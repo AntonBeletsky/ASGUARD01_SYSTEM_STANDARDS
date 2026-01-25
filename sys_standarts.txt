@@ -5,60 +5,52 @@ ASGUARD01 SYSTEM STANDARDS [Version 2.0]
 
 *** SOFTWARE DEVELOPMENT PROTOCOL: BILINGUAL CHECKLIST ***
 
-1. CODE INTEGRITY / ЦЕЛОСТНОСТЬ КОДА
+1. CODE INTEGRITY (THE CORE)
 ---------------------------------------------------------------------------
-[DRY]   NEVER DUPLICATE LOGIC. REDUNDANCY IS THE ENEMY.
-        Никогда не дублируй логику. Избыточность — враг стабильности.
+[DRY]   NEVER DUPLICATE LOGIC. REDUNDANCY IS THE ENEMY OF STABILITY.
 [KISS]  SIMPLICITY OVER COMPLEXITY. AVOID OVER-ENGINEERING.
-        Простота важнее сложности. Избегай переусложнения.
 [YAGNI] CODE ONLY WHAT IS MANDATED. NO GHOST FEATURES.
-        Пиши только то, что нужно сейчас. Никаких «фич на будущее».
 [NAME]  NOUNS FOR DATA, VERBS FOR ACTIONS. BE EXPLICIT.
-        Существительные для данных, глаголы для действий. Будь точен.
 [UNIT]  KEEP FUNCTIONS ATOMIC. ONE TASK PER SUBROUTINE.
-        Функции должны быть атомарны. Одна задача на одну подпрограмму.
+[INFO]  CODE MUST BE READABLE. COMMENTS JUSTIFY INTENT, NOT SYNTAX.
 
-2. SYSTEM ARCHITECTURE / АРХИТЕКТУРА SOLID
+2. SYSTEM ARCHITECTURE (SOLID)
 ---------------------------------------------------------------------------
 [S] SINGLE RESPONSIBILITY: ONE MODULE, ONE REASON TO CHANGE.
-    Единая ответственность: один модуль — один повод для правок.
 [O] OPEN/CLOSED: EXTEND SYSTEM VIA NEW CODE, NOT MODIFICATION.
-    Открытость/Закрытость: расширяй систему кодом, а не правкой старого.
 [L] LISKOV SUBSTITUTION: SUBTYPES MUST BE INTERCHANGEABLE.
-    Подстановка Лисков: наследники должны быть взаимозаменяемы.
-[I] INTERFACE SEGREGATION: PREFER GRANULAR INPUTS.
-    Разделение интерфейсов: выбирай точечные контракты вместо громоздких.
-[D] DEPENDENCY INVERSION: DEPEND ON ABSTRACTIONS, NOT HARDWARE.
-    Инверсия зависимостей: зависимость от абстракций, а не от «железа».
+[I] INTERFACE SEGREGATION: PREFER GRANULAR INPUTS OVER BULK OBJECTS.
+[D] DEPENDENCY INVERSION: DEPEND ON ABSTRACTIONS, NOT HARDWARE/IMPLEMENTS.
 
-3. LAYERED TOPOLOGY / ЧИСТАЯ АРХИТЕКТУРА
+3. LAYERED TOPOLOGY (CLEAN ARCHITECTURE)
 ---------------------------------------------------------------------------
-[CORE] BUSINESS RULES ARE THE CENTER. / Ядро системы — центр вселенной.
-[DIR]  DEPENDENCIES FLOW INWARD. / Зависимости направлены строго внутрь.
-[EXT]  DB AND UI ARE PLUGINS. / БД и интерфейс — лишь внешние плагины.
-[DTO]  CROSS BOUNDARIES VIA DATA OBJECTS. / Связь слоев только через DTO.
+[LAYER] CORE LOGIC (BUSINESS RULES) IS THE CENTER OF THE UNIVERSE.
+[DIR]   DEPENDENCIES FLOW INWARD. KERNEL KNOWS NOTHING OF PERIPHERALS.
+[DB/UI] HARDWARE INDEPENDENCE. DATABASE AND INTERFACE ARE PLUGINS.
+[DTO]   CROSS BOUNDARIES USING DATA TRANSFER OBJECTS ONLY.
 
-4. LOGIC PATTERNS / ПАТТЕРНЫ ПРОЕКТИРОВАНИЯ
+4. LOGIC PATTERNS (DESIGN SCHEMATICS)
 ---------------------------------------------------------------------------
-[FACTORY]   DYNAMIC INSTANTIATION. / Гибкое создание объектов.
-[STRATEGY]  SWAPPABLE ALGORITHMS. / Сменные алгоритмы на лету.
-[REPO]      DATA PERSISTENCE ABSTRACTION. / Абстракция над хранилищем.
-[DECORATOR] WRAPPERS FOR CORE LOGIC. / Обертки (логи, кэш) без смены кода.
+[FACTORY]    DYNAMIC INSTANTIATION WITHOUT HARD-CODING TYPES.
+[STRATEGY]   SWAPPABLE ALGORITHMS DURING RUNTIME.
+[REPOSITORY] DATA PERSISTENCE IS HIDDEN BEHIND A CLEAN API.
+[DECORATOR]  ADD WRAPPERS (LOGGING/CACHE) WITHOUT ALTERING SOURCE.
+[OBSERVER]   EVENT-DRIVEN COMMUNICATION BETWEEN MODULES.
 
-5. TECHNICAL STANDARDS / ТЕХНИЧЕСКИЕ СТАНДАРТЫ
+5. LOW-LEVEL STANDARDS
 ---------------------------------------------------------------------------
-[TYPE]   STRICT TYPE HINTING. / Строгая типизация всех контрактов.
-[LOGS]   SYSTEM LOGGING ONLY. / Только системные логи. Print — под запретом.
-[EXCEPT] CUSTOM ERROR CLASSES. / Свои классы ошибок для бизнес-сбоев.
-[VALID]  VALIDATE AT THE BORDER. / Валидация всех данных на границе входа.
+[TYPE]   STRICT TYPE HINTING. CONTRACTS MUST BE ENFORCED.
+[LOGS]   SYSTEM LOGGING ONLY. "PRINT" IS FOR DEBUGGING, NOT PRODUCTION.
+[EXCEPT] CUSTOM ERROR CLASSES FOR BUSINESS-SPECIFIC FAILURES.
+[VALID]  VALIDATE ALL EXTERNAL INPUT AT THE SYSTEM FRONTIER.
 
-6. RESILIENCE / ОТКАЗОУСТОЙЧИВОСТЬ
+6. RESILIENCE PROTOCOL (FAULT TOLERANCE)
 ---------------------------------------------------------------------------
-[STATE]  TRACK OFFSET AND STATUS. / Контроль состояния: смещение и статус.
-[RESUME] AUTO-RECOVERY ON BOOT. / Авто-восстановление при перезагрузке.
-[ATOM]   ATOMIC I/O OPERATIONS. / Атомарный ввод-вывод (через TMP файлы).
-[IDEM]   IDEMPOTENT EXECUTION. / Идемпотентность: повтор не портит данные.
-[HEALTH] SELF-DIAGNOSIS PROTOCOL. / Проверка целостности перед стартом.
+[STATE]  STATE IS EXTERNALIZED. TRACK OFFSET, STATUS, AND CHECKSUMS.
+[RESUME] AUTO-RECOVERY. RESUME FROM LAST CHECKPOINT AFTER POWER LOSS.
+[ATOM]   ATOMIC I/O. WRITE TO TMP, THEN SWAP. NO CORRUPT FILES.
+[IDEM]   IDEMPOTENCY. RE-RUNNING A TASK PRODUCES THE SAME RESULT.
+[HEALTH] SELF-DIAGNOSIS ON BOOT. VERIFY INTEGRITY BEFORE EXECUTION.
 
 *** END OF DOCUMENT ***
 
