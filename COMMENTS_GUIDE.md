@@ -1,16 +1,16 @@
-# 📝 РУКОВОДСТВО ПО НАПИСАНИЮ КАЧЕСТВЕННЫХ КОММЕНТАРИЕВ
+# 📝 GUIDE TO WRITING QUALITY COMMENTS
 
-## Философия комментирования кода
+## Philosophy of Code Commenting
 
-> **Правило золотой середины**: Код должен быть самодокументирующимся, комментарии объясняют "ПОЧЕМУ", а не "ЧТО"
+> **Golden Mean Rule**: Code should be self-documenting, comments explain "WHY", not "WHAT"
 
 ---
 
-# 🌐 ЧАСТЬ 1: HTML КОММЕНТАРИИ
+# 🌐 PART 1: HTML COMMENTS
 
-## 📋 ПРИНЦИПЫ КОММЕНТИРОВАНИЯ HTML
+## 📋 HTML COMMENTING PRINCIPLES
 
-### 1. **Структурное разделение** (Основной паттерн)
+### 1. **Structural Separation** (Main Pattern)
 
 ```html
 <!-- ========================================================================== -->
@@ -24,16 +24,16 @@
 </div>
 ```
 
-**Используйте для:**
-- Основных секций страницы (header, main, footer)
-- Крупных компонентов (navigation, sidebar, modals)
-- Логических блоков контента
+**Use for:**
+- Main page sections (header, main, footer)
+- Large components (navigation, sidebar, modals)
+- Logical content blocks
 
 ---
 
-### 2. **Иерархия комментариев**
+### 2. **Comment Hierarchy**
 
-#### Уровень 1: Основные секции (80 символов)
+#### Level 1: Main Sections (80 characters)
 ```html
 <!-- ========================================================================== -->
 <!-- HEADER - Main Navigation & Branding                                        -->
@@ -44,7 +44,7 @@
 </header>
 ```
 
-#### Уровень 2: Подсекции (60 символов)
+#### Level 2: Subsections (60 characters)
 ```html
 <!-- ====================================================== -->
 <!-- USER NAVIGATION - Account Actions                     -->
@@ -54,7 +54,7 @@
 </nav>
 ```
 
-#### Уровень 3: Компоненты (без линий)
+#### Level 3: Components (no lines)
 ```html
 <!-- Search Form with Category Filter -->
 <form class="search-form">
@@ -62,7 +62,7 @@
 </form>
 ```
 
-#### Уровень 4: Инлайн объяснения
+#### Level 4: Inline Explanations
 ```html
 <!-- Dropdown menu shown on category button click -->
 <div class="dropdown-menu" id="categoryMenu">
@@ -72,9 +72,9 @@
 
 ---
 
-### 3. **Когда НЕ комментировать HTML**
+### 3. **When NOT to Comment HTML**
 
-❌ **ПЛОХО** - Очевидные комментарии:
+❌ **BAD** - Obvious comments:
 ```html
 <!-- Navigation -->
 <nav>...</nav>
@@ -86,7 +86,7 @@
 <div class="container">...</div>
 ```
 
-✅ **ХОРОШО** - Значимые комментарии:
+✅ **GOOD** - Meaningful comments:
 ```html
 <!-- Navigation: Hidden on mobile (<992px), uses offcanvas instead -->
 <nav class="d-none d-lg-block">...</nav>
@@ -100,9 +100,9 @@
 
 ---
 
-### 4. **Специальные типы комментариев**
+### 4. **Special Comment Types**
 
-#### TODO комментарии
+#### TODO comments
 ```html
 <!-- TODO: Replace placeholder image with actual product photo -->
 <img src="placeholder.jpg" alt="Product">
@@ -114,7 +114,7 @@
 <div class="modal">...</div>
 ```
 
-#### FIXME комментарии
+#### FIXME comments
 ```html
 <!-- FIXME: Button overlaps on screens <375px -->
 <button class="cta-button">Sign Up</button>
@@ -123,7 +123,7 @@
 <img src="icon.svg">
 ```
 
-#### HACK/WORKAROUND комментарии
+#### HACK/WORKAROUND comments
 ```html
 <!-- HACK: Extra wrapper needed for Safari flexbox bug -->
 <div class="safari-flex-fix">
@@ -134,7 +134,7 @@
 <div class="card" style="margin-bottom: 2rem;">...</div>
 ```
 
-#### NOTE/WARNING комментарии
+#### NOTE/WARNING comments
 ```html
 <!-- NOTE: This structure is required by Bootstrap 5 Offcanvas -->
 <div class="offcanvas offcanvas-start">...</div>
@@ -145,9 +145,9 @@
 
 ---
 
-### 5. **Комментарии закрывающих тегов**
+### 5. **Closing Tag Comments**
 
-Для больших блоков кода (>50 строк) добавляйте комментарий к закрывающему тегу:
+For large code blocks (>50 lines), add a comment to the closing tag:
 
 ```html
 <!-- ========================================================================== -->
@@ -187,7 +187,7 @@
 
 ---
 
-### 6. **Conditional Comments** (для старых браузеров)
+### 6. **Conditional Comments** (for older browsers)
 
 ```html
 <!--[if lt IE 9]>
@@ -202,7 +202,7 @@
 
 ---
 
-### 7. **Временное отключение кода**
+### 7. **Temporarily Disabling Code**
 
 ```html
 <!-- DISABLED: Feature not ready for production
@@ -218,7 +218,7 @@
 
 ---
 
-### 8. **Документирование data-атрибутов**
+### 8. **Documenting data-attributes**
 
 ```html
 <!-- 
@@ -236,7 +236,7 @@
 
 ---
 
-### 9. **Комментарии для дизайн-системы**
+### 9. **Design System Comments**
 
 ```html
 <!-- 
@@ -254,7 +254,7 @@
 
 ---
 
-### 10. **Responsive комментарии**
+### 10. **Responsive Comments**
 
 ```html
 <!-- Desktop: 3 columns | Tablet: 2 columns | Mobile: 1 column -->
@@ -277,7 +277,7 @@
 
 ---
 
-### 11. **SEO комментарии**
+### 11. **SEO Comments**
 
 ```html
 <!-- SEO: H1 should be unique per page and contain primary keyword -->
@@ -298,7 +298,7 @@
 
 ---
 
-### 12. **Accessibility (A11y) комментарии**
+### 12. **Accessibility (A11y) Comments**
 
 ```html
 <!-- A11Y: Skip link for keyboard navigation -->
@@ -316,7 +316,7 @@
 
 ---
 
-### 13. **Performance комментарии**
+### 13. **Performance Comments**
 
 ```html
 <!-- PERFORMANCE: Preload critical font -->
@@ -379,7 +379,7 @@
 
 ## 🎯 HTML КОММЕНТАРИИ: BEST PRACTICES
 
-### ✅ ДЕЛАТЬ:
+### ✅ DO:
 
 1. **Комментировать структуру** - основные секции и их назначение
 2. **Объяснять неочевидное** - специфичное поведение, workarounds
@@ -389,7 +389,7 @@
 6. **Указывать авторство** - для важных компонентов
 7. **Добавлять TODO/FIXME** - для будущих улучшений
 
-### ❌ НЕ ДЕЛАТЬ:
+### ❌ DON'T:
 
 1. **Не комментировать очевидное** - "Button", "Div", "Image"
 2. **Не дублировать код** - комментарий не должен повторять HTML
@@ -430,9 +430,9 @@
 
 ---
 
-# 🎨 ЧАСТЬ 2: CSS КОММЕНТАРИИ
+# 🎨 PART 2: CSS COMMENTS
 
-## 📋 ПРИНЦИПЫ КОММЕНТИРОВАНИЯ CSS
+## 📋 CSS COMMENTING PRINCIPLES
 
 ### 1. **Структура файла CSS**
 
@@ -1204,7 +1204,7 @@ body {
 
 ## 🎯 CSS КОММЕНТАРИИ: BEST PRACTICES
 
-### ✅ ДЕЛАТЬ:
+### ✅ DO:
 
 1. **Использовать Table of Contents** для больших файлов
 2. **Группировать свойства** по категориям (positioning, box model, visual...)
@@ -1215,7 +1215,7 @@ body {
 7. **Описывать responsive behavior** - breakpoints и изменения
 8. **Добавлять performance notes** - will-change, contain
 
-### ❌ НЕ ДЕЛАТЬ:
+### ❌ DON'T:
 
 1. **Не комментировать очевидные свойства** - `color: red; /* Red color */`
 2. **Не оставлять старый закомментированный код** - использовать Git
@@ -1225,9 +1225,9 @@ body {
 
 ---
 
-# 💻 ЧАСТЬ 3: JAVASCRIPT КОММЕНТАРИИ
+# 💻 PART 3: JAVASCRIPT COMMENTS
 
-## 📋 ПРИНЦИПЫ КОММЕНТИРОВАНИЯ JAVASCRIPT
+## 📋 JAVASCRIPT COMMENTING PRINCIPLES
 
 ### 1. **JSDoc - стандарт документирования**
 
@@ -2005,7 +2005,7 @@ const rateLimiter = new RateLimiter({
 
 ---
 
-### 13. **Performance комментарии**
+### 13. **Performance Comments**
 
 ```javascript
 /**
@@ -2068,7 +2068,7 @@ class VirtualList {
 
 ---
 
-### 14. **Browser Compatibility комментарии**
+### 14. **Browser Compatibility Comments**
 
 ```javascript
 /**
@@ -2111,7 +2111,7 @@ const requestAnimationFrame =
 
 ---
 
-### 15. **Config/Constants комментарии**
+### 15. **Config/Constants Comments**
 
 ```javascript
 /* ========================================================================== */
@@ -2189,24 +2189,24 @@ const FEATURES = {
 
 ---
 
-## 🎯 JAVASCRIPT КОММЕНТАРИИ: BEST PRACTICES
+## 🎯 JAVASCRIPT COMMENTS: BEST PRACTICES
 
-### ✅ ДЕЛАТЬ:
+### ✅ DO:
 
-1. **Использовать JSDoc** для функций, классов, методов
-2. **Объяснять "ПОЧЕМУ"**, не "ЧТО" - код должен быть самодокументирующимся
-3. **Документировать сложную логику** - алгоритмы, edge cases
-4. **Указывать типы параметров** - помогает IDE и разработчикам
-5. **Добавлять примеры использования** (@example в JSDoc)
-6. **Комментировать workarounds** - объяснять почему хак нужен
-7. **Отмечать TODO/FIXME** - с приоритетом и ответственным
-8. **Документировать side effects** - функции с побочными эффектами
-9. **Указывать сложность** - O(n), O(log n) для алгоритмов
-10. **Предупреждать о security** - XSS, injection, validation
+1. **Use JSDoc** for functions, classes, methods
+2. **Explain "WHY"**, not "WHAT" - code should be self-documenting
+3. **Document complex logic** - algorithms, edge cases
+4. **Specify parameter types** - helps IDE and developers
+5. **Add usage examples** (@example in JSDoc)
+6. **Comment workarounds** - explain why hack is needed
+7. **Mark TODO/FIXME** - with priority and responsible person
+8. **Document side effects** - functions with side effects
+9. **Specify complexity** - O(n), O(log n) for algorithms
+10. **Warn about security** - XSS, injection, validation
 
-### ❌ НЕ ДЕЛАТЬ:
+### ❌ DON'T:
 
-1. **Не комментировать очевидный код**
+1. **Don't comment obvious code**
    ```javascript
    // BAD
    let i = 0; // Initialize counter
@@ -2217,7 +2217,7 @@ const FEATURES = {
    attemptCount++; // Retry on failure
    ```
 
-2. **Не оставлять закомментированный код** - используйте Git
+2. **Don't leave commented-out code** - use Git
    ```javascript
    // BAD
    // function oldImplementation() {
@@ -2229,7 +2229,7 @@ const FEATURES = {
    }
    ```
 
-3. **Не писать романы** - комментарии должны быть краткими
+3. **Don't write novels** - comments should be concise
    ```javascript
    // BAD
    /**
@@ -2249,9 +2249,9 @@ const FEATURES = {
     */
    ```
 
-4. **Не забывать обновлять** - outdated comments хуже чем никаких
+4. **Don't forget to update** - outdated comments are worse than none
 
-5. **Не дублировать код** в комментариях
+5. **Don't duplicate code** in comments
    ```javascript
    // BAD
    function add(a, b) {
@@ -2266,55 +2266,55 @@ const FEATURES = {
 
 ---
 
-## 📏 УНИВЕРСАЛЬНЫЕ ПРАВИЛА
+## 📏 UNIVERSAL RULES
 
-### 1. **Иерархия важности**
+### 1. **Hierarchy of Importance**
 
 ```
-1. Self-documenting code (лучший комментарий - ненужный комментарий)
-2. Meaningful names (переменные, функции, классы)
-3. Function/Method documentation (JSDoc, описание API)
-4. Inline comments (только для неочевидной логики)
-5. TODO/FIXME (временные заметки)
+1. Self-documenting code (best comment is no comment)
+2. Meaningful names (variables, functions, classes)
+3. Function/Method documentation (JSDoc, API description)
+4. Inline comments (only for non-obvious logic)
+5. TODO/FIXME (temporary notes)
 ```
 
-### 2. **Когда комментировать**
+### 2. **When to Comment**
 
-✅ **КОММЕНТИРУЙТЕ:**
-- Сложные алгоритмы
-- Бизнес-логику и правила
-- Workarounds и hacks
-- Edge cases и special handling
-- Public API и interfaces
+✅ **COMMENT:**
+- Complex algorithms
+- Business logic and rules
+- Workarounds and hacks
+- Edge cases and special handling
+- Public API and interfaces
 - Security concerns
 - Performance optimizations
 - Browser compatibility issues
 
-❌ **НЕ КОММЕНТИРУЙТЕ:**
-- Очевидный код
-- Что делает код (должно быть ясно из кода)
-- Временные TODO (создайте тикет)
-- Закомментированный код (удалите)
+❌ **DON'T COMMENT:**
+- Obvious code
+- What code does (should be clear from code)
+- Temporary TODOs (create a ticket)
+- Commented-out code (delete it)
 
-### 3. **Язык комментариев**
+### 3. **Comment Language**
 
-- **Используйте английский** для open source и международных команд
-- **Используйте родной язык** для локальных проектов (если команда согласна)
-- **Будьте последовательны** - выберите один язык и придерживайтесь его
+- **Use English** for open source and international teams
+- **Use native language** for local projects (if team agrees)
+- **Be consistent** - choose one language and stick to it
 
-### 4. **Стиль написания**
+### 4. **Writing Style**
 
 ```javascript
-// ПРАВИЛЬНО: Предложения начинаются с заглавной буквы, заканчиваются точкой
+// CORRECT: Sentences start with capital letter, end with period
 // This function handles user authentication and returns a token.
 
-// НЕПРАВИЛЬНО: lowercase, без пунктуации
+// INCORRECT: lowercase, no punctuation
 // this function handles user authentication and returns a token
 
-// ПРАВИЛЬНО: Краткие комментарии без точки
+// CORRECT: Brief comments without period
 // Handle authentication
 
-// ПРАВИЛЬНО: Многострочные с правильной пунктуацией
+// CORRECT: Multi-line with proper punctuation
 /**
  * This is a longer explanation that spans multiple lines.
  * Each sentence is properly capitalized and punctuated.
@@ -2324,34 +2324,34 @@ const FEATURES = {
 
 ---
 
-## 🎓 ИТОГОВЫЙ CHECKLIST КАЧЕСТВЕННОГО КОДА
+## 🎓 FINAL CHECKLIST FOR QUALITY CODE
 
 ### HTML
-- [ ] Основные секции задокументированы
-- [ ] Сложные компоненты имеют пояснения
-- [ ] Responsive поведение описано
-- [ ] Accessibility атрибуты прокомментированы
-- [ ] Закрывающие теги больших блоков помечены
-- [ ] TODO/FIXME добавлены где необходимо
+- [ ] Main sections documented
+- [ ] Complex components have explanations
+- [ ] Responsive behavior described
+- [ ] Accessibility attributes commented
+- [ ] Closing tags of large blocks marked
+- [ ] TODO/FIXME added where necessary
 
 ### CSS
-- [ ] Table of Contents для больших файлов
-- [ ] CSS переменные задокументированы
-- [ ] Сложные селекторы объяснены
-- [ ] Magic numbers прокомментированы
-- [ ] Browser hacks имеют объяснения
-- [ ] Z-index система описана
-- [ ] Media queries содержат breakpoint notes
-- [ ] Animations имеют performance notes
+- [ ] Table of Contents for large files
+- [ ] CSS variables documented
+- [ ] Complex selectors explained
+- [ ] Magic numbers commented
+- [ ] Browser hacks have explanations
+- [ ] Z-index system described
+- [ ] Media queries contain breakpoint notes
+- [ ] Animations have performance notes
 
 ### JavaScript
-- [ ] JSDoc для всех public функций/методов/классов
-- [ ] Параметры и return types указаны
-- [ ] Сложные алгоритмы объяснены
-- [ ] Edge cases задокументированы
-- [ ] Security concerns отмечены
-- [ ] Performance optimizations описаны
-- [ ] Browser compatibility указана
-- [ ] TODO/FIXME с приоритетами
+- [ ] JSDoc for all public functions/methods/classes
+- [ ] Parameters and return types specified
+- [ ] Complex algorithms explained
+- [ ] Edge cases documented
+- [ ] Security concerns noted
+- [ ] Performance optimizations described
+- [ ] Browser compatibility indicated
+- [ ] TODO/FIXME with priorities
 
-**Помните**: Хороший код объясняет сам себя, комментарии объясняют контекст! 🚀
+**Remember**: Good code explains itself, comments explain the context! 🚀
