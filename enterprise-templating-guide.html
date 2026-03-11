@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise HTML Templating Guide — Vanilla JS</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #13161e;
+    --surface2:  #1a1e28;
+    --border:    #252934;
+    --accent:    #4f8ef7;
+    --accent2:   #7ee8a2;
+    --accent3:   #f7c948;
+    --accent4:   #f76e6e;
+    --text:      #e2e6f0;
+    --muted:     #7a8199;
+    --code-bg:   #0a0c10;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Layout ─── */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 0 0 2rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar-logo {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: .75rem;
+  }
+  .sidebar-logo .tag {
+    font-family: var(--mono);
+    font-size: .65rem;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: .35rem;
+  }
+  .sidebar-logo h1 {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+  }
+
+  .nav-section {
+    padding: .5rem 1.5rem .25rem;
+    font-family: var(--mono);
+    font-size: .6rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: .75rem;
+  }
+
+  .sidebar a {
+    display: block;
+    padding: .35rem 1.5rem;
+    font-size: .82rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color .15s, background .15s;
+    border-left: 2px solid transparent;
+  }
+  .sidebar a:hover { color: var(--text); background: var(--surface2); }
+  .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(79,142,247,.06); }
+
+  .content {
+    flex: 1;
+    padding: 3rem 4rem;
+    max-width: 900px;
+  }
+
+  /* ── Typography ─── */
+  h1.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: .5rem;
+    background: linear-gradient(135deg, var(--text) 40%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .page-subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 3rem; }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 3rem 0 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+  h2 .h-num {
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--accent);
+    background: rgba(79,142,247,.12);
+    padding: .1rem .45rem;
+    border-radius: 4px;
+    letter-spacing: .05em;
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent2);
+    margin: 1.75rem 0 .6rem;
+    font-family: var(--mono);
+  }
+
+  h4 {
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--accent3);
+    margin: 1.25rem 0 .4rem;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  p { margin-bottom: .9rem; color: #c5cad8; }
+
+  /* ── Code ─── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    font-family: var(--mono);
+    font-size: .8rem;
+    line-height: 1.65;
+    scrollbar-width: thin;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: .82em;
+    color: #a8c7fa;
+    background: rgba(79,142,247,.1);
+    padding: .1em .35em;
+    border-radius: 3px;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  /* Syntax highlight classes */
+  .kw { color: #c792ea; }
+  .str { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; }
+  .fn { color: #82aaff; }
+  .cl { color: #ffcb6b; }
+  .num { color: #f78c6c; }
+  .prop { color: #a6e3a1; }
+
+  /* ── Callouts ─── */
+  .callout {
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    border-left: 3px solid;
+    font-size: .88rem;
+  }
+  .callout-tip { background: rgba(126,232,162,.06); border-color: var(--accent2); }
+  .callout-warn { background: rgba(247,201,72,.06); border-color: var(--accent3); }
+  .callout-danger { background: rgba(247,110,110,.06); border-color: var(--accent4); }
+  .callout-info { background: rgba(79,142,247,.06); border-color: var(--accent); }
+  .callout-label {
+    font-family: var(--mono);
+    font-size: .65rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: .4rem;
+  }
+  .callout-tip .callout-label { color: var(--accent2); }
+  .callout-warn .callout-label { color: var(--accent3); }
+  .callout-danger .callout-label { color: var(--accent4); }
+  .callout-info .callout-label { color: var(--accent); }
+
+  /* ── Table ─── */
+  .tbl-wrap { overflow-x: auto; margin: 1rem 0 1.5rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+  th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .65rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: .6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: #c5cad8;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: .78rem; }
+
+  /* ── Badges ─── */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: .6rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .15rem .5rem;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: .4rem;
+  }
+  .badge-new { background: rgba(79,142,247,.15); color: var(--accent); }
+  .badge-core { background: rgba(126,232,162,.12); color: var(--accent2); }
+  .badge-adv { background: rgba(247,201,72,.12); color: var(--accent3); }
+
+  /* ── Section divider ─── */
+  .section-break {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+
+  /* ── Two-col layout ─── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  .mini-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: .82rem;
+  }
+  .mini-card strong { color: var(--text); display: block; margin-bottom: .3rem; font-family: var(--mono); font-size: .78rem; }
+
+  /* ── Hero section ─── */
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+  .hero-meta-item { font-size: .78rem; color: var(--muted); }
+  .hero-meta-item span { color: var(--text); font-weight: 500; }
+
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; color: #c5cad8; }
+  li { margin-bottom: .3rem; }
+
+  /* ── Scroll indicator ─── */
+  .scroll-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: .85;
+    transition: opacity .2s;
+    z-index: 100;
+  }
+  .scroll-top:hover { opacity: 1; }
+  .scroll-top.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="tag">Internal Docs · v1.0</div>
+    <h1>Enterprise<br>Templating Guide</h1>
+  </div>
+
+  <div class="nav-section">Foundation</div>
+  <a href="#intro">Introduction</a>
+  <a href="#philosophy">Core Philosophy</a>
+  <a href="#base-class">The Base Controller</a>
+
+  <div class="nav-section">Core Patterns</div>
+  <a href="#escaping">Escaping & Security</a>
+  <a href="#rendering">Render Pipeline</a>
+  <a href="#state">State Management</a>
+  <a href="#events">Event Binding</a>
+
+  <div class="nav-section">Use Cases</div>
+  <a href="#orders">Orders List</a>
+  <a href="#users">User Directory</a>
+  <a href="#dashboard">Dashboard Cards</a>
+  <a href="#forms">Dynamic Forms</a>
+  <a href="#notifications">Notifications</a>
+  <a href="#tables">Data Tables</a>
+  <a href="#activity">Activity Feed</a>
+  <a href="#modals">Modals</a>
+
+  <div class="nav-section">Advanced</div>
+  <a href="#pagination">Pagination</a>
+  <a href="#skeleton">Skeleton Screens</a>
+  <a href="#empty">Empty States</a>
+  <a href="#perf">Performance</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="#api">Controller API</a>
+  <a href="#checklist">Checklist</a>
+</nav>
+
+<!-- ══════════════════════ CONTENT ══════════════════════ -->
+<main class="content">
+
+<!-- ── INTRO ── -->
+<section id="intro">
+  <p style="font-family:var(--mono);font-size:.7rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;">Enterprise Templating Guide</p>
+  <h1 class="page-title">Vanilla JS UI Templating<br>for Enterprise Applications</h1>
+  <p class="page-subtitle">A unified, framework-free approach to dynamic HTML rendering — scalable, secure, and maintainable.</p>
+
+  <div class="hero-meta">
+    <div class="hero-meta-item">Approach <span>innerHTML + Controller Class</span></div>
+    <div class="hero-meta-item">Dependencies <span>Zero</span></div>
+    <div class="hero-meta-item">Browser Support <span>ES2017+ / All Modern</span></div>
+    <div class="hero-meta-item">Pairs With <span>Bootstrap · Tailwind · Custom CSS</span></div>
+  </div>
+
+  <p>This guide defines the standard pattern for building dynamic, data-driven UI components using <strong>vanilla JavaScript</strong> in enterprise frontends. It is based on a class-based <code>Controller</code> pattern that unifies how rendering, state, events, and escaping are handled across all feature areas — from order lists and user directories to dashboards and notification feeds.</p>
+
+  <p>Every example in this guide follows the same architectural skeleton. Learning it once means you can read, maintain, and extend any component in the codebase without context-switching between frameworks or paradigms.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Scope</div>
+    This guide covers UI components rendered client-side from JavaScript data (API responses, state objects). It does not cover server-side rendering, React/Vue components, or static HTML pages.
+  </div>
+</section>
+
+<!-- ── PHILOSOPHY ── -->
+<section id="philosophy">
+  <h2><span class="h-num">01</span> Core Philosophy</h2>
+
+  <p>The pattern in this codebase is built on five principles:</p>
+
+  <div class="two-col">
+    <div class="mini-card">
+      <strong>1 · Class per feature area</strong>
+      Each UI section (orders, users, notifications…) has one Controller class responsible for its DOM subtree. No globals, no loose functions.
+    </div>
+    <div class="mini-card">
+      <strong>2 · innerHTML is the render engine</strong>
+      Private methods build HTML strings. One final <code>innerHTML</code> assignment per render cycle. No incremental DOM patching.
+    </div>
+    <div class="mini-card">
+      <strong>3 · Escape everything</strong>
+      A dedicated <code>_esc()</code> utility wraps every user-controlled value before it enters an HTML string. No exceptions.
+    </div>
+    <div class="mini-card">
+      <strong>4 · Scoped event delegation</strong>
+      All event listeners attach to the container root, not to individual elements. Survives re-renders without leaking listeners.
+    </div>
+    <div class="mini-card">
+      <strong>5 · State lives in <code>this.state</code></strong>
+      The component has a single plain object as its source of truth. Mutate state → call <code>_render()</code>. No other path to DOM updates.
+    </div>
+    <div class="mini-card">
+      <strong>6 · Composable render methods</strong>
+      Complex views are assembled from small, single-purpose <code>_renderXxx()</code> methods. Each can be tested and modified in isolation.
+    </div>
+  </div>
+</section>
+
+<!-- ── BASE CLASS ── -->
+<section id="base-class">
+  <h2><span class="h-num">02</span> The Base Controller</h2>
+
+  <p>Every component inherits from (or mirrors) this base structure. Copy it as your starting point for any new feature area.</p>
+
+<pre><code><span class="cm">/**
+ * BaseController — canonical skeleton for all UI controllers.
+ * Copy, rename, and fill in the methods marked TODO.
+ */</span>
+<span class="kw">class</span> <span class="cl">FeatureController</span> {
+
+  <span class="cm">/* ─── STATIC CONFIG ──────────────────────────────────────── */</span>
+  <span class="cm">// Put lookup maps, label maps, badge configs here.</span>
+  <span class="kw">static</span> <span class="prop">STATUS_MAP</span> = {
+    active:   { badge: <span class="str">'text-bg-success'</span>, label: <span class="str">'Active'</span> },
+    inactive: { badge: <span class="str">'text-bg-secondary'</span>, label: <span class="str">'Inactive'</span> },
+  };
+
+  <span class="cm">/* ─── CONSTRUCTOR ────────────────────────────────────────── */</span>
+  <span class="fn">constructor</span>(containerSelector) {
+    <span class="kw">this</span>.container = document.<span class="fn">querySelector</span>(containerSelector);
+    <span class="kw">if</span> (!<span class="kw">this</span>.container)
+      <span class="kw">throw new</span> <span class="cl">Error</span>(<span class="str">`FeatureController: "</span><span class="prop">${containerSelector}</span><span class="str">" not found`</span>);
+
+    <span class="cm">// UI sub-nodes</span>
+    <span class="kw">this</span>.listEl  = <span class="kw">this</span>.container.<span class="fn">querySelector</span>(<span class="str">'#list'</span>);
+    <span class="kw">this</span>.skelEl  = <span class="kw">this</span>.container.<span class="fn">querySelector</span>(<span class="str">'#skeleton'</span>);
+
+    <span class="cm">// Single source of truth</span>
+    <span class="kw">this</span>.state = { filter: <span class="str">'all'</span>, search: <span class="str">''</span>, page: <span class="num">1</span> };
+
+    <span class="cm">// Timers / abort controllers</span>
+    <span class="kw">this</span>._searchDebounce = <span class="kw">null</span>;
+
+    <span class="kw">this</span>.<span class="fn">_bindEvents</span>();
+    <span class="kw">this</span>.<span class="fn">_loadData</span>();
+  }
+
+  <span class="cm">/* ─── DATA LOADING ───────────────────────────────────────── */</span>
+  <span class="kw">async</span> <span class="fn">_loadData</span>() {
+    <span class="cm">// TODO: fetch from API, then call _render()</span>
+    <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchSomething</span>();
+    <span class="kw">this</span>.data = data;
+    <span class="kw">if</span> (<span class="kw">this</span>.skelEl) { <span class="kw">this</span>.skelEl.<span class="fn">remove</span>(); <span class="kw">this</span>.skelEl = <span class="kw">null</span>; }
+    <span class="kw">this</span>.<span class="fn">_render</span>();
+  }
+
+  <span class="cm">/* ─── UTILS ──────────────────────────────────────────────── */</span>
+  <span class="fn">_esc</span>(s) {
+    <span class="kw">if</span> (<span class="kw">typeof</span> s !== <span class="str">'string'</span>) <span class="kw">return</span> <span class="cl">String</span>(s ?? <span class="str">''</span>);
+    <span class="kw">return</span> s
+      .<span class="fn">replace</span>(<span class="str">/&/g</span>, <span class="str">'&amp;amp;'</span>)
+      .<span class="fn">replace</span>(<span class="str">/</span><span class="kw">&lt;</span><span class="str">/g</span>, <span class="str">'&amp;lt;'</span>)
+      .<span class="fn">replace</span>(<span class="str">/>/g</span>, <span class="str">'&amp;gt;'</span>)
+      .<span class="fn">replace</span>(<span class="str">/"/g</span>, <span class="str">'&amp;quot;'</span>);
+  }
+
+  <span class="cm">/* ─── FILTERING ──────────────────────────────────────────── */</span>
+  <span class="fn">_getFiltered</span>() {
+    <span class="kw">let</span> list = <span class="kw">this</span>.data ?? [];
+    <span class="kw">if</span> (<span class="kw">this</span>.state.filter !== <span class="str">'all'</span>)
+      list = list.<span class="fn">filter</span>(item => item.status === <span class="kw">this</span>.state.filter);
+    <span class="kw">const</span> q = <span class="kw">this</span>.state.search.<span class="fn">trim</span>().<span class="fn">toLowerCase</span>();
+    <span class="kw">if</span> (q) list = list.<span class="fn">filter</span>(item => item.name.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(q));
+    <span class="kw">return</span> list;
+  }
+
+  <span class="cm">/* ─── RENDER ─────────────────────────────────────────────── */</span>
+  <span class="fn">_render</span>() {
+    <span class="kw">const</span> items = <span class="kw">this</span>.<span class="fn">_getFiltered</span>();
+    <span class="kw">this</span>.listEl.innerHTML = items.length
+      ? items.<span class="fn">map</span>(item => <span class="kw">this</span>.<span class="fn">_renderItem</span>(item)).<span class="fn">join</span>(<span class="str">''</span>)
+      : <span class="kw">this</span>.<span class="fn">_renderEmpty</span>();
+  }
+
+  <span class="cm">/* ─── ITEM TEMPLATE ──────────────────────────────────────── */</span>
+  <span class="fn">_renderItem</span>(item) {
+    <span class="cm">// TODO: return an HTML string for a single item</span>
+    <span class="kw">return</span> <span class="str">`&lt;div class="item"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(item.name)}</span><span class="str">&lt;/div&gt;`</span>;
+  }
+
+  <span class="cm">/* ─── EMPTY STATE ────────────────────────────────────────── */</span>
+  <span class="fn">_renderEmpty</span>() {
+    <span class="kw">return</span> <span class="str">`&lt;div class="empty-state"&gt;No items found.&lt;/div&gt;`</span>;
+  }
+
+  <span class="cm">/* ─── EVENTS ─────────────────────────────────────────────── */</span>
+  <span class="fn">_bindEvents</span>() {
+    <span class="cm">// Filter tabs</span>
+    <span class="kw">this</span>.container.<span class="fn">querySelector</span>(<span class="str">'[data-filter-group]'</span>)
+      ?.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, e => {
+        <span class="kw">const</span> btn = e.target.<span class="fn">closest</span>(<span class="str">'[data-filter]'</span>);
+        <span class="kw">if</span> (!btn) <span class="kw">return</span>;
+        <span class="kw">this</span>.state.filter = btn.dataset.filter;
+        <span class="kw">this</span>.<span class="fn">_render</span>();
+      });
+
+    <span class="cm">// Search with debounce</span>
+    <span class="kw">this</span>.container.<span class="fn">querySelector</span>(<span class="str">'[data-search]'</span>)
+      ?.<span class="fn">addEventListener</span>(<span class="str">'input'</span>, e => {
+        <span class="fn">clearTimeout</span>(<span class="kw">this</span>._searchDebounce);
+        <span class="kw">this</span>._searchDebounce = <span class="fn">setTimeout</span>(() => {
+          <span class="kw">this</span>.state.search = e.target.value;
+          <span class="kw">this</span>.<span class="fn">_render</span>();
+        }, <span class="num">280</span>);
+      });
+
+    <span class="cm">// Delegated click on list items</span>
+    <span class="kw">this</span>.listEl?.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, e => {
+      <span class="kw">const</span> row = e.target.<span class="fn">closest</span>(<span class="str">'[data-id]'</span>);
+      <span class="kw">if</span> (!row) <span class="kw">return</span>;
+      <span class="kw">this</span>.<span class="fn">_onItemClick</span>(row.dataset.id);
+    });
+  }
+
+  <span class="fn">_onItemClick</span>(id) { <span class="cm">/* TODO */</span> }
+}
+
+<span class="cm">/* ── INIT ── */</span>
+document.<span class="fn">addEventListener</span>(<span class="str">'DOMContentLoaded'</span>, () => {
+  <span class="kw">new</span> <span class="cl">FeatureController</span>(<span class="str">'.feature-container'</span>);
+});
+</code></pre>
+</section>
+
+<!-- ── ESCAPING ── -->
+<section id="escaping">
+  <h2><span class="h-num">03</span> Escaping & Security</h2>
+
+  <p>The <code>_esc()</code> method is the single most important utility in the pattern. It must wrap <strong>every value from outside your control</strong> before it enters an HTML string — API responses, URL params, user input, translated labels, anything.</p>
+
+<pre><code><span class="cm">// The canonical _esc() implementation</span>
+<span class="fn">_esc</span>(s) {
+  <span class="kw">if</span> (<span class="kw">typeof</span> s !== <span class="str">'string'</span>) <span class="kw">return</span> <span class="cl">String</span>(s ?? <span class="str">''</span>);
+  <span class="kw">return</span> s
+    .<span class="fn">replace</span>(/&/g,  <span class="str">'&amp;amp;'</span>)
+    .<span class="fn">replace</span>(/</span><span class="prop">&lt;</span><span class="str">/g,  '</span>&amp;lt;<span class="str">'</span>)
+    .<span class="fn">replace</span>(/>/g,  <span class="str">'&amp;gt;'</span>)
+    .<span class="fn">replace</span>(/"/g,  <span class="str">'&amp;quot;'</span>);
+}</code></pre>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Context</th><th>Use</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Text content</td><td><code>_esc(value)</code></td><td><code>${this._esc(user.name)}</code></td></tr>
+        <tr><td>HTML attribute</td><td><code>_esc(value)</code></td><td><code>title="${this._esc(item.desc)}"</code></td></tr>
+        <tr><td>URL in href/src</td><td><code>_esc(value)</code> + validate scheme</td><td>See URL section below</td></tr>
+        <tr><td>Known-safe HTML</td><td>Raw insert, no _esc</td><td>Your own render methods only</td></tr>
+        <tr><td>Numbers</td><td><code>_esc()</code> handles via String()</td><td><code>${this._esc(item.count)}</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>_safeUrl() — URL validation</h3>
+  <p>For <code>href</code> and <code>src</code> attributes sourced from data, use a dedicated URL validator to prevent <code>javascript:</code> injection:</p>
+
+<pre><code><span class="fn">_safeUrl</span>(url, fallback = <span class="str">'#'</span>) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> u = <span class="kw">new</span> <span class="cl">URL</span>(url, location.origin);
+    <span class="kw">return</span> [<span class="str">'https:'</span>, <span class="str">'http:'</span>, <span class="str">'/'</span>].<span class="fn">some</span>(p => u.href.<span class="fn">startsWith</span>(p))
+      ? <span class="kw">this</span>.<span class="fn">_esc</span>(url)
+      : fallback;
+  } <span class="kw">catch</span> { <span class="kw">return</span> fallback; }
+}</code></pre>
+
+  <div class="callout callout-danger">
+    <div class="callout-label">Never do this</div>
+    <code>element.innerHTML = userInput</code> — even a single unescaped value from an API response can be a stored XSS vector. Always use <code>_esc()</code>.
+  </div>
+</section>
+
+<!-- ── RENDER PIPELINE ── -->
+<section id="rendering">
+  <h2><span class="h-num">04</span> The Render Pipeline</h2>
+
+  <p>The render pipeline is always one-directional: <strong>state → HTML string → innerHTML</strong>. Never mutate the DOM directly after rendering.</p>
+
+<pre><code><span class="cm">// Render pipeline: filter → compose → assign</span>
+<span class="fn">_render</span>() {
+  <span class="kw">const</span> items = <span class="kw">this</span>.<span class="fn">_getFiltered</span>();
+
+  <span class="kw">this</span>.listEl.innerHTML = items.length
+    ? items.<span class="fn">map</span>(o => <span class="kw">this</span>.<span class="fn">_renderCard</span>(o)).<span class="fn">join</span>(<span class="str">''</span>)
+    : <span class="kw">this</span>.<span class="fn">_renderEmpty</span>(<span class="kw">this</span>.state.filter);
+
+  <span class="cm">// Post-render hooks: animations, focus management, etc.</span>
+  <span class="kw">this</span>.<span class="fn">_afterRender</span>();
+}
+
+<span class="fn">_afterRender</span>() {
+  <span class="cm">// Trigger CSS transitions that require a frame boundary</span>
+  <span class="kw">this</span>.listEl.<span class="fn">querySelectorAll</span>(<span class="str">'[data-animate]'</span>).<span class="fn">forEach</span>(el => {
+    <span class="fn">requestAnimationFrame</span>(() =>
+      <span class="fn">requestAnimationFrame</span>(() => el.classList.<span class="fn">add</span>(<span class="str">'animated'</span>))
+    );
+  });
+}</code></pre>
+
+  <h3>Composing complex cards</h3>
+  <p>Break complex HTML into small private methods. Each method returns a string. The top-level <code>_renderCard()</code> assembles them:</p>
+
+<pre><code><span class="fn">_renderCard</span>(item) {
+  <span class="kw">return</span> <span class="str">`
+  &lt;div class="card" data-id="</span><span class="prop">${<span class="kw">this</span>._esc(item.id)}</span><span class="str">"&gt;
+    </span><span class="prop">${<span class="kw">this</span>._renderCardHeader(item)}</span><span class="str">
+    &lt;div class="card-body collapse" id="body-</span><span class="prop">${<span class="kw">this</span>._esc(item.id)}</span><span class="str">"&gt;
+      </span><span class="prop">${<span class="kw">this</span>._renderCardMeta(item)}</span><span class="str">
+      </span><span class="prop">${<span class="kw">this</span>._renderCardActions(item)}</span><span class="str">
+    &lt;/div&gt;
+  &lt;/div&gt;`</span>;
+}
+
+<span class="fn">_renderCardHeader</span>(item) { <span class="kw">return</span> <span class="str">`&lt;div class="card-header"&gt;...&lt;/div&gt;`</span>; }
+<span class="fn">_renderCardMeta</span>(item)   { <span class="kw">return</span> <span class="str">`&lt;div class="card-meta"&gt;...&lt;/div&gt;`</span>; }
+<span class="fn">_renderCardActions</span>(item){ <span class="kw">return</span> <span class="str">`&lt;div class="card-actions"&gt;...&lt;/div&gt;`</span>; }</code></pre>
+</section>
+
+<!-- ── STATE ── -->
+<section id="state">
+  <h2><span class="h-num">05</span> State Management</h2>
+
+  <p>State is a plain object on <code>this.state</code>. Every user interaction modifies state and triggers a re-render. No direct DOM mutation outside of <code>_render()</code>.</p>
+
+<pre><code><span class="cm">// Initial state — always define the full shape upfront</span>
+<span class="kw">this</span>.state = {
+  filter:   <span class="str">'all'</span>,
+  search:   <span class="str">''</span>,
+  page:     <span class="num">1</span>,
+  pageSize: <span class="num">25</span>,
+  sort:     { field: <span class="str">'createdAt'</span>, dir: <span class="str">'desc'</span> },
+  selected: <span class="kw">new</span> <span class="cl">Set</span>(),
+};
+
+<span class="cm">// Mutating state — always go through a setter that calls _render</span>
+<span class="fn">_setState</span>(patch) {
+  <span class="cl">Object</span>.<span class="fn">assign</span>(<span class="kw">this</span>.state, patch);
+  <span class="kw">this</span>.<span class="fn">_render</span>();
+}
+
+<span class="cm">// Usage in event handlers:</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () =>
+  <span class="kw">this</span>.<span class="fn">_setState</span>({ filter: <span class="str">'active'</span>, page: <span class="num">1</span> })
+);</code></pre>
+
+  <div class="callout callout-tip">
+    <div class="callout-label">Good practice</div>
+    Always reset <code>page</code> to 1 when changing <code>filter</code> or <code>search</code>. Add this to <code>_setState()</code> automatically if any of those keys are in the patch.
+  </div>
+</section>
+
+<!-- ── EVENTS ── -->
+<section id="events">
+  <h2><span class="h-num">06</span> Event Binding</h2>
+
+  <p>Bind all events in <code>_bindEvents()</code>, called once from the constructor. Use <strong>event delegation</strong> — attach to the container, not to individual rendered elements. This survives re-renders without memory leaks.</p>
+
+<pre><code><span class="fn">_bindEvents</span>() {
+
+  <span class="cm">// ── Filter pills ────────────────────────────────────────── */</span>
+  <span class="kw">this</span>.container.<span class="fn">querySelector</span>(<span class="str">'#filter-tabs'</span>)
+    .<span class="fn">addEventListener</span>(<span class="str">'click'</span>, e => {
+      <span class="kw">const</span> btn = e.target.<span class="fn">closest</span>(<span class="str">'[data-filter]'</span>);
+      <span class="kw">if</span> (!btn) <span class="kw">return</span>;
+
+      <span class="cm">// Update UI state</span>
+      <span class="kw">this</span>.container.<span class="fn">querySelectorAll</span>(<span class="str">'[data-filter]'</span>).<span class="fn">forEach</span>(b => {
+        b.classList.<span class="fn">toggle</span>(<span class="str">'active'</span>, b === btn);
+        b.<span class="fn">setAttribute</span>(<span class="str">'aria-selected'</span>, b === btn);
+      });
+
+      <span class="kw">this</span>.<span class="fn">_setState</span>({ filter: btn.dataset.filter, page: <span class="num">1</span> });
+    });
+
+  <span class="cm">// ── Debounced search ─────────────────────────────────────── */</span>
+  <span class="kw">this</span>.container.<span class="fn">querySelector</span>(<span class="str">'#search-input'</span>)
+    .<span class="fn">addEventListener</span>(<span class="str">'input'</span>, e => {
+      <span class="fn">clearTimeout</span>(<span class="kw">this</span>._searchDebounce);
+      <span class="kw">this</span>._searchDebounce = <span class="fn">setTimeout</span>(() =>
+        <span class="kw">this</span>.<span class="fn">_setState</span>({ search: e.target.value, page: <span class="num">1</span> }),
+        <span class="num">280</span>
+      );
+    });
+
+  <span class="cm">// ── Delegated click on dynamic list items ────────────────── */</span>
+  <span class="kw">this</span>.listEl.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, e => {
+
+    <span class="cm">// "Delete" action button</span>
+    <span class="kw">const</span> delBtn = e.target.<span class="fn">closest</span>(<span class="str">'[data-action="delete"]'</span>);
+    <span class="kw">if</span> (delBtn) { <span class="kw">this</span>.<span class="fn">_onDelete</span>(delBtn.dataset.id); <span class="kw">return</span>; }
+
+    <span class="cm">// Row expand / collapse</span>
+    <span class="kw">const</span> row = e.target.<span class="fn">closest</span>(<span class="str">'[data-expand]'</span>);
+    <span class="kw">if</span> (row) { <span class="kw">this</span>.<span class="fn">_onExpand</span>(row.dataset.id); <span class="kw">return</span>; }
+  });
+
+  <span class="cm">// ── Keyboard: close modal on Escape ─────────────────────── */</span>
+  document.<span class="fn">addEventListener</span>(<span class="str">'keydown'</span>, e => {
+    <span class="kw">if</span> (e.key === <span class="str">'Escape'</span>) <span class="kw">this</span>.<span class="fn">_closeModal</span>();
+  });
+}</code></pre>
+</section>
+
+<hr class="section-break">
+
+<!-- ══ USE CASES ══ -->
+
+<!-- ── ORDERS ── -->
+<section id="orders">
+  <h2><span class="h-num">07</span> Use Case: Orders List <span class="badge badge-core">Reference</span></h2>
+
+  <p>The canonical example. Full pattern with status stepper, tracking history accordion, and filtering.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">OrdersController</span> {
+
+  <span class="kw">static</span> <span class="prop">STATUS_CFG</span> = {
+    processing: { badge: <span class="str">'text-bg-info'</span>,      label: <span class="str">'Processing'</span> },
+    shipped:    { badge: <span class="str">'text-bg-warning'</span>,   label: <span class="str">'Shipped'</span>    },
+    delivered:  { badge: <span class="str">'text-bg-success'</span>,   label: <span class="str">'Delivered'</span>  },
+    cancelled:  { badge: <span class="str">'text-bg-danger'</span>,    label: <span class="str">'Cancelled'</span>  },
+  };
+
+  <span class="fn">constructor</span>(sel) {
+    <span class="kw">this</span>.container = document.<span class="fn">querySelector</span>(sel);
+    <span class="kw">this</span>.listEl = <span class="kw">this</span>.container.<span class="fn">querySelector</span>(<span class="str">'#orders-list'</span>);
+    <span class="kw">this</span>.state  = { filter: <span class="str">'all'</span>, search: <span class="str">''</span> };
+    <span class="kw">this</span>.<span class="fn">_bindEvents</span>();
+    <span class="fn">setTimeout</span>(() => { <span class="kw">this</span>.data = ORDERS; <span class="kw">this</span>.<span class="fn">_render</span>(); }, <span class="num">500</span>);
+  }
+
+  <span class="fn">_esc</span>(s) { <span class="cm">/* ... standard impl */</span> }
+
+  <span class="fn">_fmtDate</span>(s) {
+    <span class="kw">return</span> s ? <span class="kw">new</span> <span class="cl">Date</span>(s).<span class="fn">toLocaleDateString</span>(<span class="str">'en-US'</span>, {
+      year: <span class="str">'numeric'</span>, month: <span class="str">'long'</span>, day: <span class="str">'numeric'</span>
+    }) : <span class="str">'—'</span>;
+  }
+
+  <span class="fn">_fmtCur</span>(v, c = <span class="str">'USD'</span>) {
+    <span class="kw">return new</span> <span class="cl">Intl</span>.<span class="cl">NumberFormat</span>(<span class="str">'en-US'</span>, {
+      style: <span class="str">'currency'</span>, currency: c
+    }).<span class="fn">format</span>(v);
+  }
+
+  <span class="fn">_getFiltered</span>() {
+    <span class="kw">let</span> list = <span class="kw">this</span>.data ?? [];
+    <span class="kw">if</span> (<span class="kw">this</span>.state.filter !== <span class="str">'all'</span>)
+      list = list.<span class="fn">filter</span>(o => o.status === <span class="kw">this</span>.state.filter);
+    <span class="kw">const</span> q = <span class="kw">this</span>.state.search.<span class="fn">trim</span>().<span class="fn">toLowerCase</span>();
+    <span class="kw">if</span> (q) list = list.<span class="fn">filter</span>(o => o.id.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(q));
+    <span class="kw">return</span> list;
+  }
+
+  <span class="fn">_render</span>() {
+    <span class="kw">const</span> list = <span class="kw">this</span>.<span class="fn">_getFiltered</span>();
+    <span class="kw">this</span>.listEl.innerHTML = list.length
+      ? list.<span class="fn">map</span>(o => <span class="kw">this</span>.<span class="fn">_renderOrder</span>(o)).<span class="fn">join</span>(<span class="str">''</span>)
+      : <span class="kw">this</span>.<span class="fn">_renderEmpty</span>();
+  }
+
+  <span class="fn">_renderOrder</span>(o) {
+    <span class="kw">const</span> { badge, label } = <span class="cl">OrdersController</span>.STATUS_CFG[o.status] ?? {};
+    <span class="kw">return</span> <span class="str">`
+    &lt;div class="order-card border mb-3" data-id="</span><span class="prop">${<span class="kw">this</span>._esc(o.id)}</span><span class="str">"&gt;
+      &lt;div class="d-flex justify-content-between p-3"&gt;
+        &lt;span class="fw-semibold"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(o.id)}</span><span class="str">&lt;/span&gt;
+        &lt;span class="badge </span><span class="prop">${<span class="kw">this</span>._esc(badge)}</span><span class="str">"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(label)}</span><span class="str">&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class="collapse" id="ord-</span><span class="prop">${<span class="kw">this</span>._esc(o.id)}</span><span class="str">"&gt;
+        </span><span class="prop">${<span class="kw">this</span>._renderStepper(o.steps)}</span><span class="str">
+        </span><span class="prop">${o.items.map(i => <span class="kw">this</span>._renderProduct(i)).join('')}</span><span class="str">
+      &lt;/div&gt;
+    &lt;/div&gt;`</span>;
+  }
+  <span class="cm">/* ... _renderStepper, _renderProduct, _renderEmpty etc */</span>
+}</code></pre>
+</section>
+
+<!-- ── USERS ── -->
+<section id="users">
+  <h2><span class="h-num">08</span> Use Case: User Directory <span class="badge badge-core">Core</span></h2>
+
+  <p>Avatar initials, role badges, status dots, inline actions. Filterable by department and role.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">UserDirectoryController</span> {
+
+  <span class="kw">static</span> <span class="prop">ROLE_COLORS</span> = {
+    admin:     <span class="str">'text-bg-danger'</span>,
+    manager:   <span class="str">'text-bg-warning'</span>,
+    developer: <span class="str">'text-bg-info'</span>,
+    viewer:    <span class="str">'text-bg-secondary'</span>,
+  };
+
+  <span class="cm">// Generate a deterministic pastel avatar color from name</span>
+  <span class="fn">_avatarColor</span>(name) {
+    <span class="kw">const</span> colors = [
+      <span class="str">'#4f8ef7'</span>,<span class="str">'#7ee8a2'</span>,<span class="str">'#f7c948'</span>,<span class="str">'#f76e6e'</span>,<span class="str">'#c792ea'</span>,<span class="str">'#89ddff'</span>
+    ];
+    <span class="kw">const</span> hash = [...name].<span class="fn">reduce</span>((a, c) => a + c.<span class="fn">charCodeAt</span>(<span class="num">0</span>), <span class="num">0</span>);
+    <span class="kw">return</span> colors[hash % colors.length];
+  }
+
+  <span class="fn">_initials</span>(name) {
+    <span class="kw">return</span> name.<span class="fn">split</span>(<span class="str">' '</span>).<span class="fn">map</span>(w => w[<span class="num">0</span>]).<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">2</span>).<span class="fn">join</span>(<span class="str">''</span>).<span class="fn">toUpperCase</span>();
+  }
+
+  <span class="fn">_renderUser</span>(u) {
+    <span class="kw">const</span> roleBadge = <span class="cl">UserDirectoryController</span>.ROLE_COLORS[u.role] ?? <span class="str">'text-bg-secondary'</span>;
+    <span class="kw">const</span> avatarBg  = <span class="kw">this</span>.<span class="fn">_avatarColor</span>(u.name);
+    <span class="kw">const</span> initials  = <span class="kw">this</span>.<span class="fn">_initials</span>(u.name);
+
+    <span class="kw">return</span> <span class="str">`
+    &lt;div class="user-row d-flex align-items-center gap-3 p-3 border-bottom" data-id="</span><span class="prop">${<span class="kw">this</span>._esc(u.id)}</span><span class="str">"&gt;
+
+      &lt;div class="avatar rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+           style="width:40px;height:40px;background:</span><span class="prop">${avatarBg}</span><span class="str">;font-weight:600;color:#fff;font-size:.85rem"&gt;
+        </span><span class="prop">${initials}</span><span class="str">
+      &lt;/div&gt;
+
+      &lt;div class="flex-grow-1 mw-0"&gt;
+        &lt;div class="fw-semibold text-truncate"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(u.name)}</span><span class="str">&lt;/div&gt;
+        &lt;div class="text-secondary small text-truncate"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(u.email)}</span><span class="str">&lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class="d-none d-md-block text-secondary small"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(u.department)}</span><span class="str">&lt;/div&gt;
+
+      &lt;span class="badge </span><span class="prop">${<span class="kw">this</span>._esc(roleBadge)}</span><span class="str">"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(u.role)}</span><span class="str">&lt;/span&gt;
+
+      &lt;div class="status-dot rounded-circle flex-shrink-0"
+           style="width:9px;height:9px;background:</span><span class="prop">${u.online ? <span class="str">'#7ee8a2'</span> : <span class="str">'#555'</span>}</span><span class="str">"
+           title="</span><span class="prop">${u.online ? <span class="str">'Online'</span> : <span class="str">'Offline'</span>}</span><span class="str">"&gt;&lt;/div&gt;
+
+      &lt;button class="btn btn-sm btn-outline-secondary" data-action="view-user" data-id="</span><span class="prop">${<span class="kw">this</span>._esc(u.id)}</span><span class="str">"&gt;
+        View
+      &lt;/button&gt;
+    &lt;/div&gt;`</span>;
+  }
+}</code></pre>
+</section>
+
+<!-- ── DASHBOARD ── -->
+<section id="dashboard">
+  <h2><span class="h-num">09</span> Use Case: Dashboard KPI Cards <span class="badge badge-core">Core</span></h2>
+
+  <p>Metric cards with trend indicators, sparklines via inline SVG, and delta formatting.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">DashboardController</span> {
+
+  <span class="fn">_fmtDelta</span>(delta) {
+    <span class="kw">const</span> sign  = delta >= <span class="num">0</span> ? <span class="str">'+'</span> : <span class="str">''</span>;
+    <span class="kw">const</span> cls   = delta >= <span class="num">0</span> ? <span class="str">'text-success'</span> : <span class="str">'text-danger'</span>;
+    <span class="kw">const</span> arrow = delta >= <span class="num">0</span> ? <span class="str">'↑'</span> : <span class="str">'↓'</span>;
+    <span class="kw">return</span> <span class="str">`&lt;span class="</span><span class="prop">${cls}</span><span class="str">"&gt;</span><span class="prop">${arrow} ${sign}${delta.toFixed(1)}</span><span class="str">%&lt;/span&gt;`</span>;
+  }
+
+  <span class="fn">_sparklinePath</span>(values) {
+    <span class="kw">const</span> w = <span class="num">80</span>, h = <span class="num">32</span>;
+    <span class="kw">const</span> min = <span class="cl">Math</span>.<span class="fn">min</span>(...values), max = <span class="cl">Math</span>.<span class="fn">max</span>(...values);
+    <span class="kw">const</span> range = max - min || <span class="num">1</span>;
+    <span class="kw">const</span> pts = values.<span class="fn">map</span>((v, i) => {
+      <span class="kw">const</span> x = (i / (values.length - <span class="num">1</span>)) * w;
+      <span class="kw">const</span> y = h - ((v - min) / range) * h;
+      <span class="kw">return</span> <span class="str">`</span><span class="prop">${x.toFixed(1)}</span><span class="str">,</span><span class="prop">${y.toFixed(1)}</span><span class="str">`</span>;
+    });
+    <span class="kw">return</span> <span class="str">`M </span><span class="prop">${pts.join(<span class="str">' L '</span>)}</span><span class="str">`</span>;
+  }
+
+  <span class="fn">_renderKpiCard</span>(metric) {
+    <span class="kw">const</span> path = <span class="kw">this</span>.<span class="fn">_sparklinePath</span>(metric.trend);
+    <span class="kw">return</span> <span class="str">`
+    &lt;div class="col-6 col-lg-3"&gt;
+      &lt;div class="card h-100 p-3"&gt;
+        &lt;div class="text-secondary small mb-1"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(metric.label)}</span><span class="str">&lt;/div&gt;
+        &lt;div class="d-flex align-items-end justify-content-between gap-2"&gt;
+          &lt;div&gt;
+            &lt;div class="fs-4 fw-bold"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(metric.value)}</span><span class="str">&lt;/div&gt;
+            &lt;div class="small mt-1"&gt;</span><span class="prop">${<span class="kw">this</span>._fmtDelta(metric.delta)}</span><span class="str"> vs last period&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;svg width="80" height="32" viewBox="0 0 80 32" fill="none"
+               aria-hidden="true"&gt;
+            &lt;path d="</span><span class="prop">${path}</span><span class="str">"
+                  stroke="</span><span class="prop">${metric.delta >= <span class="num">0</span> ? <span class="str">'#7ee8a2'</span> : <span class="str">'#f76e6e'</span>}</span><span class="str">"
+                  stroke-width="2" fill="none" stroke-linecap="round"/&gt;
+          &lt;/svg&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;`</span>;
+  }
+
+  <span class="fn">_render</span>() {
+    <span class="kw">this</span>.gridEl.innerHTML = <span class="str">`
+      &lt;div class="row g-3"&gt;
+        </span><span class="prop">${<span class="kw">this</span>.metrics.map(m => <span class="kw">this</span>._renderKpiCard(m)).join('')}</span><span class="str">
+      &lt;/div&gt;`</span>;
+  }
+}</code></pre>
+</section>
+
+<!-- ── FORMS ── -->
+<section id="forms">
+  <h2><span class="h-num">10</span> Use Case: Dynamic Forms <span class="badge badge-adv">Advanced</span></h2>
+
+  <p>Forms built from a schema — field type dispatching, validation state rendering, conditional field visibility.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">DynamicFormController</span> {
+
+  <span class="cm">// Field type → render method dispatch table</span>
+  <span class="kw">static</span> <span class="prop">FIELD_RENDERERS</span> = {
+    text:     <span class="str">'_renderTextField'</span>,
+    email:    <span class="str">'_renderTextField'</span>,
+    number:   <span class="str">'_renderTextField'</span>,
+    select:   <span class="str">'_renderSelectField'</span>,
+    textarea: <span class="str">'_renderTextareaField'</span>,
+    checkbox: <span class="str">'_renderCheckboxField'</span>,
+    radio:    <span class="str">'_renderRadioGroup'</span>,
+  };
+
+  <span class="fn">_renderField</span>(field, errors = {}) {
+    <span class="kw">const</span> method = <span class="cl">DynamicFormController</span>.FIELD_RENDERERS[field.type];
+    <span class="kw">if</span> (!method || <span class="kw">typeof this</span>[method] !== <span class="str">'function'</span>) <span class="kw">return</span> <span class="str">''</span>;
+    <span class="kw">const</span> error = errors[field.name];
+    <span class="kw">return</span> <span class="kw">this</span>[method](field, error);
+  }
+
+  <span class="fn">_fieldWrapper</span>(field, inputHtml, error) {
+    <span class="kw">return</span> <span class="str">`
+    &lt;div class="mb-3" data-field="</span><span class="prop">${<span class="kw">this</span>._esc(field.name)}</span><span class="str">"&gt;
+      &lt;label class="form-label fw-semibold" for="f-</span><span class="prop">${<span class="kw">this</span>._esc(field.name)}</span><span class="str">"&gt;
+        </span><span class="prop">${<span class="kw">this</span>._esc(field.label)}</span><span class="str">
+        </span><span class="prop">${field.required ? <span class="str">'&lt;span class="text-danger"&gt;*&lt;/span&gt;'</span> : <span class="str">''</span>}</span><span class="str">
+      &lt;/label&gt;
+      </span><span class="prop">${inputHtml}</span><span class="str">
+      </span><span class="prop">${error ? <span class="str">`&lt;div class="invalid-feedback d-block"&gt;${<span class="kw">this</span>._esc(error)}&lt;/div&gt;`</span> : <span class="str">''</span>}</span><span class="str">
+      </span><span class="prop">${field.hint ? <span class="str">`&lt;div class="form-text"&gt;${<span class="kw">this</span>._esc(field.hint)}&lt;/div&gt;`</span> : <span class="str">''</span>}</span><span class="str">
+    &lt;/div&gt;`</span>;
+  }
+
+  <span class="fn">_renderTextField</span>(field, error) {
+    <span class="kw">const</span> cls = error ? <span class="str">'form-control is-invalid'</span> : <span class="str">'form-control'</span>;
+    <span class="kw">const</span> input = <span class="str">`
+      &lt;input type="</span><span class="prop">${<span class="kw">this</span>._esc(field.type)}</span><span class="str">"
+             id="f-</span><span class="prop">${<span class="kw">this</span>._esc(field.name)}</span><span class="str">"
+             name="</span><span class="prop">${<span class="kw">this</span>._esc(field.name)}</span><span class="str">"
+             class="</span><span class="prop">${cls}</span><span class="str">"
+             placeholder="</span><span class="prop">${<span class="kw">this</span>._esc(field.placeholder ?? <span class="str">''</span>)}</span><span class="str">"
+             </span><span class="prop">${field.required ? <span class="str">'required'</span> : <span class="str">''</span>}</span><span class="str">
+             </span><span class="prop">${field.maxlength ? <span class="str">`maxlength="${field.maxlength}"`</span> : <span class="str">''</span>}</span><span class="str">
+             value="</span><span class="prop">${<span class="kw">this</span>._esc(field.value ?? <span class="str">''</span>)}</span><span class="str">"&gt;`</span>;
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_fieldWrapper</span>(field, input, error);
+  }
+
+  <span class="fn">_renderSelectField</span>(field, error) {
+    <span class="kw">const</span> cls = error ? <span class="str">'form-select is-invalid'</span> : <span class="str">'form-select'</span>;
+    <span class="kw">const</span> opts = (field.options ?? []).<span class="fn">map</span>(o =>
+      <span class="str">`&lt;option value="</span><span class="prop">${<span class="kw">this</span>._esc(o.value)}</span><span class="str">"</span>
+      <span class="prop">${o.value === field.value ? <span class="str">'selected'</span> : <span class="str">''</span>}</span><span class="str">&gt;</span>
+      <span class="prop">${<span class="kw">this</span>._esc(o.label)}</span><span class="str">&lt;/option&gt;`</span>
+    ).<span class="fn">join</span>(<span class="str">''</span>);
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_fieldWrapper</span>(field,
+      <span class="str">`&lt;select id="f-</span><span class="prop">${<span class="kw">this</span>._esc(field.name)}</span><span class="str">" name="</span><span class="prop">${<span class="kw">this</span>._esc(field.name)}</span><span class="str">"
+               class="</span><span class="prop">${cls}</span><span class="str">"&gt;</span><span class="prop">${opts}</span><span class="str">&lt;/select&gt;`</span>, error);
+  }
+}</code></pre>
+</section>
+
+<!-- ── NOTIFICATIONS ── -->
+<section id="notifications">
+  <h2><span class="h-num">11</span> Use Case: Notification Feed <span class="badge badge-core">Core</span></h2>
+
+  <p>Toast queue + persistent notification list. Icon dispatch by type, relative time formatting, read/unread state.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">NotificationsController</span> {
+
+  <span class="kw">static</span> <span class="prop">TYPE_CFG</span> = {
+    success: { icon: <span class="str">'check_circle'</span>,  cls: <span class="str">'text-success'</span> },
+    error:   { icon: <span class="str">'error'</span>,          cls: <span class="str">'text-danger'</span>  },
+    warning: { icon: <span class="str">'warning'</span>,        cls: <span class="str">'text-warning'</span> },
+    info:    { icon: <span class="str">'info'</span>,           cls: <span class="str">'text-info'</span>    },
+  };
+
+  <span class="fn">_relTime</span>(isoStr) {
+    <span class="kw">const</span> diff = (<span class="cl">Date</span>.<span class="fn">now</span>() - <span class="kw">new</span> <span class="cl">Date</span>(isoStr)) / <span class="num">1000</span>;
+    <span class="kw">if</span> (diff < <span class="num">60</span>)  <span class="kw">return</span> <span class="str">'just now'</span>;
+    <span class="kw">if</span> (diff < <span class="num">3600</span>) <span class="kw">return</span> <span class="str">`</span><span class="prop">${<span class="cl">Math</span>.floor(diff/<span class="num">60</span>)}</span><span class="str">m ago`</span>;
+    <span class="kw">if</span> (diff < <span class="num">86400</span>) <span class="kw">return</span> <span class="str">`</span><span class="prop">${<span class="cl">Math</span>.floor(diff/<span class="num">3600</span>)}</span><span class="str">h ago`</span>;
+    <span class="kw">return</span> <span class="str">`</span><span class="prop">${<span class="cl">Math</span>.floor(diff/<span class="num">86400</span>)}</span><span class="str">d ago`</span>;
+  }
+
+  <span class="fn">_renderNotification</span>(n) {
+    <span class="kw">const</span> { icon, cls } = <span class="cl">NotificationsController</span>.TYPE_CFG[n.type] ?? <span class="cl">NotificationsController</span>.TYPE_CFG.info;
+    <span class="kw">return</span> <span class="str">`
+    &lt;div class="notif-row d-flex gap-3 p-3 </span><span class="prop">${n.read ? <span class="str">''</span> : <span class="str">'bg-primary-subtle'</span>}</span><span class="str">"
+         data-id="</span><span class="prop">${<span class="kw">this</span>._esc(n.id)}</span><span class="str">" role="listitem"&gt;
+      &lt;span class="material-symbols-rounded </span><span class="prop">${cls}</span><span class="str"> flex-shrink-0"&gt;</span><span class="prop">${icon}</span><span class="str">&lt;/span&gt;
+      &lt;div class="flex-grow-1 mw-0"&gt;
+        &lt;div class="small fw-semibold"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(n.title)}</span><span class="str">&lt;/div&gt;
+        &lt;div class="small text-secondary text-truncate"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(n.body)}</span><span class="str">&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class="text-secondary" style="font-size:.7rem;white-space:nowrap"&gt;
+        </span><span class="prop">${<span class="kw">this</span>._esc(<span class="kw">this</span>._relTime(n.timestamp))}</span><span class="str">
+      &lt;/div&gt;
+      </span><span class="prop">${!n.read ? <span class="str">`&lt;div style="width:8px;height:8px;border-radius:50%;background:var(--bs-primary);flex-shrink:0;margin-top:6px"&gt;&lt;/div&gt;`</span> : <span class="str">''</span>}</span><span class="str">
+    &lt;/div&gt;`</span>;
+  }
+
+  <span class="cm">// Toast queue — separate from the persistent list</span>
+  <span class="fn">showToast</span>(type, title, body, durationMs = <span class="num">4000</span>) {
+    <span class="kw">const</span> { icon, cls } = <span class="cl">NotificationsController</span>.TYPE_CFG[type] ?? {};
+    <span class="kw">const</span> id = <span class="str">`toast-</span><span class="prop">${<span class="cl">Date</span>.now()}</span><span class="str">`</span>;
+    <span class="kw">const</span> el = document.<span class="fn">createElement</span>(<span class="str">'div'</span>);
+    el.innerHTML = <span class="str">`
+      &lt;div id="</span><span class="prop">${id}</span><span class="str">" class="toast align-items-center border-0 show" role="alert"&gt;
+        &lt;div class="d-flex"&gt;
+          &lt;div class="toast-body d-flex gap-2"&gt;
+            &lt;span class="material-symbols-rounded </span><span class="prop">${cls}</span><span class="str">"&gt;</span><span class="prop">${icon}</span><span class="str">&lt;/span&gt;
+            &lt;div&gt;
+              &lt;strong&gt;</span><span class="prop">${<span class="kw">this</span>._esc(title)}</span><span class="str">&lt;/strong&gt;
+              &lt;div class="small text-secondary"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(body)}</span><span class="str">&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;`</span>;
+    <span class="kw">this</span>.toastContainer.<span class="fn">appendChild</span>(el.firstElementChild);
+    <span class="fn">setTimeout</span>(() => document.<span class="fn">getElementById</span>(id)?.<span class="fn">remove</span>(), durationMs);
+  }
+}</code></pre>
+</section>
+
+<!-- ── TABLES ── -->
+<section id="tables">
+  <h2><span class="h-num">12</span> Use Case: Data Tables <span class="badge badge-adv">Advanced</span></h2>
+
+  <p>Sortable columns, row selection, bulk actions, inline cell formatters by column type.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">DataTableController</span> {
+
+  <span class="fn">constructor</span>(sel, columns) {
+    <span class="kw">this</span>.columns = columns; <span class="cm">// column schema array</span>
+    <span class="kw">this</span>.state   = { sort: { col: columns[<span class="num">0</span>].key, dir: <span class="str">'asc'</span> }, selected: <span class="kw">new</span> <span class="cl">Set</span>() };
+    <span class="cm">/* ... */</span>
+  }
+
+  <span class="fn">_getSorted</span>(data) {
+    <span class="kw">const</span> { col, dir } = <span class="kw">this</span>.state.sort;
+    <span class="kw">return</span> [...data].<span class="fn">sort</span>((a, b) => {
+      <span class="kw">const</span> av = a[col] ?? <span class="str">''</span>, bv = b[col] ?? <span class="str">''</span>;
+      <span class="kw">const</span> cmp = <span class="kw">typeof</span> av === <span class="str">'number'</span>
+        ? av - bv
+        : <span class="cl">String</span>(av).<span class="fn">localeCompare</span>(<span class="cl">String</span>(bv));
+      <span class="kw">return</span> dir === <span class="str">'asc'</span> ? cmp : -cmp;
+    });
+  }
+
+  <span class="fn">_renderHead</span>() {
+    <span class="kw">return</span> <span class="str">`&lt;thead&gt;&lt;tr&gt;
+      &lt;th&gt;&lt;input type="checkbox" id="select-all"&gt;&lt;/th&gt;
+      </span><span class="prop">${<span class="kw">this</span>.columns.map(c => {
+        <span class="kw">const</span> active = <span class="kw">this</span>.state.sort.col === c.key;
+        <span class="kw">const</span> dir    = <span class="kw">this</span>.state.sort.dir;
+        <span class="kw">return</span> <span class="str">`&lt;th data-sort="</span><span class="prop">${<span class="kw">this</span>._esc(c.key)}</span><span class="str">" style="cursor:pointer"&gt;
+          </span><span class="prop">${<span class="kw">this</span>._esc(c.label)}</span><span class="str">
+          </span><span class="prop">${active ? (dir === <span class="str">'asc'</span> ? <span class="str">'↑'</span> : <span class="str">'↓'</span>) : <span class="str">'⇅'</span>}</span><span class="str">
+        &lt;/th&gt;`</span>;
+      }).join(<span class="str">''</span>)}</span><span class="str">
+    &lt;/tr&gt;&lt;/thead&gt;`</span>;
+  }
+
+  <span class="fn">_renderCell</span>(col, value, row) {
+    <span class="kw">switch</span> (col.type) {
+      <span class="kw">case</span> <span class="str">'currency'</span>:
+        <span class="kw">return</span> <span class="str">`&lt;td class="text-end font-monospace"&gt;</span>
+                 <span class="prop">${<span class="kw">this</span>._esc(<span class="kw">this</span>._fmtCur(value))}</span><span class="str">&lt;/td&gt;`</span>;
+      <span class="kw">case</span> <span class="str">'date'</span>:
+        <span class="kw">return</span> <span class="str">`&lt;td&gt;</span><span class="prop">${<span class="kw">this</span>._esc(<span class="kw">this</span>._fmtDate(value))}</span><span class="str">&lt;/td&gt;`</span>;
+      <span class="kw">case</span> <span class="str">'badge'</span>:
+        <span class="kw">const</span> cfg = (col.map ?? {})[value] ?? { cls: <span class="str">'text-bg-secondary'</span>, label: value };
+        <span class="kw">return</span> <span class="str">`&lt;td&gt;&lt;span class="badge </span><span class="prop">${<span class="kw">this</span>._esc(cfg.cls)}</span><span class="str">"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(cfg.label)}</span><span class="str">&lt;/span&gt;&lt;/td&gt;`</span>;
+      <span class="kw">case</span> <span class="str">'link'</span>:
+        <span class="kw">return</span> <span class="str">`&lt;td&gt;&lt;a href="</span><span class="prop">${<span class="kw">this</span>._safeUrl(row[col.urlKey])}</span><span class="str">"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(value)}</span><span class="str">&lt;/a&gt;&lt;/td&gt;`</span>;
+      <span class="kw">default</span>:
+        <span class="kw">return</span> <span class="str">`&lt;td&gt;</span><span class="prop">${<span class="kw">this</span>._esc(value)}</span><span class="str">&lt;/td&gt;`</span>;
+    }
+  }
+
+  <span class="fn">_renderRow</span>(row) {
+    <span class="kw">const</span> checked = <span class="kw">this</span>.state.selected.<span class="fn">has</span>(row.id) ? <span class="str">'checked'</span> : <span class="str">''</span>;
+    <span class="kw">return</span> <span class="str">`
+    &lt;tr data-id="</span><span class="prop">${<span class="kw">this</span>._esc(row.id)}</span><span class="str">" class="</span><span class="prop">${checked ? <span class="str">'table-active'</span> : <span class="str">''</span>}</span><span class="str">"&gt;
+      &lt;td&gt;&lt;input type="checkbox" data-select="</span><span class="prop">${<span class="kw">this</span>._esc(row.id)}</span><span class="str">" </span><span class="prop">${checked}</span><span class="str">&gt;&lt;/td&gt;
+      </span><span class="prop">${<span class="kw">this</span>.columns.map(c => <span class="kw">this</span>._renderCell(c, row[c.key], row)).join(<span class="str">''</span>)}</span><span class="str">
+    &lt;/tr&gt;`</span>;
+  }
+}</code></pre>
+</section>
+
+<!-- ── ACTIVITY FEED ── -->
+<section id="activity">
+  <h2><span class="h-num">13</span> Use Case: Activity Feed <span class="badge badge-core">Core</span></h2>
+
+  <p>Timeline grouped by day, actor avatars, action verbs, polymorphic payload rendering.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">ActivityFeedController</span> {
+
+  <span class="fn">_groupByDay</span>(events) {
+    <span class="kw">return</span> events.<span class="fn">reduce</span>((map, e) => {
+      <span class="kw">const</span> day = e.timestamp.<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">10</span>); <span class="cm">// YYYY-MM-DD</span>
+      (map[day] ??= []).<span class="fn">push</span>(e);
+      <span class="kw">return</span> map;
+    }, {});
+  }
+
+  <span class="fn">_renderPayload</span>(event) {
+    <span class="kw">switch</span> (event.type) {
+      <span class="kw">case</span> <span class="str">'comment'</span>:
+        <span class="kw">return</span> <span class="str">`&lt;blockquote class="border-start ps-2 text-secondary small mt-1"&gt;</span>
+                 <span class="prop">${<span class="kw">this</span>._esc(event.payload.text)}</span><span class="str">&lt;/blockquote&gt;`</span>;
+      <span class="kw">case</span> <span class="str">'status_change'</span>:
+        <span class="kw">return</span> <span class="str">`&lt;span class="badge text-bg-secondary"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(event.payload.from)}</span><span class="str">&lt;/span&gt;
+                 → &lt;span class="badge text-bg-success"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(event.payload.to)}</span><span class="str">&lt;/span&gt;`</span>;
+      <span class="kw">case</span> <span class="str">'file_upload'</span>:
+        <span class="kw">return</span> <span class="str">`&lt;a href="</span><span class="prop">${<span class="kw">this</span>._safeUrl(event.payload.url)}</span><span class="str">" class="small"&gt;
+                 📎 </span><span class="prop">${<span class="kw">this</span>._esc(event.payload.filename)}</span><span class="str">&lt;/a&gt;`</span>;
+      <span class="kw">default</span>:
+        <span class="kw">return</span> <span class="str">''</span>;
+    }
+  }
+
+  <span class="fn">_renderEvent</span>(e) {
+    <span class="kw">return</span> <span class="str">`
+    &lt;div class="d-flex gap-2 py-2"&gt;
+      &lt;div class="avatar-sm rounded-circle bg-secondary d-flex align-items-center justify-content-center
+                  text-white flex-shrink-0" style="width:32px;height:32px;font-size:.75rem"&gt;
+        </span><span class="prop">${<span class="kw">this</span>._initials(e.actor.name)}</span><span class="str">
+      &lt;/div&gt;
+      &lt;div class="flex-grow-1"&gt;
+        &lt;div class="small"&gt;
+          &lt;strong&gt;</span><span class="prop">${<span class="kw">this</span>._esc(e.actor.name)}</span><span class="str">&lt;/strong&gt;
+          </span><span class="prop">${<span class="kw">this</span>._esc(e.verb)}</span><span class="str">
+          &lt;span class="text-secondary"&gt;</span><span class="prop">${<span class="kw">this</span>._relTime(e.timestamp)}</span><span class="str">&lt;/span&gt;
+        &lt;/div&gt;
+        </span><span class="prop">${<span class="kw">this</span>._renderPayload(e)}</span><span class="str">
+      &lt;/div&gt;
+    &lt;/div&gt;`</span>;
+  }
+
+  <span class="fn">_render</span>() {
+    <span class="kw">const</span> groups = <span class="kw">this</span>.<span class="fn">_groupByDay</span>(<span class="kw">this</span>.events);
+    <span class="kw">this</span>.feedEl.innerHTML = <span class="cl">Object</span>.<span class="fn">entries</span>(groups).<span class="fn">map</span>(([day, events]) => <span class="str">`
+      &lt;div class="mb-4"&gt;
+        &lt;div class="text-secondary small fw-bold text-uppercase mb-2"&gt;
+          </span><span class="prop">${<span class="kw">this</span>._esc(<span class="kw">this</span>._fmtDate(day))}</span><span class="str">
+        &lt;/div&gt;
+        &lt;div class="border-start ms-2 ps-3"&gt;
+          </span><span class="prop">${events.map(e => <span class="kw">this</span>._renderEvent(e)).join(<span class="str">''</span>)}</span><span class="str">
+        &lt;/div&gt;
+      &lt;/div&gt;`</span>).<span class="fn">join</span>(<span class="str">''</span>);
+  }
+}</code></pre>
+</section>
+
+<!-- ── MODALS ── -->
+<section id="modals">
+  <h2><span class="h-num">14</span> Use Case: Modals <span class="badge badge-core">Core</span></h2>
+
+  <p>Render modal content from data, manage open/close lifecycle, restore focus on dismiss.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">ModalController</span> {
+
+  <span class="fn">constructor</span>() {
+    <span class="kw">this</span>.overlay  = document.<span class="fn">querySelector</span>(<span class="str">'#modal-overlay'</span>);
+    <span class="kw">this</span>.modalBox = document.<span class="fn">querySelector</span>(<span class="str">'#modal-box'</span>);
+    <span class="kw">this</span>._trigger = <span class="kw">null</span>; <span class="cm">// element that opened the modal (restore focus)</span>
+    <span class="kw">this</span>.<span class="fn">_bindEvents</span>();
+  }
+
+  <span class="fn">open</span>(data, triggerEl) {
+    <span class="kw">this</span>._trigger = triggerEl ?? document.activeElement;
+    <span class="kw">this</span>.modalBox.innerHTML = <span class="kw">this</span>.<span class="fn">_renderModal</span>(data);
+    <span class="kw">this</span>.overlay.classList.<span class="fn">add</span>(<span class="str">'show'</span>);
+    document.body.style.overflow = <span class="str">'hidden'</span>;
+
+    <span class="cm">// Move focus into modal (accessibility)</span>
+    <span class="kw">const</span> firstFocusable = <span class="kw">this</span>.modalBox.<span class="fn">querySelector</span>(
+      <span class="str">'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'</span>
+    );
+    firstFocusable?.<span class="fn">focus</span>();
+  }
+
+  <span class="fn">close</span>() {
+    <span class="kw">this</span>.overlay.classList.<span class="fn">remove</span>(<span class="str">'show'</span>);
+    document.body.style.overflow = <span class="str">''</span>;
+    <span class="kw">this</span>._trigger?.<span class="fn">focus</span>(); <span class="cm">// restore focus</span>
+    <span class="kw">this</span>._trigger = <span class="kw">null</span>;
+  }
+
+  <span class="fn">_renderModal</span>(data) {
+    <span class="kw">return</span> <span class="str">`
+    &lt;div class="modal-header"&gt;
+      &lt;h5 class="modal-title"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(data.title)}</span><span class="str">&lt;/h5&gt;
+      &lt;button type="button" class="btn-close" data-action="close-modal"
+              aria-label="Close"&gt;&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="modal-body"&gt;</span><span class="prop">${<span class="kw">this</span>._renderModalBody(data)}</span><span class="str">&lt;/div&gt;
+    &lt;div class="modal-footer"&gt;
+      &lt;button class="btn btn-secondary" data-action="close-modal"&gt;Cancel&lt;/button&gt;
+      &lt;button class="btn btn-primary" data-action="confirm-modal"
+              data-id="</span><span class="prop">${<span class="kw">this</span>._esc(data.id)}</span><span class="str">"&gt;Confirm&lt;/button&gt;
+    &lt;/div&gt;`</span>;
+  }
+
+  <span class="fn">_bindEvents</span>() {
+    <span class="kw">this</span>.overlay.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, e => {
+      <span class="kw">if</span> (e.target === <span class="kw">this</span>.overlay) <span class="kw">this</span>.<span class="fn">close</span>(); <span class="cm">// backdrop click</span>
+      <span class="kw">if</span> (e.target.<span class="fn">closest</span>(<span class="str">'[data-action="close-modal"]'</span>)) <span class="kw">this</span>.<span class="fn">close</span>();
+    });
+    document.<span class="fn">addEventListener</span>(<span class="str">'keydown'</span>, e => {
+      <span class="kw">if</span> (e.key === <span class="str">'Escape'</span> && <span class="kw">this</span>.overlay.classList.<span class="fn">contains</span>(<span class="str">'show'</span>))
+        <span class="kw">this</span>.<span class="fn">close</span>();
+    });
+  }
+}</code></pre>
+</section>
+
+<hr class="section-break">
+
+<!-- ── PAGINATION ── -->
+<section id="pagination">
+  <h2><span class="h-num">15</span> Pagination</h2>
+
+<pre><code><span class="cm">// Add to state: { page: 1, pageSize: 25 }</span>
+
+<span class="fn">_paginate</span>(list) {
+  <span class="kw">const</span> { page, pageSize } = <span class="kw">this</span>.state;
+  <span class="kw">const</span> start = (page - <span class="num">1</span>) * pageSize;
+  <span class="kw">return</span> {
+    items:    list.<span class="fn">slice</span>(start, start + pageSize),
+    total:    list.length,
+    pages:    <span class="cl">Math</span>.<span class="fn">ceil</span>(list.length / pageSize),
+    page,
+  };
+}
+
+<span class="fn">_renderPagination</span>({ page, pages, total, pageSize }) {
+  <span class="kw">if</span> (pages <= <span class="num">1</span>) <span class="kw">return</span> <span class="str">''</span>;
+  <span class="kw">const</span> nums = <span class="cl">Array</span>.<span class="fn">from</span>({ length: pages }, (_, i) => i + <span class="num">1</span>);
+
+  <span class="kw">return</span> <span class="str">`
+  &lt;nav class="d-flex align-items-center justify-content-between mt-3"&gt;
+    &lt;div class="text-secondary small"&gt;
+      </span><span class="prop">${(page-<span class="num">1</span>)*pageSize+<span class="num">1</span>}–${<span class="cl">Math</span>.min(page*pageSize, total)}</span><span class="str"> of </span><span class="prop">${total}</span><span class="str">
+    &lt;/div&gt;
+    &lt;ul class="pagination pagination-sm mb-0"&gt;
+      &lt;li class="page-item </span><span class="prop">${page === <span class="num">1</span> ? <span class="str">'disabled'</span> : <span class="str">''</span>}</span><span class="str">"&gt;
+        &lt;button class="page-link" data-page="</span><span class="prop">${page - <span class="num">1</span>}</span><span class="str">"&gt;‹&lt;/button&gt;&lt;/li&gt;
+      </span><span class="prop">${nums.map(n => <span class="str">`
+        &lt;li class="page-item </span><span class="prop">${n === page ? <span class="str">'active'</span> : <span class="str">''</span>}</span><span class="str">"&gt;
+          &lt;button class="page-link" data-page="</span><span class="prop">${n}</span><span class="str">"&gt;</span><span class="prop">${n}</span><span class="str">&lt;/button&gt;
+        &lt;/li&gt;`</span>).join(<span class="str">''</span>)}</span><span class="str">
+      &lt;li class="page-item </span><span class="prop">${page === pages ? <span class="str">'disabled'</span> : <span class="str">''</span>}</span><span class="str">"&gt;
+        &lt;button class="page-link" data-page="</span><span class="prop">${page + <span class="num">1</span>}</span><span class="str">"&gt;›&lt;/button&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/nav&gt;`</span>;
+}
+
+<span class="cm">// In _bindEvents: delegate pagination clicks</span>
+<span class="kw">this</span>.container.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, e => {
+  <span class="kw">const</span> pg = e.target.<span class="fn">closest</span>(<span class="str">'[data-page]'</span>);
+  <span class="kw">if</span> (pg) <span class="kw">this</span>.<span class="fn">_setState</span>({ page: +pg.dataset.page });
+});</code></pre>
+</section>
+
+<!-- ── SKELETON ── -->
+<section id="skeleton">
+  <h2><span class="h-num">16</span> Skeleton Screens</h2>
+
+  <p>Use skeleton screens instead of spinners for list/table content. They set layout expectations and reduce perceived load time.</p>
+
+<pre><code><span class="cm">// Reusable skeleton primitives</span>
+<span class="kw">const</span> <span class="cl">Skel</span> = {
+  <span class="fn">line</span>(w = <span class="str">'100%'</span>, h = <span class="str">'14px'</span>) {
+    <span class="kw">return</span> <span class="str">`&lt;div class="skeleton rounded" style="width:</span><span class="prop">${w}</span><span class="str">;height:</span><span class="prop">${h}</span><span class="str">"&gt;&lt;/div&gt;`</span>;
+  },
+  <span class="fn">circle</span>(size = <span class="str">'40px'</span>) {
+    <span class="kw">return</span> <span class="str">`&lt;div class="skeleton rounded-circle" style="width:</span><span class="prop">${size}</span><span class="str">;height:</span><span class="prop">${size}</span><span class="str">"&gt;&lt;/div&gt;`</span>;
+  },
+  <span class="fn">block</span>(w = <span class="str">'100%'</span>, h = <span class="str">'80px'</span>) {
+    <span class="kw">return</span> <span class="str">`&lt;div class="skeleton rounded" style="width:</span><span class="prop">${w}</span><span class="str">;height:</span><span class="prop">${h}</span><span class="str">"&gt;&lt;/div&gt;`</span>;
+  },
+};
+
+<span class="cm">// Example: skeleton for a user row</span>
+<span class="fn">_renderSkeletonRows</span>(count = <span class="num">5</span>) {
+  <span class="kw">return</span> <span class="cl">Array</span>.<span class="fn">from</span>({ length: count }, () => <span class="str">`
+    &lt;div class="d-flex align-items-center gap-3 p-3 border-bottom"&gt;
+      </span><span class="prop">${<span class="cl">Skel</span>.circle(<span class="str">'40px'</span>)}</span><span class="str">
+      &lt;div class="flex-grow-1 d-flex flex-column gap-2"&gt;
+        </span><span class="prop">${<span class="cl">Skel</span>.line(<span class="str">'180px'</span>, <span class="str">'14px'</span>)}</span><span class="str">
+        </span><span class="prop">${<span class="cl">Skel</span>.line(<span class="str">'120px'</span>, <span class="str">'12px'</span>)}</span><span class="str">
+      &lt;/div&gt;
+      </span><span class="prop">${<span class="cl">Skel</span>.line(<span class="str">'80px'</span>, <span class="str">'22px'</span>)}</span><span class="str">
+    &lt;/div&gt;`).<span class="fn">join</span>(</span><span class="str">''</span><span class="str">);
+}</span>
+
+<span class="cm">/* CSS */</span>
+<span class="str">.skeleton</span> {
+  background: linear-gradient(<span class="num">90</span>deg,
+    var(--bs-gray-<span class="num">200</span>) <span class="num">25</span>%,
+    var(--bs-gray-<span class="num">100</span>) <span class="num">50</span>%,
+    var(--bs-gray-<span class="num">200</span>) <span class="num">75</span>%);
+  background-size: <span class="num">200</span>% <span class="num">100</span>%;
+  animation: shimmer <span class="num">1</span>.<span class="num">4</span>s ease-in-out infinite;
+}
+@keyframes shimmer {
+  <span class="num">0</span>%   { background-position: <span class="num">200</span>% <span class="num">0</span>; }
+  <span class="num">100</span>% { background-position: -<span class="num">200</span>% <span class="num">0</span>; }
+}</code></pre>
+</section>
+
+<!-- ── EMPTY ── -->
+<section id="empty">
+  <h2><span class="h-num">17</span> Empty States</h2>
+
+  <p>Always provide a contextual empty state — never leave the list container blank. Map filter keys to specific messages.</p>
+
+<pre><code><span class="cm">// Static config — one entry per filter tab</span>
+<span class="kw">static</span> <span class="prop">EMPTY_STATES</span> = {
+  all:        { icon: <span class="str">'inbox'</span>,         title: <span class="str">'Nothing here yet'</span>,       sub: <span class="str">'Items will appear here once created.'</span> },
+  active:     { icon: <span class="str">'check_circle'</span>,  title: <span class="str">'No active items'</span>,        sub: <span class="str">'Activate an item to see it here.'</span>     },
+  archived:   { icon: <span class="str">'archive'</span>,       title: <span class="str">'Nothing archived'</span>,       sub: <span class="str">'Archived items will show up here.'</span>    },
+  search:     { icon: <span class="str">'search_off'</span>,    title: <span class="str">'No results'</span>,             sub: <span class="str">'Try a different search term.'</span>         },
+};
+
+<span class="fn">_renderEmpty</span>(filter = <span class="str">'all'</span>) {
+  <span class="kw">const</span> key = <span class="kw">this</span>.state.search.<span class="fn">trim</span>() ? <span class="str">'search'</span> : (filter ?? <span class="str">'all'</span>);
+  <span class="kw">const</span> { icon, title, sub } = <span class="kw">this</span>.constructor.EMPTY_STATES[key]
+                              ?? <span class="kw">this</span>.constructor.EMPTY_STATES.all;
+  <span class="kw">return</span> <span class="str">`
+  &lt;div class="empty-state text-center py-5 px-3" role="status"&gt;
+    &lt;span class="material-symbols-rounded text-secondary mb-3 d-block"
+          style="font-size:3rem"&gt;</span><span class="prop">${icon}</span><span class="str">&lt;/span&gt;
+    &lt;h5 class="fw-semibold mb-1"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(title)}</span><span class="str">&lt;/h5&gt;
+    &lt;p class="text-secondary small mb-0"&gt;</span><span class="prop">${<span class="kw">this</span>._esc(sub)}</span><span class="str">&lt;/p&gt;
+  &lt;/div&gt;`</span>;
+}</code></pre>
+</section>
+
+<!-- ── PERFORMANCE ── -->
+<section id="perf">
+  <h2><span class="h-num">18</span> Performance</h2>
+
+  <h3>When to use DocumentFragment</h3>
+  <p>For lists over ~200 items where individual items need post-render DOM access (e.g. attaching canvas, initializing third-party widgets), prefer <code>DocumentFragment</code> over full <code>innerHTML</code> replacement:</p>
+
+<pre><code><span class="fn">_render</span>() {
+  <span class="kw">const</span> frag = document.<span class="fn">createDocumentFragment</span>();
+  <span class="kw">for</span> (<span class="kw">const</span> item <span class="kw">of</span> <span class="kw">this</span>.<span class="fn">_getFiltered</span>()) {
+    <span class="kw">const</span> wrap = document.<span class="fn">createElement</span>(<span class="str">'div'</span>);
+    wrap.innerHTML = <span class="kw">this</span>.<span class="fn">_renderItem</span>(item);
+    frag.<span class="fn">appendChild</span>(wrap.firstElementChild);
+  }
+  <span class="kw">this</span>.listEl.<span class="fn">replaceChildren</span>(frag);
+}</code></pre>
+
+  <h3>Debounce vs Throttle</h3>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Scenario</th><th>Use</th><th>Delay</th></tr></thead>
+      <tbody>
+        <tr><td>Search input</td><td>Debounce</td><td>250–300ms</td></tr>
+        <tr><td>Window resize</td><td>Debounce</td><td>150ms</td></tr>
+        <tr><td>Scroll handler</td><td>Throttle</td><td>100ms</td></tr>
+        <tr><td>Drag events</td><td>Throttle</td><td>16ms (rAF)</td></tr>
+        <tr><td>Filter tab click</td><td>None needed</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Avoid layout thrash in post-render hooks</h3>
+<pre><code><span class="cm">// ❌ Causes layout thrash — reads then writes in a loop</span>
+items.<span class="fn">forEach</span>(el => {
+  <span class="kw">const</span> h = el.offsetHeight; <span class="cm">// forces reflow</span>
+  el.style.marginTop = h / <span class="num">2</span> + <span class="str">'px'</span>; <span class="cm">// invalidates layout</span>
+});
+
+<span class="cm">// ✅ Batch reads first, then writes</span>
+<span class="kw">const</span> heights = items.<span class="fn">map</span>(el => el.offsetHeight); <span class="cm">// all reads</span>
+items.<span class="fn">forEach</span>((el, i) => el.style.marginTop = heights[i] / <span class="num">2</span> + <span class="str">'px'</span>);</code></pre>
+</section>
+
+<hr class="section-break">
+
+<!-- ── API REFERENCE ── -->
+<section id="api">
+  <h2><span class="h-num">19</span> Controller API Reference</h2>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Visibility</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>constructor(sel)</code></td><td>public</td><td>Init, bind events, start data load</td></tr>
+        <tr><td><code>_loadData()</code></td><td>private</td><td>Fetch/set <code>this.data</code>, call <code>_render()</code></td></tr>
+        <tr><td><code>_setState(patch)</code></td><td>private</td><td>Merge patch into state, call <code>_render()</code></td></tr>
+        <tr><td><code>_getFiltered()</code></td><td>private</td><td>Apply filter + search to <code>this.data</code></td></tr>
+        <tr><td><code>_render()</code></td><td>private</td><td>Set <code>listEl.innerHTML</code> from filtered data</td></tr>
+        <tr><td><code>_afterRender()</code></td><td>private</td><td>Post-render DOM hooks (animations, focus)</td></tr>
+        <tr><td><code>_renderItem(item)</code></td><td>private</td><td>Return HTML string for one item</td></tr>
+        <tr><td><code>_renderEmpty(filter)</code></td><td>private</td><td>Return empty-state HTML string</td></tr>
+        <tr><td><code>_bindEvents()</code></td><td>private</td><td>All event listeners — called once from constructor</td></tr>
+        <tr><td><code>_esc(s)</code></td><td>private</td><td>HTML-escape a string value</td></tr>
+        <tr><td><code>_safeUrl(url)</code></td><td>private</td><td>Validate and escape a URL</td></tr>
+        <tr><td><code>_fmtDate(s)</code></td><td>private</td><td>Format ISO date string for display</td></tr>
+        <tr><td><code>_fmtCur(v, c)</code></td><td>private</td><td>Format a number as currency</td></tr>
+        <tr><td><code>_relTime(s)</code></td><td>private</td><td>Format ISO timestamp as relative time</td></tr>
+        <tr><td><code>_paginate(list)</code></td><td>private</td><td>Slice list to current page, return page metadata</td></tr>
+        <tr><td><code>_renderPagination(meta)</code></td><td>private</td><td>Return pagination HTML string</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Static CONFIG shape</h3>
+<pre><code><span class="kw">static</span> <span class="prop">STATUS_CFG</span> = {
+  <span class="cm">// key: string value from data</span>
+  active: {
+    badge:  <span class="str">'text-bg-success'</span>,   <span class="cm">// Bootstrap badge class</span>
+    label:  <span class="str">'Active'</span>,             <span class="cm">// Display label</span>
+    icon:   <span class="str">'check_circle'</span>,       <span class="cm">// Material Symbol name (optional)</span>
+    color:  <span class="str">'#7ee8a2'</span>,             <span class="cm">// Raw color (optional, for SVG/canvas)</span>
+  },
+};</code></pre>
+</section>
+
+<!-- ── CHECKLIST ── -->
+<section id="checklist">
+  <h2><span class="h-num">20</span> Implementation Checklist</h2>
+
+  <div class="callout callout-tip">
+    <div class="callout-label">Use before shipping any new controller</div>
+    Run through this list on every new feature area.
+  </div>
+
+  <h4>Security</h4>
+  <ul>
+    <li>Every API-sourced value passes through <code>_esc()</code> before entering HTML</li>
+    <li>URLs use <code>_safeUrl()</code> — no raw <code>href</code> from data without validation</li>
+    <li>No <code>eval()</code>, <code>Function()</code>, or <code>setTimeout(string)</code> anywhere</li>
+  </ul>
+
+  <h4>Architecture</h4>
+  <ul>
+    <li>One controller class per feature area, scoped to one container element</li>
+    <li>All state lives in <code>this.state</code> — no DOM reads to determine state</li>
+    <li>All events use delegation from container root — no listeners on rendered elements</li>
+    <li><code>_bindEvents()</code> called exactly once from constructor</li>
+    <li>Static config (badge maps, label maps) defined as <code>static</code> class properties</li>
+  </ul>
+
+  <h4>UX</h4>
+  <ul>
+    <li>Skeleton screen shown during initial data load</li>
+    <li>Empty state rendered for every filter/search combination that returns 0 results</li>
+    <li>Search input is debounced (250–300ms)</li>
+    <li>Pagination resets to page 1 on filter or search change</li>
+    <li>Modals restore focus to trigger element on close</li>
+    <li>CSS transitions use <code>requestAnimationFrame</code> double-tick for reliability</li>
+  </ul>
+
+  <h4>Accessibility</h4>
+  <ul>
+    <li>List container has <code>role="list"</code>, items have <code>role="listitem"</code></li>
+    <li>Live region (<code>aria-live="polite"</code>) on the list container for screen reader announcements</li>
+    <li>Filter tabs use <code>role="tab"</code> and <code>aria-selected</code></li>
+    <li>Icon-only buttons have <code>aria-label</code></li>
+    <li>Status dots and decorative icons have <code>aria-hidden="true"</code></li>
+  </ul>
+
+  <h4>Code quality</h4>
+  <ul>
+    <li><code>'use strict'</code> at top of every script block</li>
+    <li>All render methods return a string — no side effects</li>
+    <li>No raw number/boolean interpolation without <code>_esc()</code></li>
+    <li>Complex cards broken into focused sub-render methods</li>
+    <li>No jQuery or framework imports — this pattern is intentionally zero-dependency</li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+
+<script>
+'use strict';
+
+// ── Sidebar active link on scroll ────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navLinks  = document.querySelectorAll('.sidebar a');
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => obs.observe(s));
+
+// ── Scroll-to-top button ──────────────────────────────────────
+const scrollBtn = document.getElementById('scroll-top');
+window.addEventListener('scroll', () => {
+  scrollBtn.classList.toggle('visible', window.scrollY > 400);
+}, { passive: true });
+</script>
+</body>
+</html>
