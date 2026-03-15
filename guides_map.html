@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asguard01 — Карта Руководств v4.1</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Unbounded:wght@300;600;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base:       #0a0b0e;
+    --bg-card:       #111318;
+    --bg-card-hover: #181b22;
+    --border:        rgba(255,255,255,0.07);
+    --border-bright: rgba(255,255,255,0.18);
+    --txt-primary:   #e8eaf0;
+    --txt-muted:     #6b7280;
+    --txt-dim:       #3d4250;
+
+    --accent-blue:   #3b82f6;
+    --accent-green:  #22c55e;
+    --accent-red:    #ef4444;
+    --accent-amber:  #f59e0b;
+    --accent-purple: #a78bfa;
+    --accent-cyan:   #06b6d4;
+    --accent-pink:   #ec4899;
+    --accent-lime:   #84cc16;
+    --accent-orange: #f97316;
+
+    --group-colors: #3b82f6, #22c55e, #ef4444, #f59e0b, #a78bfa, #06b6d4, #ec4899, #84cc16, #f97316;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-base);
+    color: var(--txt-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── noise overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: .5;
+  }
+
+  /* ── header ── */
+  .site-header {
+    position: relative;
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    z-index: 1;
+  }
+  .site-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+  }
+  .header-tag {
+    font-size: 10px;
+    letter-spacing: .2em;
+    color: var(--txt-muted);
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+  }
+  .site-header h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    line-height: 1.1;
+    letter-spacing: -.02em;
+  }
+  .site-header h1 span { color: var(--accent-blue); }
+  .version-badge {
+    display: inline-block;
+    background: rgba(59,130,246,.12);
+    border: 1px solid rgba(59,130,246,.3);
+    color: var(--accent-blue);
+    font-size: 10px;
+    letter-spacing: .1em;
+    padding: 3px 10px;
+    border-radius: 2px;
+    margin-top: .75rem;
+  }
+
+  /* ── legend & controls ── */
+  .controls-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,11,14,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+  }
+  .search-input {
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    color: var(--txt-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    outline: none;
+    width: 260px;
+    transition: border-color .2s;
+  }
+  .search-input:focus { border-color: var(--accent-blue); }
+  .search-input::placeholder { color: var(--txt-dim); }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .legend-item {
+    display: flex; align-items: center;
+    font-size: 11px;
+    color: var(--txt-muted);
+    white-space: nowrap;
+  }
+
+  /* ── group grid ── */
+  .groups-grid {
+    position: relative;
+    z-index: 1;
+    padding: 2rem 0 4rem;
+  }
+
+  /* ── group card ── */
+  .group-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color .25s;
+    height: 100%;
+  }
+  .group-card.dimmed { opacity: .22; transition: opacity .25s; }
+  .group-card.highlighted { border-color: var(--border-bright); }
+
+  .group-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: default;
+  }
+  .group-id-badge {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .group-name-text {
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--txt-muted);
+    line-height: 1.4;
+  }
+
+  /* ── item row ── */
+  .item-row {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .18s;
+    position: relative;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row:hover, .item-row.active { background: var(--bg-card-hover); }
+  .item-row.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .item-id {
+    font-size: 10px;
+    color: var(--txt-dim);
+    margin-bottom: 2px;
+  }
+  .item-file {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--txt-primary);
+    margin-bottom: 4px;
+    word-break: break-all;
+  }
+  .item-summary {
+    font-size: 11px;
+    color: var(--txt-muted);
+    line-height: 1.5;
+  }
+
+  .item-relations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .rel-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    cursor: pointer;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  .rel-tag:hover { opacity: .75; }
+  .rel-tag.compat {
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.25);
+    color: var(--accent-green);
+  }
+  .rel-tag.conflict {
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    color: var(--accent-red);
+  }
+  .rel-tag .rel-icon { font-size: 9px; }
+
+  /* ── detail panel ── */
+  #detail-panel {
+    position: fixed;
+    right: 0; top: 0; bottom: 0;
+    width: 380px;
+    background: #0d0f14;
+    border-left: 1px solid var(--border-bright);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    overflow-y: auto;
+    padding: 0;
+  }
+  #detail-panel.open { transform: translateX(0); }
+
+  .panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: #0d0f14;
+    z-index: 1;
+  }
+  .panel-close {
+    background: none;
+    border: 1px solid var(--border-bright);
+    color: var(--txt-muted);
+    font-size: 16px;
+    width: 30px; height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .panel-close:hover { border-color: var(--accent-red); color: var(--accent-red); }
+
+  .panel-body { padding: 20px 24px; }
+
+  .panel-label {
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--txt-dim);
+    margin-bottom: 6px;
+    margin-top: 20px;
+  }
+  .panel-label:first-child { margin-top: 0; }
+
+  .panel-file {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--txt-primary);
+    word-break: break-all;
+    line-height: 1.4;
+  }
+  .panel-summary {
+    font-size: 12px;
+    color: #9ca3af;
+    line-height: 1.7;
+    border-left: 2px solid var(--border-bright);
+    padding-left: 14px;
+  }
+
+  .conn-list { list-style: none; }
+  .conn-item {
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .conn-item:hover { background: rgba(255,255,255,.04); }
+  .conn-item.compat-item { border-left: 3px solid var(--accent-green); background: rgba(34,197,94,.05); }
+  .conn-item.conflict-item { border-left: 3px solid var(--accent-red); background: rgba(239,68,68,.05); }
+  .conn-item-id { font-weight: 700; flex-shrink: 0; }
+  .conn-item-file { color: var(--txt-muted); font-size: 10px; margin-top: 2px; }
+
+  /* ── stats bar ── */
+  .stats-bar {
+    position: relative; z-index: 1;
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 0;
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    font-size: 1.8rem;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-lbl { font-size: 10px; color: var(--txt-muted); letter-spacing: .1em; text-transform: uppercase; }
+
+  /* ── group color system ── */
+  .g1 { --gc: #3b82f6; }
+  .g2 { --gc: #22c55e; }
+  .g3 { --gc: #f59e0b; }
+  .g4 { --gc: #a78bfa; }
+  .g5 { --gc: #ef4444; }
+  .g6 { --gc: #06b6d4; }
+  .g7 { --gc: #ec4899; }
+  .g8 { --gc: #84cc16; }
+  .g9 { --gc: #f97316; }
+
+  .group-id-badge { background: rgba(var(--gc-rgb),.15); color: var(--gc); border: 1px solid rgba(var(--gc-rgb),.3); }
+
+  /* apply via inline style instead */
+  .group-stripe { height: 3px; }
+
+  .item-row.active::before { background: var(--gc); }
+
+  /* dimming on hover nav */
+  body.has-active .group-card:not(.highlighted) { opacity: .18; }
+  body.has-active .group-card.highlighted { opacity: 1; border-color: var(--border-bright); }
+
+  /* search highlight */
+  .item-row.search-hidden { display: none; }
+  .item-row.search-match .item-file { color: var(--accent-amber); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+  /* transition page push */
+  .page-wrap { transition: margin-right .3s cubic-bezier(.4,0,.2,1); }
+  .page-wrap.panel-open { margin-right: 380px; }
+
+  @media(max-width: 768px) {
+    #detail-panel { width: 100%; }
+    .page-wrap.panel-open { margin-right: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap" id="pageWrap">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container-xl">
+      <div class="header-tag">Engineering Documentation System</div>
+      <h1>Asguard<span>01</span><br>Карта Руководств</h1>
+      <div class="version-badge">v4.1 · Final Audit · 9 групп · 27 документов</div>
+    </div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="container-xl">
+      <div class="row g-0 text-center" id="statsRow">
+        <div class="col stat-item">
+          <div class="stat-num" style="color:#3b82f6">9</div>
+          <div class="stat-lbl">Групп</div>
+        </div>
+        <div class="col stat-item">
+          <div class="stat-num" style="color:#a78bfa">27</div>
+          <div class="stat-lbl">Гайдов</div>
+        </div>
+        <div class="col stat-item">
+          <div class="stat-num" style="color:#22c55e" id="statCompat">0</div>
+          <div class="stat-lbl">Связей ✓</div>
+        </div>
+        <div class="col stat-item">
+          <div class="stat-num" style="color:#ef4444" id="statConflict">0</div>
+          <div class="stat-lbl">Конфликтов ✗</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-bar">
+    <div class="container-xl">
+      <div class="d-flex align-items-center flex-wrap gap-3">
+        <input class="search-input" type="text" id="searchInput" placeholder="🔍  Поиск по имени файла...">
+        <div class="d-flex align-items-center gap-4 ms-2">
+          <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Совместим</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Конфликт</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#6b7280"></span>Нейтральный</div>
+        </div>
+        <button id="resetBtn" class="ms-auto btn btn-sm" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#9ca3af;font-family:'JetBrains Mono',monospace;font-size:11px;">
+          ↺ Сбросить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <main class="groups-grid">
+    <div class="container-xl">
+      <div class="row g-3" id="groupsGrid"></div>
+    </div>
+  </main>
+
+</div><!-- /page-wrap -->
+
+<!-- DETAIL PANEL -->
+<aside id="detail-panel">
+  <div class="panel-header d-flex align-items-start justify-content-between gap-3">
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--txt-dim);margin-bottom:6px">Детали гайда</div>
+      <div id="panelGroupBadge" style="font-size:12px;font-weight:700;"></div>
+    </div>
+    <button class="panel-close" id="panelClose">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</aside>
+
+<script>
+const DATA = {
+  "project":"Asguard01 Engineering Docs","version":"4.1 (Final Audit)",
+  "structure":[
+    {"group_id":"G1","group_name":"guides_accessibility_and_seo","items":[
+      {"item_id":1,"file":"accessibility_guide.md","summary":"Глубокое руководство по WCAG 2.2. Концепция: создание семантически корректного кода для экранных дикторов и клавиатурного управления.","дружит":["G4.3","G9.1","G9.2","G3.1"],"конфликтует":[]},
+      {"item_id":2,"file":"complete-seo-guide.md","summary":"Стандарт технической оптимизации и Core Web Vitals. Применяется для обеспечения индексации и скорости загрузки.","дружит":["G1.1","G5.1","G5.2"],"конфликтует":[]}
+    ]},
+    {"group_id":"G2","group_name":"guides_bootstrap_ecosystem_standards","items":[
+      {"item_id":1,"file":"bootstrap-scalable-templates-guide.md","summary":"Архитектура крупных проектов на SASS. Концепция: масштабируемость через сборщики и разделение стилей.","дружит":["G2.2","G7.1","G4.3"],"конфликтует":["G2.6"]},
+      {"item_id":2,"file":"bootstrap-unified-guide-extended.md","summary":"Продвинутая унификация: Utility API + CSS Grid. Максимальное использование встроенных возможностей Bootstrap 5.","дружит":["G2.3","G2.6","G8.1"],"конфликтует":["G2.5"]},
+      {"item_id":3,"file":"bootstrap-unified-guide.md","summary":"Базовый стандарт Utility-first. Концепция: отказ от кастомного CSS в пользу системных классов.","дружит":["G2.2","G8.1","G2.4"],"конфликтует":["G2.5"]},
+      {"item_id":4,"file":"bootstrapification-cleaning-guide.md","summary":"Методы очистки legacy-кода. Концепция: инкапсуляция стилей в контейнеры и удаление инлайна.","дружит":["G4.2","G8.2","G2.1"],"конфликтует":[]},
+      {"item_id":5,"file":"BOOTSTRAPIFICATION_GUIDE.md","summary":"Гибридный подход: адаптация дизайна под Bootstrap с сохранением уникальных кастомных компонентов.","дружит":["G2.4","G9.2"],"конфликтует":["G2.2","G2.3","G2.6"]},
+      {"item_id":6,"file":"kill-fucked-customization-make-clean-bootstrap.md","summary":"Радикальный манифест. Концепция: физическое уничтожение любого кастомного CSS, который можно заменить утилитой.","дружит":["G2.2","G2.3","G8.1"],"конфликтует":["G2.5","G2.1"]},
+      {"item_id":7,"file":"readme.md","summary":"Сравнительная навигация по философиям Bootstrap внутри проекта.","дружит":["G6.1","G2.2","G2.5","G2.6"],"конфликтует":[]}
+    ]},
+    {"group_id":"G3","group_name":"guides_documentation_and_compliance","items":[
+      {"item_id":1,"file":"COMMENTS_GUIDE.md","summary":"Стандарт «Золотой середины» для комментариев. Концепция: описание контекста «Почему», а не механики «Что».","дружит":["G3.2","G4.3","G7.1"],"конфликтует":["G3.3"]},
+      {"item_id":2,"file":"COMMENTS_GUIDE_EXTENDED.md","summary":"Примеры сложного документирования (анимации, JS-логика).","дружит":["G3.1","G4.3","G8.2"],"конфликтует":[]},
+      {"item_id":3,"file":"compact_comments_guide_html_css_js.md","summary":"Специфичный стандарт для Envato. Концепция: жесткая структура START/END и закрывающие теги.","дружит":["G3.4"],"конфликтует":["G3.1","G3.2"]},
+      {"item_id":4,"file":"envato-compliance-guide.md","summary":"Требования к нейтральности и чистоте интеллектуальной собственности.","дружит":["G3.3","G5.3"],"конфликтует":[]}
+    ]},
+    {"group_id":"G4","group_name":"guides_frontend_implementation_methodology","items":[
+      {"item_id":1,"file":"containerization-guide-2.md","summary":"Продвинутая контейнеризация JS. Концепция: статические конфиги и полная автономность виджета.","дружит":["G4.2","G5.2","G7.1"],"конфликтует":[]},
+      {"item_id":2,"file":"containerization-guide.md","summary":"Базовый стандарт виджетов. Концепция: использование data-ref и data-action для развязки HTML и JS.","дружит":["G4.1","G8.2","G4.3"],"конфликтует":[]},
+      {"item_id":3,"file":"good-style-methodology.md","summary":"Манифест качественного Vanilla кода. Концепция: State Machine, безопасность и отсутствие сторонних фреймворков.","дружит":["G4.1","G4.2","G7.1","G5.3","G1.1","G3.1"],"конфликтует":[]}
+    ]},
+    {"group_id":"G5","group_name":"guides_performance_and_security","items":[
+      {"item_id":1,"file":"js-performance optimization-base-guide.md","summary":"Оптимизация критического пути рендеринга. Концепция: минимизация Reflow и Repaint.","дружит":["G5.2","G4.3","G8.2"],"конфликтует":[]},
+      {"item_id":2,"file":"js-performance optimization-pro-guide.md","summary":"Профессиональный уровень: Long Tasks, Web Workers и PerformanceObserver.","дружит":["G5.1","G4.1","G7.2"],"конфликтует":[]},
+      {"item_id":3,"file":"js-security-guide.md","summary":"Полный справочник по кибербезопасности фронтенда. Концепция: защита от XSS, CSRF и Prototype Pollution.","дружит":["G4.3","G3.4","G7.1"],"конфликтует":[]}
+    ]},
+    {"group_id":"G6","group_name":"guides_project_metadata_index","items":[
+      {"item_id":1,"file":"readme.md","summary":"Главная точка входа, описывающая иерархию и цели всех руководств.","дружит":["G2.7","G7.1","G4.3"],"конфликтует":[]}
+    ]},
+    {"group_id":"G7","group_name":"guides_software_architecture_patterns","items":[
+      {"item_id":1,"file":"DESIGN_SOFTWARE_GUIDE_ASGUARD01.md","summary":"Корпоративный стандарт проектирования систем. Концепция: SOLID, Clean Architecture и стабильность.","дружит":["G7.2","G4.3","G3.1","G6.1"],"конфликтует":[]},
+      {"item_id":2,"file":"sys_standarts_full_guide.md","summary":"Расширенный справочник паттернов (GoF, CQRS, Event Sourcing).","дружит":["G7.1","G5.2","G3.2"],"конфликтует":[]}
+    ]},
+    {"group_id":"G8","group_name":"guides_systematic_refactoring_strategies","items":[
+      {"item_id":1,"file":"css_refactoring_id_to_class_guide.md","summary":"Методика избавления от ID в стилях без поломки JS-логики.","дружит":["G2.3","G2.6","G8.2"],"конфликтует":[]},
+      {"item_id":2,"file":"refactoring_guide.md","summary":"Пошаговый процесс трансформации компонента (Account Tab case study).","дружит":["G8.3","G4.2","G2.4","G5.1"],"конфликтует":[]},
+      {"item_id":3,"file":"refactoring_plan_guide.md","summary":"Стандарт JSON-документирования изменений. Концепция: аудит перед исполнением.","дружит":["G8.2","G7.1","G4.3"],"конфликтует":[]}
+    ]},
+    {"group_id":"G9","group_name":"guides_visual_ux_guidelines","items":[
+      {"item_id":1,"file":"UI-UX-Web-Development-Guide.md","summary":"Общие стандарты Mobile-first, микро-взаимодействий и доступности.","дружит":["G9.2","G1.1","G4.3"],"конфликтует":[]},
+      {"item_id":2,"file":"web-color-guide.md","summary":"Математическая теория цвета и контрастность. Концепция: визуальная гармония по правилу 60-30-10.","дружит":["G9.1","G1.1","G2.5"],"конфликтует":[]}
+    ]}
+  ]
+};
+
+// ── Color per group ──
+const GROUP_COLORS = {
+  G1:'#3b82f6', G2:'#22c55e', G3:'#f59e0b', G4:'#a78bfa',
+  G5:'#ef4444', G6:'#06b6d4', G7:'#ec4899', G8:'#84cc16', G9:'#f97316'
+};
+const GROUP_LABELS = {
+  G1:'Accessibility & SEO', G2:'Bootstrap Ecosystem', G3:'Docs & Compliance',
+  G4:'Frontend Methodology', G5:'Performance & Security', G6:'Project Index',
+  G7:'Architecture', G8:'Refactoring', G9:'Visual & UX'
+};
+
+// ── Build flat lookup ──
+const itemMap = {}; // "G1.1" → {group, item, gid, iid}
+DATA.structure.forEach(g => {
+  g.items.forEach(it => {
+    const key = `${g.group_id}.${it.item_id}`;
+    itemMap[key] = { group: g, item: it, gid: g.group_id, iid: it.item_id };
+  });
+});
+
+// ── Stats ──
+let totalCompat = 0, totalConflict = 0;
+DATA.structure.forEach(g => g.items.forEach(it => {
+  totalCompat += it.дружит.length;
+  totalConflict += it.конфликтует.length;
+}));
+document.getElementById('statCompat').textContent = totalCompat;
+document.getElementById('statConflict').textContent = totalConflict;
+
+// ── Render groups ──
+const grid = document.getElementById('groupsGrid');
+DATA.structure.forEach(g => {
+  const color = GROUP_COLORS[g.group_id];
+  const gnum = parseInt(g.group_id.replace('G',''));
+  const col = document.createElement('div');
+  const colSpan = g.items.length >= 6 ? 'col-12 col-xl-6' :
+                  g.items.length >= 4 ? 'col-12 col-md-6 col-xl-4' :
+                  g.items.length >= 2 ? 'col-12 col-md-6 col-xl-4' :
+                                        'col-12 col-md-6 col-xl-3';
+  col.className = colSpan;
+
+  const itemsHTML = g.items.map(it => {
+    const key = `${g.group_id}.${it.item_id}`;
+    const compatTags = it.дружит.map(r =>
+      `<span class="rel-tag compat" data-ref="${r}" title="${getFileByRef(r)}"><span class="rel-icon">✓</span>${r}</span>`
+    ).join('');
+    const conflictTags = it.конфликтует.map(r =>
+      `<span class="rel-tag conflict" data-ref="${r}" title="${getFileByRef(r)}"><span class="rel-icon">✗</span>${r}</span>`
+    ).join('');
+    const hasTags = (it.дружит.length + it.конфликтует.length) > 0;
+    return `
+      <div class="item-row" data-key="${key}" data-gid="${g.group_id}" style="--gc:${color}">
+        <div class="item-id">${key}</div>
+        <div class="item-file">${it.file}</div>
+        <div class="item-summary">${it.summary.split('.')[0]}.</div>
+        ${hasTags ? `<div class="item-relations">${compatTags}${conflictTags}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  col.innerHTML = `
+    <div class="group-card g${gnum}" data-gid="${g.group_id}" style="--gc:${color}">
+      <div class="group-stripe" style="background:${color};opacity:.7"></div>
+      <div class="group-header">
+        <div class="group-id-badge" style="background:${color}18;color:${color};border:1px solid ${color}33">${g.group_id}</div>
+        <div>
+          <div class="group-name-text">${GROUP_LABELS[g.group_id]}</div>
+          <div style="font-size:10px;color:var(--txt-dim);margin-top:1px">${g.items.length} гайд${g.items.length>1?'а':''}</div>
+        </div>
+      </div>
+      ${itemsHTML}
+    </div>`;
+  grid.appendChild(col);
+});
+
+function getFileByRef(ref) {
+  return itemMap[ref] ? itemMap[ref].item.file : ref;
+}
+
+// ── Panel logic ──
+const panel = document.getElementById('detail-panel');
+const panelBody = document.getElementById('panelBody');
+const panelGroupBadge = document.getElementById('panelGroupBadge');
+const pageWrap = document.getElementById('pageWrap');
+let activeKey = null;
+
+function openPanel(key) {
+  const entry = itemMap[key];
+  if (!entry) return;
+  activeKey = key;
+  const { group: g, item: it } = entry;
+  const color = GROUP_COLORS[g.group_id];
+
+  panelGroupBadge.innerHTML = `<span style="color:${color}">${g.group_id}</span> · ${GROUP_LABELS[g.group_id]}`;
+
+  const compatItems = it.дружит.map(r => {
+    const e = itemMap[r];
+    return `<li class="conn-item compat-item" data-ref="${r}">
+      <span class="conn-item-id" style="color:${GROUP_COLORS[r.split('.')[0]] || '#22c55e'}">${r}</span>
+      <div><div class="conn-item-file">${e ? e.item.file : '—'}</div></div>
+    </li>`;
+  }).join('') || '<li style="color:var(--txt-dim);font-size:11px;padding:6px 0">Нет совместимых</li>';
+
+  const conflictItems = it.конфликтует.map(r => {
+    const e = itemMap[r];
+    return `<li class="conn-item conflict-item" data-ref="${r}">
+      <span class="conn-item-id" style="color:#ef4444">${r}</span>
+      <div><div class="conn-item-file">${e ? e.item.file : '—'}</div></div>
+    </li>`;
+  }).join('') || '<li style="color:var(--txt-dim);font-size:11px;padding:6px 0">Конфликтов нет ✓</li>';
+
+  panelBody.innerHTML = `
+    <div class="panel-label">Файл</div>
+    <div class="panel-file" style="color:${color}">${it.file}</div>
+
+    <div class="panel-label">Описание</div>
+    <div class="panel-summary">${it.summary}</div>
+
+    <div class="panel-label" style="color:#22c55e">✓ Совместим с (${it.дружит.length})</div>
+    <ul class="conn-list">${compatItems}</ul>
+
+    <div class="panel-label" style="color:#ef4444">✗ Конфликтует с (${it.конфликтует.length})</div>
+    <ul class="conn-list">${conflictItems}</ul>
+  `;
+
+  panel.classList.add('open');
+  pageWrap.classList.add('panel-open');
+
+  // highlight active row
+  document.querySelectorAll('.item-row').forEach(r => r.classList.remove('active'));
+  const activeRow = document.querySelector(`[data-key="${key}"]`);
+  if (activeRow) activeRow.classList.add('active');
+
+  // dim/highlight groups
+  highlightRelated(key);
+}
+
+function closePanel() {
+  panel.classList.remove('open');
+  pageWrap.classList.remove('panel-open');
+  document.querySelectorAll('.item-row').forEach(r => r.classList.remove('active'));
+  document.querySelectorAll('.group-card').forEach(c => {
+    c.classList.remove('highlighted', 'dimmed');
+  });
+  document.body.classList.remove('has-active');
+  activeKey = null;
+}
+
+function highlightRelated(key) {
+  const entry = itemMap[key];
+  if (!entry) return;
+  const { item: it, gid } = entry;
+  const relatedGids = new Set([gid]);
+  [...it.дружит, ...it.конфликтует].forEach(r => {
+    relatedGids.add(r.split('.')[0]);
+  });
+
+  document.body.classList.add('has-active');
+  document.querySelectorAll('.group-card').forEach(card => {
+    const cgid = card.dataset.gid;
+    if (relatedGids.has(cgid)) {
+      card.classList.add('highlighted');
+      card.classList.remove('dimmed');
+    } else {
+      card.classList.add('dimmed');
+      card.classList.remove('highlighted');
+    }
+  });
+}
+
+// ── Events ──
+document.getElementById('groupsGrid').addEventListener('click', e => {
+  // click on rel-tag → jump to that item
+  const relTag = e.target.closest('.rel-tag');
+  if (relTag) {
+    e.stopPropagation();
+    const ref = relTag.dataset.ref;
+    if (itemMap[ref]) openPanel(ref);
+    return;
+  }
+  // click on conn-item in panel → jump
+  const connItem = e.target.closest('.conn-item');
+  if (connItem) {
+    const ref = connItem.dataset.ref;
+    if (itemMap[ref]) openPanel(ref);
+    return;
+  }
+  // click on item row
+  const row = e.target.closest('.item-row');
+  if (row) {
+    const key = row.dataset.key;
+    if (activeKey === key) { closePanel(); return; }
+    openPanel(key);
+  }
+});
+
+panel.addEventListener('click', e => {
+  const connItem = e.target.closest('.conn-item');
+  if (connItem) {
+    const ref = connItem.dataset.ref;
+    if (itemMap[ref]) openPanel(ref);
+  }
+});
+
+document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  closePanel();
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.item-row').forEach(r => r.classList.remove('search-hidden','search-match'));
+});
+
+// ── Search ──
+document.getElementById('searchInput').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase().trim();
+  document.querySelectorAll('.item-row').forEach(row => {
+    const file = row.querySelector('.item-file').textContent.toLowerCase();
+    const summary = row.querySelector('.item-summary').textContent.toLowerCase();
+    if (!q) {
+      row.classList.remove('search-hidden', 'search-match');
+    } else if (file.includes(q) || summary.includes(q)) {
+      row.classList.remove('search-hidden');
+      row.classList.add('search-match');
+    } else {
+      row.classList.add('search-hidden');
+      row.classList.remove('search-match');
+    }
+  });
+});
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePanel();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

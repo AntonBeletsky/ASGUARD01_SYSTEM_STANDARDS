@@ -1,0 +1,139 @@
+Gemini said
+Понимаю твою досаду — требования Envato к «стерильности» и компактности кода часто идут вразрез с желанием написать максимально подробную документацию. Чтобы проект прошел проверку и не превратился в «портянку» из лишних стилей и комментариев, нужно сменить фокус с «максимальной детализации» на «максимальную утилитарность».
+
+Вот списки гайдов, разделенные по принципу их полезности для прохождения цензуры Envato.
+
+🟢 Рекомендуемые (Стек «Компактность и Стандарт»)
+Эти документы помогают уменьшить вес файлов и сделать код «прозрачным» для ревьюеров:
+
+envato-compliance-guide.md — Твоя библия. Здесь прописано, что именно нужно вырезать (персональные данные, лишние бренды, мусорные файлы).
+
+compact_comments_guide_html_css_js.md — Прямой ответ на требование компактности. Используй только этот формат комментирования. Он заменяет все остальные гайды по комментариям.
+
+kill-fucked-customization-make-clean-bootstrap.md — Радикальный метод удаления лишнего CSS. Помогает убить 60–70% кастомного кода, заменяя его на нативные утилиты Bootstrap.
+
+bootstrap-unified-guide-extended.md — Учит использовать Utility API. Вместо написания своих классов, ты расширяешь Bootstrap, что выглядит для ревьюера как «правильный» подход.
+
+js-performance-optimization-base-guide.md — Позволяет сделать JS легким, без «костылей», которые могут посчитать за плохой тон (например, лишние циклы или тяжелые библиотеки).
+
+🔴 Не рекомендуемые (Риск «Раздувания» и отказов)
+Эти гайды хороши для внутреннего энтерпрайза, но для маркетплейса они слишком тяжелые или специфичные:
+
+COMMENTS_GUIDE_EXTENDED.md — ЗАПРЕЩЕНО. Слишком много визуального шума и «заборчиков» в коде. Ревьюер Envato может счесть это попыткой искусственно увеличить объем кода.
+
+BOOTSTRAPIFICATION_GUIDE.md — Осторожно. Он поощряет гибридный подход и создание новых кастомных классов. Для Envato лучше «чистый» Bootstrap.
+
+sys_standarts_full_guide.md — Слишком высокий уровень абстракции. SOLID и сложные паттерны в простом HTML-шаблоне могут выглядеть как овер-инжиниринг.
+
+🛠 Порядок применения (Конвейер «Сжатия» кода)
+Чтобы на выходе получить чистый продукт, применяй гайды в этой последовательности:
+
+Шаг 1: Тотальная зачистка (Стиль)
+
+Гайд: kill-fucked-customization-make-clean-bootstrap.md
+
+Действие: Пройдись по всем CSS-файлам. Если видишь класс, который делает только font-size или margin — удаляй его и переноси утилиту в HTML. Цель: оставить только те стили, которые физически нельзя сделать на Bootstrap (сложные градиенты, специфические маски).
+
+Шаг 2: Упаковка логики (JS)
+
+Гайд: containerization-guide-2.md
+
+Действие: Оберни все скрипты в изолированные контроллеры. Envato не любит глобальные переменные и функции в window. Всё должно быть внутри классов.
+
+Шаг 3: Финальная «сушка» документации (Комментарии)
+
+Гайд: compact_comments_guide_html_css_js.md
+
+Действие: Удали все длинные описания «как это работает». Оставь только метки начала/конца секций (например, ``) и короткие пояснения WHY для сложных участков JS. Удали все TODO и FIXME.
+
+Шаг 4: Проверка на «стерильность»
+
+Гайд: envato-compliance-guide.md
+
+Действие: Финальный чек-лист. Проверь пути к картинкам (должны быть заглушки), удали все упоминания реальных брендов, почисти мета-теги author.
+
+Результат: Ты получишь код, который выглядит профессионально, весит минимум и не вызывает вопросов у инспекторов маркетплейса.
+
+
+{
+  "project": "Envato Compliance & Compactness Strategy",
+  "version": "1.0",
+  "strategy_focus": "Maximum Utility / Minimum Bloat",
+  "map": {
+    "recommended_guides": [
+      {
+        "id": "G3.4",
+        "file": "envato-compliance-guide.md",
+        "role": "Core Protocol",
+        "benefit": "Compliance checklist: removes personal data, OS junk, and IP risks."
+      },
+      {
+        "id": "G3.2",
+        "file": "compact_comments_guide_html_css_js.md",
+        "role": "Documentation Standard",
+        "benefit": "Replaces bulky docs with minimalist 3-level commenting."
+      },
+      {
+        "id": "G8.1",
+        "file": "kill-fucked-customization-make-clean-bootstrap.md",
+        "role": "CSS Purge",
+        "benefit": "Reduces CSS declarations by 60-70% using Bootstrap utilities."
+      },
+      {
+        "id": "G2.3",
+        "file": "bootstrap-unified-guide-extended.md",
+        "role": "Architecture",
+        "benefit": "Ensures design consistency through Utility API and CSS variables."
+      },
+      {
+        "id": "G5.1",
+        "file": "js-performance-optimization-base-guide.md",
+        "role": "Performance",
+        "benefit": "Eliminates [Violation] warnings and heavy JS patterns."
+      }
+    ],
+    "deprecated_guides": [
+      {
+        "id": "G3.1",
+        "file": "COMMENTS_GUIDE_EXTENDED.md",
+        "reason": "High visual noise; risk of rejection for 'artificial code bloating'."
+      },
+      {
+        "id": "G2.1",
+        "file": "BOOTSTRAPIFICATION_GUIDE.md",
+        "reason": "Promotes hybrid custom classes which increase file weight."
+      },
+      {
+        "id": "G7.2",
+        "file": "sys_standarts_full_guide.md",
+        "reason": "Over-engineering for marketplace templates; too many abstractions."
+      }
+    ],
+    "execution_pipeline": [
+      {
+        "step": 1,
+        "phase": "Style Purge",
+        "guide_id": "G8.1",
+        "action": "Delete all custom CSS that can be replaced by Bootstrap p-*, m-*, d-* utilities."
+      },
+      {
+        "step": 2,
+        "phase": "JS Encapsulation",
+        "guide_id": "G4.2",
+        "action": "Wrap logic in controllers; remove global variables and window-scope functions."
+      },
+      {
+        "step": 3,
+        "phase": "Doc Shrinking",
+        "guide_id": "G3.2",
+        "action": "Strip 'What' comments; keep only 'Why' and structural markers (START/END)."
+      },
+      {
+        "step": 4,
+        "phase": "Sanitization",
+        "guide_id": "G3.4",
+        "action": "Replace real brand names with placeholders; strip EXIF data and OS junk files."
+      }
+    ]
+  }
+}

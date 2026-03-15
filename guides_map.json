@@ -1,0 +1,249 @@
+{
+  "project": "Asguard01 Engineering Docs",
+  "version": "4.1 (Final Audit)",
+  "structure": [
+    {
+      "group_id": "G1",
+      "group_name": "guides_accessibility_and_seo",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "accessibility_guide.md",
+          "summary": "Глубокое руководство по WCAG 2.2. Концепция: создание семантически корректного кода для экранных дикторов и клавиатурного управления.",
+          "дружит": ["G4.3", "G9.1", "G9.2", "G3.1"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 2,
+          "file": "complete-seo-guide.md",
+          "summary": "Стандарт технической оптимизации и Core Web Vitals. Применяется для обеспечения индексации и скорости загрузки.",
+          "дружит": ["G1.1", "G5.1", "G5.2"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G2",
+      "group_name": "guides_bootstrap_ecosystem_standards",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "bootstrap-scalable-templates-guide.md",
+          "summary": "Архитектура крупных проектов на SASS. Концепция: масштабируемость через сборщики и разделение стилей.",
+          "дружит": ["G2.2", "G7.1", "G4.3"],
+          "конфликтует": ["G2.6"]
+        },
+        {
+          "item_id": 2,
+          "file": "bootstrap-unified-guide-extended.md",
+          "summary": "Продвинутая унификация: Utility API + CSS Grid. Максимальное использование встроенных возможностей Bootstrap 5.",
+          "дружит": ["G2.3", "G2.6", "G8.1"],
+          "конфликтует": ["G2.5"]
+        },
+        {
+          "item_id": 3,
+          "file": "bootstrap-unified-guide.md",
+          "summary": "Базовый стандарт Utility-first. Концепция: отказ от кастомного CSS в пользу системных классов.",
+          "дружит": ["G2.2", "G8.1", "G2.4"],
+          "конфликтует": ["G2.5"]
+        },
+        {
+          "item_id": 4,
+          "file": "bootstrapification-cleaning-guide.md",
+          "summary": "Методы очистки legacy-кода. Концепция: инкапсуляция стилей в контейнеры и удаление инлайна.",
+          "дружит": ["G4.2", "G8.2", "G2.1"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 5,
+          "file": "BOOTSTRAPIFICATION_GUIDE.md",
+          "summary": "Гибридный подход: адаптация дизайна под Bootstrap с сохранением уникальных кастомных компонентов.",
+          "дружит": ["G2.4", "G9.2"],
+          "конфликтует": ["G2.2", "G2.3", "G2.6"]
+        },
+        {
+          "item_id": 6,
+          "file": "kill-fucked-customization-make-clean-bootstrap.md",
+          "summary": "Радикальный манифест. Концепция: физическое уничтожение любого кастомного CSS, который можно заменить утилитой.",
+          "дружит": ["G2.2", "G2.3", "G8.1"],
+          "конфликтует": ["G2.5", "G2.1"]
+        },
+        {
+          "item_id": 7,
+          "file": "readme.md",
+          "summary": "Сравнительная навигация по философиям Bootstrap внутри проекта.",
+          "дружит": ["G6.1", "G2.2", "G2.5", "G2.6"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G3",
+      "group_name": "guides_documentation_and_compliance",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "COMMENTS_GUIDE.md",
+          "summary": "Стандарт «Золотой середины» для комментариев. Концепция: описание контекста «Почему», а не механики «Что».",
+          "дружит": ["G3.2", "G4.3", "G7.1"],
+          "конфликтует": ["G3.3"]
+        },
+        {
+          "item_id": 2,
+          "file": "COMMENTS_GUIDE_EXTENDED.md",
+          "summary": "Примеры сложного документирования (анимации, JS-логика).",
+          "дружит": ["G3.1", "G4.3", "G8.2"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 3,
+          "file": "compact_comments_guide_html_css_js.md",
+          "summary": "Специфичный стандарт для Envato. Концепция: жесткая структура START/END и закрывающие теги.",
+          "дружит": ["G3.4"],
+          "конфликтует": ["G3.1", "G3.2"]
+        },
+        {
+          "item_id": 4,
+          "file": "envato-compliance-guide.md",
+          "summary": "Требования к нейтральности и чистоте интеллектуальной собственности.",
+          "дружит": ["G3.3", "G5.3"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G4",
+      "group_name": "guides_frontend_implementation_methodology",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "containerization-guide-2.md",
+          "summary": "Продвинутая контейнеризация JS. Концепция: статические конфиги и полная автономность виджета.",
+          "дружит": ["G4.2", "G5.2", "G7.1"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 2,
+          "file": "containerization-guide.md",
+          "summary": "Базовый стандарт виджетов. Концепция: использование data-ref и data-action для развязки HTML и JS.",
+          "дружит": ["G4.1", "G8.2", "G4.3"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 3,
+          "file": "good-style-methodology.md",
+          "summary": "Манифест качественного Vanilla кода. Концепция: State Machine, безопасность и отсутствие сторонних фреймворков.",
+          "дружит": ["G4.1", "G4.2", "G7.1", "G5.3", "G1.1", "G3.1"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G5",
+      "group_name": "guides_performance_and_security",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "js-performance optimization-base-guide.md",
+          "summary": "Оптимизация критического пути рендеринга. Концепция: минимизация Reflow и Repaint.",
+          "дружит": ["G5.2", "G4.3", "G8.2"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 2,
+          "file": "js-performance optimization-pro-guide.md",
+          "summary": "Профессиональный уровень: Long Tasks, Web Workers и PerformanceObserver.",
+          "дружит": ["G5.1", "G4.1", "G7.2"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 3,
+          "file": "js-security-guide.md",
+          "summary": "Полный справочник по кибербезопасности фронтенда. Концепция: защита от XSS, CSRF и Prototype Pollution.",
+          "дружит": ["G4.3", "G3.4", "G7.1"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G6",
+      "group_name": "guides_project_metadata_index",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "readme.md",
+          "summary": "Главная точка входа, описывающая иерархию и цели всех руководств.",
+          "дружит": ["G2.7", "G7.1", "G4.3"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G7",
+      "group_name": "guides_software_architecture_patterns",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "DESIGN_SOFTWARE_GUIDE_ASGUARD01.md",
+          "summary": "Корпоративный стандарт проектирования систем. Концепция: SOLID, Clean Architecture и стабильность.",
+          "дружит": ["G7.2", "G4.3", "G3.1", "G6.1"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 2,
+          "file": "sys_standarts_full_guide.md",
+          "summary": "Расширенный справочник паттернов (GoF, CQRS, Event Sourcing).",
+          "дружит": ["G7.1", "G5.2", "G3.2"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G8",
+      "group_name": "guides_systematic_refactoring_strategies",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "css_refactoring_id_to_class_guide.md",
+          "summary": "Методика избавления от ID в стилях без поломки JS-логики.",
+          "дружит": ["G2.3", "G2.6", "G8.2"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 2,
+          "file": "refactoring_guide.md",
+          "summary": "Пошаговый процесс трансформации компонента (Account Tab case study).",
+          "дружит": ["G8.3", "G4.2", "G2.4", "G5.1"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 3,
+          "file": "refactoring_plan_guide.md",
+          "summary": "Стандарт JSON-документирования изменений. Концепция: аудит перед исполнением.",
+          "дружит": ["G8.2", "G7.1", "G4.3"],
+          "конфликтует": []
+        }
+      ]
+    },
+    {
+      "group_id": "G9",
+      "group_name": "guides_visual_ux_guidelines",
+      "items": [
+        {
+          "item_id": 1,
+          "file": "UI-UX-Web-Development-Guide.md",
+          "summary": "Общие стандарты Mobile-first, микро-взаимодействий и доступности.",
+          "дружит": ["G9.2", "G1.1", "G4.3"],
+          "конфликтует": []
+        },
+        {
+          "item_id": 2,
+          "file": "web-color-guide.md",
+          "summary": "Математическая теория цвета и контрастность. Концепция: визуальная гармония по правилу 60-30-10.",
+          "дружит": ["G9.1", "G1.1", "G2.5"],
+          "конфликтует": []
+        }
+      ]
+    }
+  ]
+}
