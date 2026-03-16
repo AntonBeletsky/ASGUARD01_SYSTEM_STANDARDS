@@ -1,0 +1,821 @@
+// ============================================================================
+// PRACTICAL COMPONENT SELECTOR MAP EXAMPLES
+// ============================================================================
+
+// EXAMPLE 1: SIMPLE BUTTON COMPONENT
+// ============================================================================
+// components/Button/component.selectors.json
+
+{
+  "componentName": "Button",
+  "version": "2.1.0",
+  "lastModified": "2024-03-16T10:30:00Z",
+  "modifiedBy": "claude-ai-v1",
+
+  "selectors": {
+    "root": {
+      "selector": ".button",
+      "type": "class",
+      "element": "button",
+      "required": true,
+      "usedIn": {
+        "css": ["Button.css:1"],
+        "js": ["Button.js:12"],
+        "html": ["Button.html:1"]
+      }
+    },
+    "icon": {
+      "selector": ".button__icon",
+      "type": "class",
+      "parent": ".button",
+      "usedIn": {
+        "css": ["Button.css:28"],
+        "js": ["Button.js:18"],
+        "html": ["Button.html:3"]
+      }
+    },
+    "text": {
+      "selector": ".button__text",
+      "type": "class",
+      "parent": ".button",
+      "usedIn": {
+        "css": ["Button.css:42"],
+        "js": ["Button.js:55"],
+        "html": ["Button.html:4"]
+      }
+    },
+    "variantPrimary": {
+      "selector": ".button--primary",
+      "type": "modifier",
+      "appliedTo": ".button",
+      "usedIn": {
+        "css": ["Button.css:50"],
+        "js": null,
+        "html": ["Button.html:1"]
+      }
+    },
+    "disabled": {
+      "selector": ".button--disabled",
+      "type": "state",
+      "appliedTo": ".button",
+      "altSelector": "button:disabled",
+      "usedIn": {
+        "css": ["Button.css:78"],
+        "js": ["Button.js:92"],
+        "html": null
+      }
+    },
+    "loading": {
+      "selector": ".button--loading",
+      "type": "state",
+      "appliedTo": ".button",
+      "usedIn": {
+        "css": ["Button.css:120"],
+        "js": ["Button.js:88"],
+        "html": null
+      }
+    }
+  },
+
+  "dataAttributes": {
+    "buttonId": {
+      "attribute": "data-button-id",
+      "element": ".button",
+      "examples": ["submit-btn", "close-btn"],
+      "usedIn": {
+        "js": ["Button.js:22"],
+        "html": ["Button.html:1"]
+      }
+    },
+    "action": {
+      "attribute": "data-action",
+      "element": ".button",
+      "examples": ["submit", "cancel", "delete"],
+      "usedIn": {
+        "js": ["App.js:42"],
+        "html": ["Button.html:1"]
+      }
+    }
+  },
+
+  "ariaAttributes": {
+    "label": {
+      "attribute": "aria-label",
+      "element": ".button",
+      "required": true,
+      "usedIn": {
+        "js": ["Button.js:25"],
+        "html": ["Button.html:2"]
+      }
+    },
+    "busy": {
+      "attribute": "aria-busy",
+      "element": ".button",
+      "syncWith": ".button--loading",
+      "usedIn": {
+        "js": ["Button.js:89"]
+      }
+    }
+  },
+
+  "cssVariables": {
+    "primaryBg": {
+      "variable": "--button-primary-bg",
+      "defaultValue": "#007bff",
+      "usedIn": {
+        "css": ["Button.css:50"]
+      }
+    },
+    "padding": {
+      "variable": "--button-padding",
+      "defaultValue": "12px 24px",
+      "usedIn": {
+        "css": ["Button.css:8"]
+      }
+    }
+  },
+
+  "jsVariables": {
+    "element": {
+      "variable": "this.element",
+      "type": "HTMLElement",
+      "description": "Button DOM element reference",
+      "usedIn": ["Button.js:5", "Button.js:42"]
+    },
+    "isDisabled": {
+      "variable": "this.isDisabled",
+      "type": "boolean",
+      "default": false,
+      "usedIn": ["Button.js:8", "Button.js:92"]
+    }
+  },
+
+  "methods": {
+    "constructor": {
+      "signature": "constructor(element: HTMLElement)",
+      "returns": "void",
+      "usedIn": ["Button.js:4"]
+    },
+    "disable": {
+      "signature": "disable(): void",
+      "modifies": [".button--disabled", "aria-disabled"],
+      "usedIn": ["App.js:55"]
+    },
+    "enable": {
+      "signature": "enable(): void",
+      "modifies": [".button--disabled", "aria-disabled"],
+      "usedIn": ["App.js:62"]
+    },
+    "setLoading": {
+      "signature": "setLoading(isLoading: boolean): void",
+      "modifies": [".button--loading", "aria-busy"],
+      "usedIn": ["App.js:75"]
+    }
+  },
+
+  "events": {
+    "clicked": {
+      "eventName": "button:clicked",
+      "emittedBy": "Button.js:35",
+      "listenedBy": ["App.js:42"],
+      "payload": {
+        "buttonId": "string",
+        "timestamp": "number"
+      }
+    }
+  },
+
+  "validationRules": [
+    {
+      "rule": "selector-in-all-layers",
+      "check": ".button must be in CSS, JS, and HTML"
+    },
+    {
+      "rule": "bem-consistency",
+      "check": "All children must follow .button__{elementName} format"
+    },
+    {
+      "rule": "aria-sync",
+      "check": "aria-disabled must match .button--disabled state"
+    }
+  ]
+}
+
+
+// EXAMPLE 2: COMPLEX INPUT WITH VALIDATION
+// ============================================================================
+// components/Input/component.selectors.json
+
+{
+  "componentName": "Input",
+  "version": "1.5.0",
+  "lastModified": "2024-03-15T14:22:00Z",
+
+  "selectors": {
+    "wrapper": {
+      "selector": ".input",
+      "type": "class",
+      "element": "div",
+      "description": "Input component wrapper",
+      "usedIn": {
+        "css": ["Input.css:1"],
+        "js": ["Input.js:8"],
+        "html": ["Input.html:1"]
+      }
+    },
+    "label": {
+      "selector": ".input__label",
+      "type": "class",
+      "parent": ".input",
+      "usedIn": {
+        "css": ["Input.css:20"],
+        "js": null,
+        "html": ["Input.html:2"]
+      }
+    },
+    "field": {
+      "selector": ".input__field",
+      "type": "class",
+      "element": "input",
+      "parent": ".input",
+      "description": "The actual input element",
+      "usedIn": {
+        "css": ["Input.css:35"],
+        "js": ["Input.js:15", "Input.js:42"],
+        "html": ["Input.html:3"]
+      }
+    },
+    "hint": {
+      "selector": ".input__hint",
+      "type": "class",
+      "parent": ".input",
+      "usedIn": {
+        "css": ["Input.css:80"],
+        "js": null,
+        "html": ["Input.html:4"]
+      }
+    },
+    "error": {
+      "selector": ".input__error",
+      "type": "class",
+      "parent": ".input",
+      "description": "Error message container",
+      "usedIn": {
+        "css": ["Input.css:95"],
+        "js": ["Input.js:65", "Input.js:88"],
+        "html": ["Input.html:5"]
+      }
+    },
+    "fieldError": {
+      "selector": ".input__field--error",
+      "type": "state",
+      "appliedTo": ".input__field",
+      "usedIn": {
+        "css": ["Input.css:105"],
+        "js": ["Input.js:85"],
+        "html": null
+      }
+    },
+    "wrapperError": {
+      "selector": ".input--error",
+      "type": "state",
+      "appliedTo": ".input",
+      "description": "Error state on wrapper",
+      "usedIn": {
+        "css": ["Input.css:98"],
+        "js": ["Input.js:82"],
+        "html": null
+      }
+    },
+    "disabled": {
+      "selector": ".input--disabled",
+      "type": "state",
+      "appliedTo": ".input",
+      "usedIn": {
+        "css": ["Input.css:110"],
+        "js": ["Input.js:120"],
+        "html": null
+      }
+    }
+  },
+
+  "dataAttributes": {
+    "inputId": {
+      "attribute": "data-input-id",
+      "element": ".input__field",
+      "examples": ["email-input", "name-input"],
+      "usedIn": {
+        "js": ["Input.js:22"],
+        "html": ["Input.html:3"]
+      }
+    },
+    "validators": {
+      "attribute": "data-validators",
+      "element": ".input__field",
+      "examples": ["required,email,minLength:3"],
+      "usedIn": {
+        "js": ["Input.js:28"],
+        "html": ["Input.html:3"]
+      }
+    }
+  },
+
+  "ariaAttributes": {
+    "label": {
+      "attribute": "aria-label",
+      "element": ".input__field",
+      "usedIn": {
+        "html": ["Input.html:3"]
+      }
+    },
+    "describedBy": {
+      "attribute": "aria-describedby",
+      "element": ".input__field",
+      "referencesIds": ["input-hint", "input-error"],
+      "usedIn": {
+        "html": ["Input.html:3"]
+      }
+    },
+    "invalid": {
+      "attribute": "aria-invalid",
+      "element": ".input__field",
+      "syncWith": ".input__field--error",
+      "values": ["true", "false"],
+      "usedIn": {
+        "js": ["Input.js:80"]
+      }
+    }
+  },
+
+  "cssVariables": {
+    "borderColor": {
+      "variable": "--input-border-color",
+      "defaultValue": "#e0e0e0",
+      "usedIn": {
+        "css": ["Input.css:35"]
+      }
+    },
+    "focusColor": {
+      "variable": "--input-focus-color",
+      "defaultValue": "#007bff",
+      "usedIn": {
+        "css": ["Input.css:50"]
+      }
+    },
+    "errorColor": {
+      "variable": "--input-error-color",
+      "defaultValue": "#dc3545",
+      "usedIn": {
+        "css": ["Input.css:105"]
+      }
+    }
+  },
+
+  "jsVariables": {
+    "element": {
+      "variable": "this.element",
+      "type": "HTMLElement",
+      "description": "Input field element",
+      "usedIn": ["Input.js:6"]
+    },
+    "wrapper": {
+      "variable": "this.wrapper",
+      "type": "HTMLElement",
+      "description": "Input wrapper element",
+      "usedIn": ["Input.js:7", "Input.js:82"]
+    },
+    "errorElement": {
+      "variable": "this.errorElement",
+      "type": "HTMLElement|null",
+      "description": "Error message container",
+      "usedIn": ["Input.js:9", "Input.js:85"]
+    },
+    "value": {
+      "variable": "this.value",
+      "type": "string",
+      "description": "Current input value",
+      "usedIn": ["Input.js:10", "Input.js:42"]
+    },
+    "validators": {
+      "variable": "this.validators",
+      "type": "Function[]",
+      "description": "Validation functions",
+      "usedIn": ["Input.js:11", "Input.js:55"]
+    }
+  },
+
+  "methods": {
+    "constructor": {
+      "signature": "constructor(element: HTMLElement)",
+      "usedIn": ["Input.js:5"]
+    },
+    "init": {
+      "signature": "init(): void",
+      "setupListeners": [
+        "input event on .input__field",
+        "blur event on .input__field"
+      ],
+      "usedIn": ["Input.js:15"]
+    },
+    "validate": {
+      "signature": "validate(): boolean",
+      "returns": "true if valid, false otherwise",
+      "callsValidators": true,
+      "modifies": [".input--error", ".input__field--error", "aria-invalid"],
+      "usedIn": ["Input.js:45", "Input.js:120"]
+    },
+    "setError": {
+      "signature": "setError(message: string): void",
+      "modifies": [
+        ".input--error (added to wrapper)",
+        ".input__field--error (added to field)",
+        "aria-invalid (set to true)",
+        ".input__error (text updated)"
+      ],
+      "usedIn": ["Input.js:65"]
+    },
+    "clearError": {
+      "signature": "clearError(): void",
+      "modifies": [
+        ".input--error (removed)",
+        ".input__field--error (removed)",
+        "aria-invalid (set to false)",
+        ".input__error (text cleared)"
+      ],
+      "usedIn": ["Input.js:78"]
+    },
+    "getValue": {
+      "signature": "getValue(): string",
+      "usedIn": ["Input.js:95"]
+    },
+    "setValue": {
+      "signature": "setValue(value: string): void",
+      "modifies": ["input value", "this.value"],
+      "usedIn": ["Input.js:100"]
+    }
+  },
+
+  "events": {
+    "valid": {
+      "eventName": "input:valid",
+      "emittedBy": "validate() when valid",
+      "payload": {
+        "inputId": "string",
+        "value": "string"
+      },
+      "listenedBy": ["App.js:50"]
+    },
+    "invalid": {
+      "eventName": "input:invalid",
+      "emittedBy": "validate() when invalid",
+      "payload": {
+        "inputId": "string",
+        "message": "string",
+        "value": "string"
+      },
+      "listenedBy": ["App.js:55"]
+    }
+  },
+
+  "criticalSyncs": [
+    {
+      "name": "Error state sync",
+      "conditions": {
+        "cssClass": ".input--error",
+        "fieldClass": ".input__field--error",
+        "ariaAttribute": "aria-invalid=true",
+        "errorMessage": "displayed in .input__error"
+      },
+      "mustAllBeTrue": "when invalid"
+    },
+    {
+      "name": "Disabled state sync",
+      "conditions": {
+        "cssClass": ".input--disabled",
+        "inputAttribute": "disabled",
+        "ariaAttribute": "aria-disabled=true"
+      },
+      "mustAllBeTrue": "when disabled"
+    }
+  ]
+}
+
+
+// EXAMPLE 3: MODAL WITH COMPLEX INTERACTIONS
+// ============================================================================
+// components/Modal/component.selectors.json
+
+{
+  "componentName": "Modal",
+  "version": "2.0.0",
+  "lastModified": "2024-03-14T16:45:00Z",
+
+  "selectors": {
+    "root": {
+      "selector": ".modal",
+      "type": "class",
+      "element": "div",
+      "role": "dialog",
+      "usedIn": {
+        "css": ["Modal.css:1"],
+        "js": ["Modal.js:12"],
+        "html": ["Modal.html:1"]
+      }
+    },
+    "overlay": {
+      "selector": ".modal__overlay",
+      "type": "class",
+      "parent": ".modal",
+      "description": "Semi-transparent backdrop",
+      "usedIn": {
+        "css": ["Modal.css:28"],
+        "js": ["Modal.js:18"],
+        "html": ["Modal.html:2"]
+      }
+    },
+    "content": {
+      "selector": ".modal__content",
+      "type": "class",
+      "parent": ".modal",
+      "description": "Main content container",
+      "usedIn": {
+        "css": ["Modal.css:42"],
+        "js": ["Modal.js:20"],
+        "html": ["Modal.html:3"]
+      }
+    },
+    "closeBtn": {
+      "selector": ".modal__close",
+      "type": "class",
+      "parent": ".modal__content",
+      "description": "Close button",
+      "usedIn": {
+        "css": ["Modal.css:55"],
+        "js": ["Modal.js:22"],
+        "html": ["Modal.html:4"]
+      }
+    },
+    "body": {
+      "selector": ".modal__body",
+      "type": "class",
+      "parent": ".modal__content",
+      "description": "Content body",
+      "usedIn": {
+        "css": ["Modal.css:70"],
+        "js": ["Modal.js:25"],
+        "html": ["Modal.html:5"]
+      }
+    },
+    "footer": {
+      "selector": ".modal__footer",
+      "type": "class",
+      "parent": ".modal__content",
+      "description": "Actions footer",
+      "usedIn": {
+        "css": ["Modal.css:82"],
+        "js": null,
+        "html": ["Modal.html:8"]
+      }
+    },
+    "open": {
+      "selector": ".modal--open",
+      "type": "state",
+      "appliedTo": ".modal",
+      "description": "Modal visible state",
+      "usedIn": {
+        "css": ["Modal.css:15"],
+        "js": ["Modal.js:40", "Modal.js:65"],
+        "html": null
+      }
+    },
+    "animated": {
+      "selector": ".modal--animated",
+      "type": "state",
+      "appliedTo": ".modal",
+      "description": "Transition animation state",
+      "usedIn": {
+        "css": ["Modal.css:22"],
+        "js": ["Modal.js:48"],
+        "html": null
+      }
+    }
+  },
+
+  "dataAttributes": {
+    "modalId": {
+      "attribute": "data-modal-id",
+      "element": ".modal",
+      "examples": ["modal-1", "confirm-dialog"],
+      "usedIn": {
+        "js": ["Modal.js:28"],
+        "html": ["Modal.html:1"]
+      }
+    },
+    "closeButton": {
+      "attribute": "data-modal-close",
+      "element": "button",
+      "role": "trigger for modal close",
+      "usedIn": {
+        "js": ["Modal.js:30"],
+        "html": ["Modal.html:4", "Modal.html:12"]
+      }
+    },
+    "openTrigger": {
+      "attribute": "data-modal-open",
+      "element": "button",
+      "value": "modal-1",
+      "role": "trigger for modal open",
+      "usedIn": {
+        "js": ["Modal.js:32"],
+        "html": ["Modal.html:20"]
+      }
+    }
+  },
+
+  "ariaAttributes": {
+    "role": {
+      "attribute": "role",
+      "element": ".modal",
+      "value": "dialog",
+      "required": true,
+      "usedIn": {
+        "html": ["Modal.html:1"]
+      }
+    },
+    "modal": {
+      "attribute": "aria-modal",
+      "element": ".modal",
+      "value": "true",
+      "required": true,
+      "usedIn": {
+        "html": ["Modal.html:1"]
+      }
+    },
+    "hidden": {
+      "attribute": "aria-hidden",
+      "element": ".modal",
+      "values": ["true", "false"],
+      "syncWith": ".modal--open",
+      "description": "true when closed, false when open",
+      "usedIn": {
+        "js": ["Modal.js:35"],
+        "html": ["Modal.html:1"]
+      }
+    },
+    "labelledBy": {
+      "attribute": "aria-labelledby",
+      "element": ".modal",
+      "referencesId": "modal-title",
+      "usedIn": {
+        "html": ["Modal.html:1"]
+      }
+    }
+  },
+
+  "jsVariables": {
+    "element": {
+      "variable": "this.element",
+      "type": "HTMLElement",
+      "usedIn": ["Modal.js:6"]
+    },
+    "isOpen": {
+      "variable": "this.isOpen",
+      "type": "boolean",
+      "default": false,
+      "usedIn": ["Modal.js:8"]
+    },
+    "overlay": {
+      "variable": "this.overlay",
+      "type": "HTMLElement",
+      "usedIn": ["Modal.js:9"]
+    },
+    "content": {
+      "variable": "this.content",
+      "type": "HTMLElement",
+      "usedIn": ["Modal.js:10"]
+    },
+    "closeButton": {
+      "variable": "this.closeButton",
+      "type": "HTMLElement",
+      "usedIn": ["Modal.js:11"]
+    },
+    "listeners": {
+      "variable": "this.unlisten*",
+      "type": "Function[]",
+      "examples": [
+        "this.unlistenClose",
+        "this.unlistenOverlay",
+        "this.unlistenKeyboard"
+      ],
+      "usedIn": ["Modal.js:15-25"]
+    }
+  },
+
+  "methods": {
+    "constructor": {
+      "signature": "constructor(element: HTMLElement)",
+      "queries": [".modal", ".modal__overlay", ".modal__content"],
+      "usedIn": ["Modal.js:5"]
+    },
+    "init": {
+      "signature": "init(): void",
+      "setupListeners": [
+        "click on .modal__close",
+        "click on .modal__overlay",
+        "keydown Escape on document"
+      ],
+      "listenEvents": "modal:open-request",
+      "usedIn": ["Modal.js:20"]
+    },
+    "open": {
+      "signature": "open(): void",
+      "modifies": [
+        ".modal--open (add)",
+        ".modal--animated (add)",
+        "aria-hidden (false)",
+        "body overflow (hidden)"
+      ],
+      "emits": "modal:opened",
+      "usedIn": ["Modal.js:40"]
+    },
+    "close": {
+      "signature": "close(): void",
+      "modifies": [
+        ".modal--animated (remove)",
+        ".modal--open (remove)",
+        "aria-hidden (true)",
+        "body overflow (auto)"
+      ],
+      "emits": "modal:closed",
+      "usedIn": ["Modal.js:65"]
+    },
+    "setContent": {
+      "signature": "setContent(html: string): void",
+      "modifies": ".modal__body innerHTML",
+      "usedIn": ["Modal.js:90"]
+    }
+  },
+
+  "events": {
+    "opened": {
+      "eventName": "modal:opened",
+      "emittedBy": "open()",
+      "payload": {
+        "modalId": "string",
+        "timestamp": "number"
+      },
+      "listenedBy": ["App.js:100"]
+    },
+    "closed": {
+      "eventName": "modal:closed",
+      "emittedBy": "close()",
+      "payload": {
+        "modalId": "string"
+      },
+      "listenedBy": ["App.js:108"]
+    },
+    "openRequest": {
+      "eventName": "modal:open-request",
+      "emittedBy": "external triggers",
+      "listenedBy": ["Modal.js:32"],
+      "payload": {
+        "modalId": "string"
+      }
+    }
+  },
+
+  "criticalBehaviors": [
+    {
+      "name": "Open/Close state",
+      "sequence": [
+        "user clicks .modal__close or .modal__overlay",
+        "close() called",
+        ".modal--animated removed",
+        "setTimeout 300ms",
+        ".modal--open removed",
+        "aria-hidden set to true",
+        "body overflow reset",
+        "modal:closed event emitted"
+      ]
+    },
+    {
+      "name": "Keyboard handling",
+      "sequence": [
+        "user presses Escape key",
+        "if this.isOpen === true",
+        "close() called"
+      ]
+    },
+    {
+      "name": "Focus management",
+      "sequence": [
+        "modal opened",
+        "focus moved to .modal__content",
+        "user navigates with Tab",
+        "focus stays within modal",
+        "modal closed",
+        "focus returned to trigger element"
+      ]
+    }
+  ]
+}
