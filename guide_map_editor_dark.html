@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide Map Editor — Asguard01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+:root {
+  --bg-void:        #0a0b0d;
+  --bg-base:        #0f1114;
+  --bg-panel:       #161920;
+  --bg-card:        #1c2029;
+  --bg-hover:       #222835;
+  --bg-active:      #262d3a;
+  --border-dim:     #2a2f3d;
+  --border-mid:     #363d52;
+  --border-bright:  #4a5370;
+  --accent-primary: #4f8ef7;
+  --accent-hot:     #f74f7a;
+  --accent-warm:    #f7a94f;
+  --accent-cool:    #4ff7b8;
+  --accent-purple:  #a04ff7;
+  --text-primary:   #e8ecf5;
+  --text-secondary: #8b93a8;
+  --text-dim:       #545c72;
+  --text-link:      #4f8ef7;
+  --radius-sm:      4px;
+  --radius-md:      8px;
+  --radius-lg:      12px;
+  --font-mono:      'JetBrains Mono', monospace;
+  --font-main:      'Onest', sans-serif;
+  --transition:     0.18s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
+
+/* === LAYOUT === */
+.app-shell {
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  grid-template-columns: 280px 1fr 360px;
+  grid-template-areas:
+    "topbar topbar topbar"
+    "sidebar editor inspector";
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* === TOPBAR === */
+.topbar {
+  grid-area: topbar;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 16px;
+  position: relative;
+  z-index: 100;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 24px;
+}
+
+.topbar-logo {
+  width: 28px; height: 28px;
+  background: var(--accent-primary);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bg-void);
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.topbar-subtitle {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+.topbar-divider {
+  width: 1px; height: 28px;
+  background: var(--border-dim);
+  margin: 0 16px;
+  flex-shrink: 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar-stats {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.stat-chip strong {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+/* === BTN SYSTEM === */
+.btn-tool {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  line-height: 1;
+}
+.btn-tool:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-bright); }
+.btn-tool.btn-primary-tool { background: var(--accent-primary); border-color: var(--accent-primary); color: #fff; }
+.btn-tool.btn-primary-tool:hover { background: #6ba3f9; border-color: #6ba3f9; }
+.btn-tool.btn-danger-tool { border-color: var(--accent-hot); color: var(--accent-hot); }
+.btn-tool.btn-danger-tool:hover { background: rgba(247,79,122,0.12); }
+.btn-tool.btn-success-tool { border-color: var(--accent-cool); color: var(--accent-cool); }
+.btn-tool.btn-success-tool:hover { background: rgba(79,247,184,0.12); }
+.btn-tool i { font-size: 13px; }
+
+.btn-icon {
+  width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.btn-icon:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-dim); }
+.btn-icon.danger:hover { color: var(--accent-hot); border-color: var(--accent-hot); background: rgba(247,79,122,0.08); }
+.btn-icon i { font-size: 13px; }
+
+/* === SIDEBAR === */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-dim);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.sidebar-search {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.input-search {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px 6px 30px;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 12px;
+  outline: none;
+  transition: border-color var(--transition);
+  position: relative;
+}
+.input-search:focus { border-color: var(--accent-primary); }
+.search-wrap { position: relative; }
+.search-wrap .bi { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 12px; pointer-events: none; }
+
+.sidebar-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+/* === TREE NODES === */
+.tree-group {
+  margin-bottom: 2px;
+}
+
+.tree-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 8px 6px 12px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background var(--transition);
+  user-select: none;
+}
+.tree-group-header:hover { background: var(--bg-hover); }
+.tree-group-header.active { background: var(--bg-active); }
+
+.tree-group-toggle {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim);
+  font-size: 10px;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+  margin-right: 6px;
+}
+.tree-group-toggle.open { transform: rotate(90deg); }
+
+.tree-group-icon {
+  width: 18px; height: 18px;
+  background: var(--bg-active);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--accent-primary);
+  margin-right: 8px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.tree-group-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-group-count {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  background: var(--bg-card);
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-right: 4px;
+}
+
+.tree-group-actions { display: none; gap: 2px; }
+.tree-group-header:hover .tree-group-actions { display: flex; }
+
+.tree-items {
+  display: none;
+  padding-left: 0;
+}
+.tree-items.open { display: block; }
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 8px 5px 44px;
+  cursor: pointer;
+  transition: background var(--transition);
+  border-left: 2px solid transparent;
+  position: relative;
+}
+.tree-item:hover { background: var(--bg-hover); }
+.tree-item.selected {
+  background: rgba(79, 142, 247, 0.1);
+  border-left-color: var(--accent-primary);
+}
+
+.tree-item-id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  min-width: 28px;
+  margin-right: 8px;
+}
+
+.tree-item-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tree-item.selected .tree-item-name { color: var(--text-primary); }
+
+.tree-item-links {
+  display: flex;
+  gap: 4px;
+  margin-right: 4px;
+}
+.link-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.link-dot.friend { background: var(--accent-cool); }
+.link-dot.conflict { background: var(--accent-hot); }
+
+.tree-item-actions { display: none; gap: 2px; }
+.tree-item:hover .tree-item-actions { display: flex; }
+
+/* === EDITOR PANEL === */
+.editor-panel {
+  grid-area: editor;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.editor-toolbar {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--bg-panel);
+}
+
+.editor-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-right: auto;
+}
+.editor-breadcrumb .crumb { color: var(--text-secondary); }
+.editor-breadcrumb .crumb.active { color: var(--text-primary); font-weight: 500; }
+.editor-breadcrumb .sep { color: var(--text-dim); }
+
+.editor-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* === EMPTY STATE === */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.empty-state-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+.empty-state h5 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.empty-state p {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* === FORM ELEMENTS === */
+.field-group { margin-bottom: 20px; }
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 7px;
+}
+.field-label .badge-required {
+  background: rgba(247, 79, 122, 0.2);
+  color: var(--accent-hot);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.input-field {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.input-field:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.12);
+}
+.input-field.mono { font-family: var(--font-mono); font-size: 12px; }
+
+textarea.input-field {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.input-field::placeholder { color: var(--text-dim); }
+
+/* === SECTION CARD === */
+.section-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-dim);
+  background: var(--bg-panel);
+}
+
+.section-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.section-card-body { padding: 16px; }
+
+/* === LINKS EDITOR === */
+.links-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.link-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+.link-entry:hover { border-color: var(--border-bright); }
+.link-entry.type-friend { border-left: 3px solid var(--accent-cool); }
+.link-entry.type-conflict { border-left: 3px solid var(--accent-hot); }
+
+.link-entry-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 48px;
+}
+
+.link-entry-desc {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.link-type-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.badge-friend { background: rgba(79, 247, 184, 0.15); color: var(--accent-cool); }
+.badge-conflict { background: rgba(247, 79, 122, 0.15); color: var(--accent-hot); }
+
+/* === LINKS MODAL === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+
+.modal-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  width: 680px;
+  max-width: 95vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+.modal-title { font-size: 15px; font-weight: 600; flex: 1; }
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-dim);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* === LINKS SELECTOR === */
+.links-selector-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 3px;
+  background: var(--bg-base);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-dim);
+}
+.links-tab {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all var(--transition);
+}
+.links-tab.active { background: var(--bg-card); color: var(--text-primary); }
+.links-tab.tab-friend.active { color: var(--accent-cool); }
+.links-tab.tab-conflict.active { color: var(--accent-hot); }
+
+.links-all-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.link-checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+.link-checkbox-item:hover { border-color: var(--border-bright); background: var(--bg-hover); }
+.link-checkbox-item input[type="checkbox"] { accent-color: var(--accent-primary); margin-top: 1px; cursor: pointer; flex-shrink: 0; }
+.link-checkbox-item.checked-friend { border-color: rgba(79, 247, 184, 0.4); background: rgba(79, 247, 184, 0.05); }
+.link-checkbox-item.checked-conflict { border-color: rgba(247, 79, 122, 0.4); background: rgba(247, 79, 122, 0.05); }
+
+.link-cb-id { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--text-primary); }
+.link-cb-file { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-cb-group { font-size: 10px; color: var(--text-dim); opacity: 0.6; }
+
+/* === INSPECTOR === */
+.inspector {
+  grid-area: inspector;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border-dim);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.inspector-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.inspector-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* === RELATION GRAPH === */
+.relation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.relation-item:hover { border-color: var(--border-bright); }
+.relation-item.friend { border-left: 3px solid var(--accent-cool); }
+.relation-item.conflict { border-left: 3px solid var(--accent-hot); }
+
+.relation-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.relation-icon.friend { color: var(--accent-cool); }
+.relation-icon.conflict { color: var(--accent-hot); }
+
+.relation-content { flex: 1; overflow: hidden; }
+.relation-id { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--text-primary); }
+.relation-file { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* === JSON PREVIEW === */
+.json-preview {
+  background: var(--bg-void);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+/* === TOAST === */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast-msg {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--text-primary);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 0.2s ease;
+  pointer-events: auto;
+  max-width: 320px;
+}
+.toast-msg.success { border-left: 3px solid var(--accent-cool); }
+.toast-msg.error { border-left: 3px solid var(--accent-hot); }
+.toast-msg.info { border-left: 3px solid var(--accent-primary); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; } }
+@keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+
+/* === HIGHLIGHT === */
+.highlight-friend { color: var(--accent-cool); }
+.highlight-conflict { color: var(--accent-hot); }
+.highlight-id { color: var(--accent-primary); font-family: var(--font-mono); }
+
+/* === GROUP EDITOR HEADER === */
+.group-edit-banner {
+  background: linear-gradient(135deg, rgba(79,142,247,0.08) 0%, transparent 60%);
+  border: 1px solid rgba(79,142,247,0.2);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.group-edit-id {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  line-height: 1;
+}
+.group-edit-meta { flex: 1; }
+.group-edit-meta h3 { font-size: 16px; font-weight: 600; margin: 0 0 2px; }
+.group-edit-meta p { font-size: 12px; color: var(--text-dim); margin: 0; }
+
+.item-edit-banner {
+  background: linear-gradient(135deg, rgba(79,247,184,0.05) 0%, transparent 60%);
+  border: 1px solid rgba(79,247,184,0.15);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.item-edit-id {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-cool);
+  background: rgba(79,247,184,0.1);
+  border: 1px solid rgba(79,247,184,0.2);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+/* === DIVIDER === */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 16px;
+}
+.section-divider-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.section-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-dim);
+}
+
+/* === PROJECT EDITOR === */
+.project-meta-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+/* TAGS */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.tag-blue { background: rgba(79,142,247,0.15); color: var(--accent-primary); }
+.tag-green { background: rgba(79,247,184,0.15); color: var(--accent-cool); }
+.tag-red { background: rgba(247,79,122,0.15); color: var(--accent-hot); }
+
+/* Collapse icon */
+.collapse-icon { transition: transform 0.2s; }
+[data-collapsed="true"] .collapse-icon { transform: rotate(-90deg); }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ==================== TOPBAR ==================== -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">GM</div>
+      <div>
+        <div class="topbar-title">Guide Map Editor</div>
+        <div class="topbar-subtitle" id="topbar-version">v0.0.0 — не загружено</div>
+      </div>
+    </div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-actions">
+      <label class="btn-tool" title="Загрузить JSON-карту">
+        <i class="bi bi-upload"></i> Загрузить
+        <input type="file" id="file-input" accept=".json" hidden>
+      </label>
+      <button class="btn-tool btn-success-tool" id="btn-export" title="Сохранить карту как JSON">
+        <i class="bi bi-download"></i> Сохранить JSON
+      </button>
+      <div class="topbar-divider"></div>
+      <button class="btn-tool btn-primary-tool" id="btn-add-group" title="Добавить новую группу">
+        <i class="bi bi-folder-plus"></i> Новая группа
+      </button>
+      <button class="btn-tool" id="btn-validate" title="Проверить целостность связей">
+        <i class="bi bi-shield-check"></i> Валидация
+      </button>
+    </div>
+    <div class="topbar-stats">
+      <div class="stat-chip">
+        <i class="bi bi-folder2-open" style="color:var(--accent-primary)"></i>
+        Групп: <strong id="stat-groups">—</strong>
+      </div>
+      <div class="stat-chip">
+        <i class="bi bi-file-text" style="color:var(--accent-cool)"></i>
+        Гайдов: <strong id="stat-items">—</strong>
+      </div>
+      <div class="stat-chip">
+        <i class="bi bi-link-45deg" style="color:var(--accent-warm)"></i>
+        Связей: <strong id="stat-links">—</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== SIDEBAR ==================== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-section-title">Структура карты</span>
+      <button class="btn-icon" id="btn-collapse-all" title="Свернуть всё"><i class="bi bi-chevron-bar-up"></i></button>
+    </div>
+    <div class="sidebar-search">
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input class="input-search" type="text" id="sidebar-search" placeholder="Поиск по названию файла...">
+      </div>
+    </div>
+    <div class="sidebar-tree" id="sidebar-tree">
+      <div class="empty-state" style="height:200px;font-size:12px;gap:8px;">
+        <i class="bi bi-cloud-upload" style="font-size:32px;opacity:.3"></i>
+        <span style="color:var(--text-dim)">Загрузите JSON-карту</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==================== EDITOR ==================== -->
+  <main class="editor-panel">
+    <div class="editor-toolbar">
+      <div class="editor-breadcrumb" id="editor-breadcrumb">
+        <span class="crumb">Guide Map Editor</span>
+      </div>
+      <button class="btn-tool d-none" id="btn-save-item" style="margin-left:auto;">
+        <i class="bi bi-check2"></i> Сохранить
+      </button>
+      <button class="btn-tool btn-danger-tool d-none" id="btn-delete-entity">
+        <i class="bi bi-trash3"></i> Удалить
+      </button>
+    </div>
+    <div class="editor-body" id="editor-body">
+      <div class="empty-state" id="editor-empty">
+        <div class="empty-state-icon"><i class="bi bi-map"></i></div>
+        <h5>Выберите элемент для редактирования</h5>
+        <p>Загрузите карту и выберите группу или гайд из дерева слева</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== INSPECTOR ==================== -->
+  <aside class="inspector">
+    <div class="inspector-header">
+      <div class="sidebar-section-title">Инспектор связей</div>
+      <div id="inspector-item-label" style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono);margin-top:4px;">— нет выбора —</div>
+    </div>
+    <div class="inspector-body" id="inspector-body">
+      <div class="empty-state" style="height:300px;font-size:12px;gap:6px;">
+        <i class="bi bi-diagram-3" style="font-size:28px;opacity:.25"></i>
+        <span style="color:var(--text-dim)">Выберите гайд</span>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ==================== LINKS MODAL ==================== -->
+<div class="modal-overlay" id="links-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <i class="bi bi-diagram-3" style="color:var(--accent-primary);font-size:18px;"></i>
+      <div class="modal-title">Редактор связей — <span id="modal-item-label" style="color:var(--accent-primary);font-family:var(--font-mono)"></span></div>
+      <button class="btn-icon" onclick="closeLinksModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="links-selector-tabs">
+        <button class="links-tab tab-friend active" onclick="switchLinksTab('friend',this)">
+          <i class="bi bi-heart" style="margin-right:4px;"></i>Дружит
+          <span id="modal-count-friend" class="ms-1 tag tag-green">0</span>
+        </button>
+        <button class="links-tab tab-conflict" onclick="switchLinksTab('conflict',this)">
+          <i class="bi bi-x-octagon" style="margin-right:4px;"></i>Конфликтует
+          <span id="modal-count-conflict" class="ms-1 tag tag-red">0</span>
+        </button>
+      </div>
+      <div id="links-checkboxes" class="links-all-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-tool" onclick="closeLinksModal()">Отмена</button>
+      <button class="btn-tool btn-primary-tool" onclick="applyLinksModal()">
+        <i class="bi bi-check2"></i> Применить
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VALIDATION MODAL ==================== -->
+<div class="modal-overlay" id="validate-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <i class="bi bi-shield-check" style="color:var(--accent-cool);font-size:18px;"></i>
+      <div class="modal-title">Валидация карты</div>
+      <button class="btn-icon" onclick="document.getElementById('validate-modal').classList.remove('show')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="validate-body"></div>
+    <div class="modal-footer">
+      <button class="btn-tool btn-primary-tool" onclick="document.getElementById('validate-modal').classList.remove('show')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== JSON PREVIEW MODAL ==================== -->
+<div class="modal-overlay" id="json-modal">
+  <div class="modal-box" style="width:800px;">
+    <div class="modal-header">
+      <i class="bi bi-code-slash" style="color:var(--accent-warm);font-size:18px;"></i>
+      <div class="modal-title">Предпросмотр JSON</div>
+      <button class="btn-icon" onclick="document.getElementById('json-modal').classList.remove('show')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <pre class="json-preview" id="json-preview-content" style="max-height:60vh;"></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-tool" onclick="document.getElementById('json-modal').classList.remove('show')">Закрыть</button>
+      <button class="btn-tool btn-success-tool" onclick="doExport()"><i class="bi bi-download"></i> Скачать</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ================================================================
+//  STATE
+// ================================================================
+let state = {
+  project: '',
+  version: '',
+  structure: []
+};
+
+// Контекст выбранного элемента
+let selectedCtx = null; // { type: 'group'|'item', groupId, itemId }
+
+// Для модала связей
+let modalCtx = null; // { groupId, itemId, type: 'friend'|'conflict' }
+let modalLinkType = 'friend';
+
+// ================================================================
+//  UTILS
+// ================================================================
+function genId(prefix) {
+  return prefix + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+function getItemByRef(ref) {
+  // ref = "G2.3" → group index 2, item index 3
+  const m = ref.match(/^G(\d+)\.(\d+)$/);
+  if (!m) return null;
+  const gIdx = parseInt(m[1]) - 1;
+  const iIdx = parseInt(m[2]) - 1;
+  const g = state.structure[gIdx];
+  if (!g) return null;
+  const item = g.items ? g.items[iIdx] : null;
+  return item ? { group: g, item } : null;
+}
+
+function getRefForItem(groupId, itemId) {
+  const gIdx = state.structure.findIndex(g => g.group_id === groupId);
+  if (gIdx < 0) return null;
+  const g = state.structure[gIdx];
+  const iIdx = g.items.findIndex(it => it.item_id === itemId);
+  if (iIdx < 0) return null;
+  return `G${gIdx + 1}.${iIdx + 1}`;
+}
+
+function getAllItemRefs() {
+  const refs = [];
+  state.structure.forEach((g, gi) => {
+    (g.items || []).forEach((it, ii) => {
+      refs.push({ ref: `G${gi+1}.${ii+1}`, group: g, item: it });
+    });
+  });
+  return refs;
+}
+
+function countStats() {
+  let items = 0, links = 0;
+  state.structure.forEach(g => {
+    (g.items || []).forEach(it => {
+      items++;
+      links += (it['дружит'] || []).length + (it['конфликтует'] || []).length;
+    });
+  });
+  document.getElementById('stat-groups').textContent = state.structure.length;
+  document.getElementById('stat-items').textContent = items;
+  document.getElementById('stat-links').textContent = links;
+  document.getElementById('topbar-version').textContent =
+    (state.project || 'Без названия') + ' — ' + (state.version || 'v?');
+}
+
+// ================================================================
+//  TOAST
+// ================================================================
+function toast(msg, type = 'info') {
+  const icons = { success: 'bi-check-circle', error: 'bi-x-circle', info: 'bi-info-circle' };
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast-msg ${type}`;
+  el.innerHTML = `<i class="bi ${icons[type]}" style="flex-shrink:0"></i> ${msg}`;
+  c.appendChild(el);
+  setTimeout(() => { el.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(() => el.remove(), 300); }, 2800);
+}
+
+// ================================================================
+//  LOAD / EXPORT
+// ================================================================
+document.getElementById('file-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      loadMap(data);
+      toast(`Загружено: ${file.name}`, 'success');
+    } catch(err) {
+      toast('Ошибка парсинга JSON: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  this.value = '';
+});
+
+function loadMap(data) {
+  state.project = data.project || '';
+  state.version = data.version || '';
+  state.structure = data.structure || [];
+  selectedCtx = null;
+  renderSidebar();
+  renderEditorEmpty();
+  renderInspector(null);
+  countStats();
+}
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const json = buildJSON();
+  document.getElementById('json-preview-content').textContent = JSON.stringify(json, null, 2);
+  document.getElementById('json-modal').classList.add('show');
+});
+
+function doExport() {
+  const json = buildJSON();
+  const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = (state.project || 'guides_map').replace(/\s+/g, '_') + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast('JSON сохранён', 'success');
+  document.getElementById('json-modal').classList.remove('show');
+}
+
+function buildJSON() {
+  return {
+    project: state.project,
+    version: state.version,
+    structure: state.structure.map((g, gi) => ({
+      group_id: `G${gi+1}`,
+      group_name: g.group_name,
+      items: (g.items || []).map((it, ii) => ({
+        item_id: ii + 1,
+        file: it.file,
+        summary: it.summary,
+        'дружит': it['дружит'] || [],
+        'конфликтует': it['конфликтует'] || []
+      }))
+    }))
+  };
+}
+
+// Normalize group_ids after any structural change
+function normalizeIds() {
+  state.structure.forEach((g, gi) => {
+    g.group_id = `G${gi+1}`;
+    (g.items || []).forEach((it, ii) => { it.item_id = ii + 1; });
+  });
+}
+
+// ================================================================
+//  SIDEBAR RENDER
+// ================================================================
+function renderSidebar() {
+  const q = (document.getElementById('sidebar-search').value || '').toLowerCase();
+  const tree = document.getElementById('sidebar-tree');
+  if (!state.structure.length) {
+    tree.innerHTML = `<div class="empty-state" style="height:200px;font-size:12px;gap:8px;"><i class="bi bi-cloud-upload" style="font-size:32px;opacity:.3"></i><span style="color:var(--text-dim)">Загрузите JSON-карту</span></div>`;
+    return;
+  }
+  tree.innerHTML = '';
+  state.structure.forEach((g, gi) => {
+    const items = (g.items || []).filter(it => !q || it.file.toLowerCase().includes(q));
+    if (q && !items.length && !g.group_name.toLowerCase().includes(q)) return;
+    const gOpen = true;
+    const groupEl = document.createElement('div');
+    groupEl.className = 'tree-group';
+    const headerEl = document.createElement('div');
+    headerEl.className = 'tree-group-header' + (selectedCtx && selectedCtx.type==='group' && selectedCtx.groupId===g.group_id ? ' active' : '');
+    headerEl.innerHTML = `
+      <span class="tree-group-toggle open bi bi-chevron-right"></span>
+      <span class="tree-group-icon">${g.group_id}</span>
+      <span class="tree-group-name">${g.group_name}</span>
+      <span class="tree-group-count">${(g.items||[]).length}</span>
+      <div class="tree-group-actions">
+        <button class="btn-icon" title="Добавить гайд"><i class="bi bi-file-plus"></i></button>
+        <button class="btn-icon danger" title="Удалить группу"><i class="bi bi-trash3"></i></button>
+      </div>
+    `;
+    const itemsEl = document.createElement('div');
+    itemsEl.className = 'tree-items open';
+
+    // Header click → select group
+    headerEl.addEventListener('click', (e) => {
+      if (e.target.closest('.tree-group-actions')) return;
+      const toggle = headerEl.querySelector('.tree-group-toggle');
+      const isOpen = itemsEl.classList.contains('open');
+      if (isOpen) { itemsEl.classList.remove('open'); toggle.classList.remove('open'); }
+      else { itemsEl.classList.add('open'); toggle.classList.add('open'); }
+      selectGroup(g.group_id);
+    });
+
+    // Group add item
+    headerEl.querySelector('[title="Добавить гайд"]').addEventListener('click', e => {
+      e.stopPropagation();
+      addItem(g.group_id);
+    });
+    // Group delete
+    headerEl.querySelector('[title="Удалить группу"]').addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm(`Удалить группу "${g.group_name}" и все её гайды?`)) deleteGroup(g.group_id);
+    });
+
+    items.forEach((it, ii) => {
+      const friendCount = (it['дружит'] || []).length;
+      const conflictCount = (it['конфликтует'] || []).length;
+      const isSelected = selectedCtx && selectedCtx.type==='item' && selectedCtx.groupId===g.group_id && selectedCtx.itemId===it.item_id;
+      const itemEl = document.createElement('div');
+      itemEl.className = 'tree-item' + (isSelected ? ' selected' : '');
+      itemEl.innerHTML = `
+        <span class="tree-item-id">${g.group_id}.${it.item_id}</span>
+        <span class="tree-item-name">${it.file}</span>
+        <div class="tree-item-links">
+          ${friendCount ? `<span class="link-dot friend" title="${friendCount} связей дружит"></span>` : ''}
+          ${conflictCount ? `<span class="link-dot conflict" title="${conflictCount} конфликтов"></span>` : ''}
+        </div>
+        <div class="tree-item-actions">
+          <button class="btn-icon danger" title="Удалить гайд"><i class="bi bi-trash3"></i></button>
+        </div>
+      `;
+      itemEl.addEventListener('click', (e) => {
+        if (e.target.closest('.tree-item-actions')) return;
+        selectItem(g.group_id, it.item_id);
+      });
+      itemEl.querySelector('[title="Удалить гайд"]').addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm(`Удалить гайд "${it.file}"?`)) deleteItem(g.group_id, it.item_id);
+      });
+      itemsEl.appendChild(itemEl);
+    });
+
+    groupEl.appendChild(headerEl);
+    groupEl.appendChild(itemsEl);
+    tree.appendChild(groupEl);
+  });
+}
+
+document.getElementById('sidebar-search').addEventListener('input', renderSidebar);
+
+document.getElementById('btn-collapse-all').addEventListener('click', () => {
+  document.querySelectorAll('.tree-items').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.tree-group-toggle').forEach(el => el.classList.remove('open'));
+});
+
+// ================================================================
+//  SELECTION
+// ================================================================
+function selectGroup(groupId) {
+  selectedCtx = { type: 'group', groupId };
+  renderSidebar();
+  renderGroupEditor(groupId);
+  renderInspector(null);
+}
+
+function selectItem(groupId, itemId) {
+  selectedCtx = { type: 'item', groupId, itemId };
+  renderSidebar();
+  renderItemEditor(groupId, itemId);
+  renderInspector({ groupId, itemId });
+}
+
+// ================================================================
+//  EDITOR: PROJECT LEVEL (click on topbar logo concept)
+// ================================================================
+document.getElementById('btn-add-group').addEventListener('click', () => {
+  const newGroup = {
+    group_id: '',
+    group_name: 'guides_new_group',
+    items: []
+  };
+  state.structure.push(newGroup);
+  normalizeIds();
+  renderSidebar();
+  countStats();
+  const g = state.structure[state.structure.length - 1];
+  selectGroup(g.group_id);
+  toast('Новая группа создана', 'success');
+});
+
+// ================================================================
+//  EDITOR: GROUP
+// ================================================================
+function renderGroupEditor(groupId) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const body = document.getElementById('editor-body');
+  const bc = document.getElementById('editor-breadcrumb');
+  bc.innerHTML = `<span class="crumb">Карта</span><span class="sep"><i class="bi bi-chevron-right" style="font-size:10px;"></i></span><span class="crumb active">${g.group_id}: ${g.group_name}</span>`;
+  document.getElementById('btn-save-item').classList.remove('d-none');
+  document.getElementById('btn-delete-entity').classList.remove('d-none');
+
+  document.getElementById('btn-save-item').onclick = () => saveGroupEditor(groupId);
+  document.getElementById('btn-delete-entity').onclick = () => { if(confirm('Удалить группу?')) deleteGroup(groupId); };
+
+  body.innerHTML = `
+    <div class="group-edit-banner">
+      <div class="group-edit-id">${g.group_id}</div>
+      <div class="group-edit-meta">
+        <h3>${g.group_name}</h3>
+        <p>${(g.items||[]).length} гайдов в группе</p>
+      </div>
+      <button class="btn-tool btn-primary-tool" onclick="addItem('${groupId}')">
+        <i class="bi bi-file-plus"></i> Добавить гайд
+      </button>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <i class="bi bi-folder2" style="color:var(--accent-primary);font-size:14px;"></i>
+        <span class="section-card-title">Параметры группы</span>
+      </div>
+      <div class="section-card-body">
+        <div class="row g-3">
+          <div class="col-4">
+            <div class="field-group mb-0">
+              <div class="field-label">ID группы</div>
+              <input class="input-field mono" id="ge-id" value="${g.group_id}" readonly style="opacity:.5;cursor:not-allowed;">
+            </div>
+          </div>
+          <div class="col-8">
+            <div class="field-group mb-0">
+              <div class="field-label">Название группы <span class="badge-required">обяз.</span></div>
+              <input class="input-field mono" id="ge-name" value="${g.group_name}" placeholder="guides_group_name">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <div class="section-divider-line"></div>
+      <span class="section-divider-label">Гайды в группе (${(g.items||[]).length})</span>
+      <div class="section-divider-line"></div>
+    </div>
+
+    <div id="group-items-list"></div>
+  `;
+
+  renderGroupItemsList(groupId);
+}
+
+function renderGroupItemsList(groupId) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const container = document.getElementById('group-items-list');
+  if (!container) return;
+  if (!(g.items||[]).length) {
+    container.innerHTML = `<div class="empty-state" style="height:120px;"><i class="bi bi-file-text" style="font-size:28px;opacity:.2"></i><span style="color:var(--text-dim);font-size:12px;">Нет гайдов</span></div>`;
+    return;
+  }
+  container.innerHTML = '';
+  g.items.forEach((it, ii) => {
+    const gIdx = state.structure.indexOf(g);
+    const ref = `G${gIdx+1}.${ii+1}`;
+    const fLen = (it['дружит']||[]).length;
+    const cLen = (it['конфликтует']||[]).length;
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.style.cursor = 'pointer';
+    card.innerHTML = `
+      <div class="section-card-header" style="cursor:pointer;">
+        <span class="highlight-id" style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${ref}</span>
+        <span class="section-card-title ms-2">${it.file}</span>
+        ${fLen ? `<span class="tag tag-green ms-auto"><i class="bi bi-heart"></i> ${fLen}</span>` : ''}
+        ${cLen ? `<span class="tag tag-red ${fLen?'':'ms-auto'}"><i class="bi bi-x-octagon"></i> ${cLen}</span>` : ''}
+        <button class="btn-icon ms-2" title="Редактировать" onclick="event.stopPropagation();selectItem('${g.group_id}',${it.item_id})">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn-icon danger ms-1" title="Удалить" onclick="event.stopPropagation();if(confirm('Удалить?'))deleteItem('${g.group_id}',${it.item_id})">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </div>
+      <div class="section-card-body" style="padding:10px 16px;">
+        <div style="font-size:12px;color:var(--text-dim);">${it.summary || '<em>нет описания</em>'}</div>
+      </div>
+    `;
+    card.addEventListener('click', () => selectItem(g.group_id, it.item_id));
+    container.appendChild(card);
+  });
+}
+
+function saveGroupEditor(groupId) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const nameVal = document.getElementById('ge-name').value.trim();
+  if (!nameVal) { toast('Название группы не может быть пустым', 'error'); return; }
+  g.group_name = nameVal;
+  renderSidebar();
+  countStats();
+  toast('Группа сохранена', 'success');
+}
+
+// ================================================================
+//  EDITOR: ITEM
+// ================================================================
+function renderItemEditor(groupId, itemId) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const it = g.items.find(x => x.item_id === itemId);
+  if (!it) return;
+  const ref = getRefForItem(groupId, itemId) || '—';
+
+  const body = document.getElementById('editor-body');
+  const bc = document.getElementById('editor-breadcrumb');
+  bc.innerHTML = `
+    <span class="crumb" style="cursor:pointer;" onclick="selectGroup('${groupId}')">${g.group_id}</span>
+    <span class="sep"><i class="bi bi-chevron-right" style="font-size:10px;"></i></span>
+    <span class="crumb active">${it.file}</span>
+  `;
+  document.getElementById('btn-save-item').classList.remove('d-none');
+  document.getElementById('btn-delete-entity').classList.remove('d-none');
+  document.getElementById('btn-save-item').onclick = () => saveItemEditor(groupId, itemId);
+  document.getElementById('btn-delete-entity').onclick = () => { if(confirm('Удалить гайд?')) deleteItem(groupId, itemId); };
+
+  const friends = (it['дружит'] || []);
+  const conflicts = (it['конфликтует'] || []);
+
+  body.innerHTML = `
+    <div class="item-edit-banner">
+      <span class="item-edit-id">${ref}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;">${it.file}</div>
+        <div style="font-size:11px;color:var(--text-dim);">${g.group_name}</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <i class="bi bi-file-text" style="color:var(--accent-cool);font-size:14px;"></i>
+        <span class="section-card-title">Основные данные</span>
+      </div>
+      <div class="section-card-body">
+        <div class="field-group">
+          <div class="field-label">Файл <span class="badge-required">обяз.</span></div>
+          <input class="input-field mono" id="ie-file" value="${escAttr(it.file)}" placeholder="guide_name.md">
+        </div>
+        <div class="field-group mb-0">
+          <div class="field-label">Описание / Summary</div>
+          <textarea class="input-field" id="ie-summary" rows="3" placeholder="Краткое описание назначения гайда...">${escHtml(it.summary||'')}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <i class="bi bi-diagram-3" style="color:var(--accent-primary);font-size:14px;"></i>
+        <span class="section-card-title">Связи</span>
+        <button class="btn-tool ms-auto btn-primary-tool" id="btn-open-links-modal">
+          <i class="bi bi-pencil-square"></i> Редактировать связи
+        </button>
+      </div>
+      <div class="section-card-body">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="field-label highlight-friend"><i class="bi bi-heart"></i> Дружит (${friends.length})</div>
+            <div class="links-grid" id="ie-friends-list"></div>
+            ${!friends.length ? `<div style="font-size:11px;color:var(--text-dim);padding:8px 0;">Нет связей</div>` : ''}
+          </div>
+          <div class="col-6">
+            <div class="field-label highlight-conflict"><i class="bi bi-x-octagon"></i> Конфликтует (${conflicts.length})</div>
+            <div class="links-grid" id="ie-conflicts-list"></div>
+            ${!conflicts.length ? `<div style="font-size:11px;color:var(--text-dim);padding:8px 0;">Нет конфликтов</div>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Render friend tags
+  renderLinksList('ie-friends-list', friends, 'friend', groupId, itemId);
+  renderLinksList('ie-conflicts-list', conflicts, 'conflict', groupId, itemId);
+
+  document.getElementById('btn-open-links-modal').addEventListener('click', () => {
+    openLinksModal(groupId, itemId);
+  });
+}
+
+function renderLinksList(containerId, refs, type, groupId, itemId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  refs.forEach(ref => {
+    const resolved = getItemByRef(ref);
+    const el = document.createElement('div');
+    el.className = `link-entry type-${type}`;
+    el.innerHTML = `
+      <span class="link-entry-id">${ref}</span>
+      <span class="link-entry-desc">${resolved ? resolved.item.file : '⚠ не найдено'}</span>
+      <span class="link-type-badge badge-${type}">${type === 'friend' ? 'дружит' : 'конфликт'}</span>
+      <button class="btn-icon danger ms-1" title="Удалить связь" style="width:22px;height:22px;" data-ref="${ref}" data-type="${type}">
+        <i class="bi bi-x" style="font-size:12px;"></i>
+      </button>
+    `;
+    el.querySelector('[title="Удалить связь"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeLinkEntry(groupId, itemId, ref, type);
+    });
+    container.appendChild(el);
+  });
+}
+
+function removeLinkEntry(groupId, itemId, ref, type) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const it = g.items.find(x => x.item_id === itemId);
+  if (!it) return;
+  const key = type === 'friend' ? 'дружит' : 'конфликтует';
+  it[key] = (it[key] || []).filter(r => r !== ref);
+  renderItemEditor(groupId, itemId);
+  renderInspector({ groupId, itemId });
+  countStats();
+  toast(`Связь ${ref} удалена`, 'info');
+}
+
+function saveItemEditor(groupId, itemId) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const it = g.items.find(x => x.item_id === itemId);
+  if (!it) return;
+  const fileVal = document.getElementById('ie-file').value.trim();
+  if (!fileVal) { toast('Имя файла не может быть пустым', 'error'); return; }
+  it.file = fileVal;
+  it.summary = document.getElementById('ie-summary').value.trim();
+  renderSidebar();
+  countStats();
+  toast('Гайд сохранён', 'success');
+}
+
+// ================================================================
+//  EDITOR: EMPTY
+// ================================================================
+function renderEditorEmpty() {
+  document.getElementById('editor-body').innerHTML = `
+    <div class="empty-state" id="editor-empty">
+      <div class="empty-state-icon"><i class="bi bi-map"></i></div>
+      <h5>Выберите элемент для редактирования</h5>
+      <p>Выберите группу или гайд из дерева слева</p>
+    </div>
+  `;
+  document.getElementById('editor-breadcrumb').innerHTML = `<span class="crumb">Guide Map Editor</span>`;
+  document.getElementById('btn-save-item').classList.add('d-none');
+  document.getElementById('btn-delete-entity').classList.add('d-none');
+}
+
+// ================================================================
+//  CRUD
+// ================================================================
+function addItem(groupId) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const newItem = {
+    item_id: (g.items || []).length + 1,
+    file: 'new_guide.md',
+    summary: '',
+    'дружит': [],
+    'конфликтует': []
+  };
+  if (!g.items) g.items = [];
+  g.items.push(newItem);
+  normalizeIds();
+  renderSidebar();
+  countStats();
+  selectItem(groupId, newItem.item_id);
+  toast('Новый гайд добавлен', 'success');
+}
+
+function deleteGroup(groupId) {
+  const idx = state.structure.findIndex(x => x.group_id === groupId);
+  if (idx < 0) return;
+  state.structure.splice(idx, 1);
+  normalizeIds();
+  selectedCtx = null;
+  renderSidebar();
+  renderEditorEmpty();
+  renderInspector(null);
+  countStats();
+  toast('Группа удалена', 'info');
+}
+
+function deleteItem(groupId, itemId) {
+  const g = state.structure.find(x => x.group_id === groupId);
+  if (!g) return;
+  const idx = g.items.findIndex(x => x.item_id === itemId);
+  if (idx < 0) return;
+  g.items.splice(idx, 1);
+  normalizeIds();
+  selectedCtx = { type: 'group', groupId };
+  renderSidebar();
+  renderGroupEditor(groupId);
+  renderInspector(null);
+  countStats();
+  toast('Гайд удалён', 'info');
+}
+
+// ================================================================
+//  INSPECTOR
+// ================================================================
+function renderInspector(ctx) {
+  const body = document.getElementById('inspector-body');
+  const label = document.getElementById('inspector-item-label');
+
+  if (!ctx) {
+    label.textContent = '— нет выбора —';
+    body.innerHTML = `<div class="empty-state" style="height:300px;font-size:12px;gap:6px;"><i class="bi bi-diagram-3" style="font-size:28px;opacity:.25"></i><span style="color:var(--text-dim)">Выберите гайд</span></div>`;
+    return;
+  }
+  const g = state.structure.find(x => x.group_id === ctx.groupId);
+  if (!g) return;
+  const it = g.items ? g.items.find(x => x.item_id === ctx.itemId) : null;
+  if (!it) return;
+  const ref = getRefForItem(ctx.groupId, ctx.itemId) || '—';
+  label.textContent = ref + ' · ' + it.file;
+
+  const friends = it['дружит'] || [];
+  const conflicts = it['конфликтует'] || [];
+
+  let html = '';
+  if (friends.length) {
+    html += `<div class="field-label highlight-friend mt-2"><i class="bi bi-heart"></i> Дружит (${friends.length})</div>`;
+    friends.forEach(r => {
+      const resolved = getItemByRef(r);
+      html += `<div class="relation-item friend" onclick="resolved_navigate('${r}')">
+        <i class="bi bi-heart-fill relation-icon friend"></i>
+        <div class="relation-content">
+          <div class="relation-id">${r}</div>
+          <div class="relation-file">${resolved ? resolved.item.file : '<span style="color:var(--accent-hot)">⚠ не найдено</span>'}</div>
+        </div>
+      </div>`;
+    });
+  }
+  if (conflicts.length) {
+    html += `<div class="field-label highlight-conflict mt-3"><i class="bi bi-x-octagon"></i> Конфликтует (${conflicts.length})</div>`;
+    conflicts.forEach(r => {
+      const resolved = getItemByRef(r);
+      html += `<div class="relation-item conflict" onclick="resolved_navigate('${r}')">
+        <i class="bi bi-x-octagon-fill relation-icon conflict"></i>
+        <div class="relation-content">
+          <div class="relation-id">${r}</div>
+          <div class="relation-file">${resolved ? resolved.item.file : '<span style="color:var(--accent-hot)">⚠ не найдено</span>'}</div>
+        </div>
+      </div>`;
+    });
+  }
+  if (!friends.length && !conflicts.length) {
+    html = `<div style="font-size:12px;color:var(--text-dim);padding:16px 8px;text-align:center;"><i class="bi bi-diagram-3" style="font-size:24px;display:block;margin-bottom:8px;opacity:.3"></i>Нет связей</div>`;
+  }
+
+  // Also show: who links to this item
+  const backlinks = findBacklinks(ref);
+  if (backlinks.length) {
+    html += `<div class="section-divider mt-3 mb-2"><div class="section-divider-line"></div><span class="section-divider-label">Входящие ссылки</span><div class="section-divider-line"></div></div>`;
+    backlinks.forEach(bl => {
+      html += `<div class="relation-item" style="border-left:3px solid var(--accent-purple);" onclick="resolved_navigate('${bl.ref}')">
+        <i class="bi bi-arrow-bar-left" style="color:var(--accent-purple);font-size:14px;flex-shrink:0;margin-top:1px;"></i>
+        <div class="relation-content">
+          <div class="relation-id">${bl.ref} <span class="tag" style="${bl.linkType==='friend'?'background:rgba(79,247,184,.1);color:var(--accent-cool);':'background:rgba(247,79,122,.1);color:var(--accent-hot);'}">${bl.linkType==='friend'?'дружит':'конфликт'}</span></div>
+          <div class="relation-file">${bl.item.file}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  body.innerHTML = html;
+}
+
+function findBacklinks(targetRef) {
+  const result = [];
+  getAllItemRefs().forEach(({ ref, group, item }) => {
+    if ((item['дружит']||[]).includes(targetRef)) result.push({ ref, group, item, linkType: 'friend' });
+    if ((item['конфликтует']||[]).includes(targetRef)) result.push({ ref, group, item, linkType: 'conflict' });
+  });
+  return result;
+}
+
+function resolved_navigate(ref) {
+  const m = ref.match(/^G(\d+)\.(\d+)$/);
+  if (!m) return;
+  const gIdx = parseInt(m[1]) - 1;
+  const iIdx = parseInt(m[2]) - 1;
+  const g = state.structure[gIdx];
+  if (!g) return;
+  const it = g.items ? g.items[iIdx] : null;
+  if (!it) return;
+  selectItem(g.group_id, it.item_id);
+}
+
+// ================================================================
+//  LINKS MODAL
+// ================================================================
+function openLinksModal(groupId, itemId) {
+  modalCtx = { groupId, itemId };
+  modalLinkType = 'friend';
+  const g = state.structure.find(x => x.group_id === groupId);
+  const it = g ? g.items.find(x => x.item_id === itemId) : null;
+  if (!it) return;
+  const ref = getRefForItem(groupId, itemId);
+  document.getElementById('modal-item-label').textContent = ref + ' · ' + it.file;
+
+  // Activate friend tab
+  document.querySelectorAll('.links-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.links-tab.tab-friend').classList.add('active');
+
+  updateModalCounts(it);
+  renderLinksCheckboxes(it);
+  document.getElementById('links-modal').classList.add('show');
+}
+
+function updateModalCounts(it) {
+  document.getElementById('modal-count-friend').textContent = (it['дружит']||[]).length;
+  document.getElementById('modal-count-conflict').textContent = (it['конфликтует']||[]).length;
+}
+
+function switchLinksTab(type, btn) {
+  modalLinkType = type;
+  document.querySelectorAll('.links-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (!modalCtx) return;
+  const g = state.structure.find(x => x.group_id === modalCtx.groupId);
+  const it = g ? g.items.find(x => x.item_id === modalCtx.itemId) : null;
+  if (it) renderLinksCheckboxes(it);
+}
+
+function renderLinksCheckboxes(it) {
+  const container = document.getElementById('links-checkboxes');
+  container.innerHTML = '';
+  const currentRef = getRefForItem(modalCtx.groupId, modalCtx.itemId);
+  const currentLinks = (it[modalLinkType === 'friend' ? 'дружит' : 'конфликтует'] || []);
+  const oppositeLinks = (it[modalLinkType === 'friend' ? 'конфликтует' : 'дружит'] || []);
+
+  getAllItemRefs().forEach(({ ref, group, item }) => {
+    if (ref === currentRef) return; // skip self
+    const isChecked = currentLinks.includes(ref);
+    const isOpposite = oppositeLinks.includes(ref);
+    const el = document.createElement('label');
+    el.className = 'link-checkbox-item' + (isChecked ? (modalLinkType==='friend' ? ' checked-friend' : ' checked-conflict') : '');
+    el.innerHTML = `
+      <input type="checkbox" ${isChecked ? 'checked' : ''} ${isOpposite ? 'disabled title="Уже есть в противоположных связях"' : ''} data-ref="${ref}">
+      <div style="overflow:hidden;">
+        <div class="link-cb-id">${ref} ${isOpposite ? '<span style="color:var(--accent-hot);font-size:9px;">[занято]</span>' : ''}</div>
+        <div class="link-cb-file">${item.file}</div>
+        <div class="link-cb-group">${group.group_name}</div>
+      </div>
+    `;
+    el.querySelector('input').addEventListener('change', (e) => {
+      el.classList.toggle(modalLinkType==='friend' ? 'checked-friend' : 'checked-conflict', e.target.checked);
+    });
+    container.appendChild(el);
+  });
+}
+
+function applyLinksModal() {
+  if (!modalCtx) return;
+  const g = state.structure.find(x => x.group_id === modalCtx.groupId);
+  const it = g ? g.items.find(x => x.item_id === modalCtx.itemId) : null;
+  if (!it) return;
+  const key = modalLinkType === 'friend' ? 'дружит' : 'конфликтует';
+  const checked = Array.from(document.querySelectorAll('#links-checkboxes input[type=checkbox]:checked')).map(c => c.dataset.ref);
+  it[key] = checked;
+  updateModalCounts(it);
+  closeLinksModal();
+  renderItemEditor(modalCtx.groupId, modalCtx.itemId);
+  renderInspector({ groupId: modalCtx.groupId, itemId: modalCtx.itemId });
+  renderSidebar();
+  countStats();
+  toast(`Связи (${modalLinkType==='friend'?'дружит':'конфликтует'}) обновлены: ${checked.length} шт.`, 'success');
+}
+
+function closeLinksModal() {
+  document.getElementById('links-modal').classList.remove('show');
+}
+
+// ================================================================
+//  VALIDATION
+// ================================================================
+document.getElementById('btn-validate').addEventListener('click', runValidation);
+
+function runValidation() {
+  const allRefs = new Set(getAllItemRefs().map(x => x.ref));
+  let issues = [];
+  getAllItemRefs().forEach(({ ref, group, item }) => {
+    (item['дружит']||[]).forEach(r => {
+      if (!allRefs.has(r)) issues.push({ src: ref, target: r, type: 'broken-friend', file: item.file });
+    });
+    (item['конфликтует']||[]).forEach(r => {
+      if (!allRefs.has(r)) issues.push({ src: ref, target: r, type: 'broken-conflict', file: item.file });
+    });
+    // Check for same item in both friend and conflict
+    const friends = item['дружит']||[];
+    const conflicts = item['конфликтует']||[];
+    friends.forEach(r => {
+      if (conflicts.includes(r)) issues.push({ src: ref, target: r, type: 'duplicate', file: item.file });
+    });
+  });
+
+  const body = document.getElementById('validate-body');
+  if (!issues.length) {
+    body.innerHTML = `
+      <div style="text-align:center;padding:32px;">
+        <i class="bi bi-check-circle-fill" style="font-size:48px;color:var(--accent-cool);display:block;margin-bottom:16px;"></i>
+        <h5 style="color:var(--accent-cool);">Карта валидна</h5>
+        <p style="color:var(--text-dim);font-size:13px;">Все ${allRefs.size} элементов проверены. Битых ссылок не найдено.</p>
+      </div>`;
+  } else {
+    body.innerHTML = `
+      <div style="margin-bottom:16px;padding:10px 14px;background:rgba(247,79,122,.08);border:1px solid rgba(247,79,122,.2);border-radius:6px;font-size:12px;color:var(--accent-hot);">
+        <i class="bi bi-exclamation-triangle me-2"></i> Найдено проблем: <strong>${issues.length}</strong>
+      </div>
+      ${issues.map(iss => `
+        <div class="relation-item" style="margin-bottom:6px;border-left:3px solid var(--accent-hot);">
+          <i class="bi bi-x-circle-fill" style="color:var(--accent-hot);font-size:14px;flex-shrink:0;"></i>
+          <div class="relation-content">
+            <div class="relation-id">${iss.src} → <span style="color:var(--accent-hot)">${iss.target}</span>
+              <span class="tag tag-red ms-2">${iss.type==='broken-friend'?'битая дружба':iss.type==='broken-conflict'?'битый конфликт':'дублирующая связь'}</span>
+            </div>
+            <div class="relation-file">${iss.file}</div>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  }
+  document.getElementById('validate-modal').classList.add('show');
+}
+
+// ================================================================
+//  HELPERS
+// ================================================================
+function escAttr(str) { return (str||'').replace(/"/g, '&quot;'); }
+function escHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('show'); });
+});
+
+// ================================================================
+//  INIT: auto-load if data available
+// ================================================================
+(function init() {
+  // Try to load embedded sample data from meta
+  countStats();
+})();
+</script>
+
+<!-- Auto-inject uploaded JSON if opened alongside it -->
+<script>
+// If you open this file directly in a browser with the JSON in the same folder,
+// you can pre-load it by dragging the JSON onto the page
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.endsWith('.json')) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      loadMap(JSON.parse(ev.target.result));
+      toast(`Перетащен файл: ${file.name}`, 'success');
+    } catch(err) { toast('Ошибка: ' + err.message, 'error'); }
+  };
+  reader.readAsText(file);
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

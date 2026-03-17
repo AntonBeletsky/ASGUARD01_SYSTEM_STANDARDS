@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide Map Editor — Asguard01</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page:       #f4f5f7;
+  --bg-card:       #ffffff;
+  --bg-card-alt:   #f9fafb;
+  --bg-header:     #1a1d23;
+  --txt-strong:    #111318;
+  --txt-body:      #374151;
+  --txt-muted:     #6b7280;
+  --txt-dim:       #9ca3af;
+  --border-base:   #e2e5ea;
+  --border-strong: #c8cdd6;
+  --c-compat:      #16a34a;
+  --c-compat-bg:   #f0fdf4;
+  --c-compat-bd:   #bbf7d0;
+  --c-conflict:    #dc2626;
+  --c-conflict-bg: #fef2f2;
+  --c-conflict-bd: #fecaca;
+  --c-primary:     #2563eb;
+  --c-primary-bg:  #eff6ff;
+  --c-primary-bd:  #bfdbfe;
+  --radius: 5px;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg-page);color:var(--txt-body);font-family:var(--font-sans);font-size:14px;line-height:1.6;min-height:100vh;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px;}
+
+/* HEADER */
+.site-header{background:var(--bg-header);color:#fff;padding:18px 0 14px;border-bottom:3px solid var(--c-primary);}
+.header-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;margin-bottom:5px;}
+.site-header h1{font-family:var(--font-sans);font-weight:700;font-size:18px;color:#fff;margin:0 0 4px;}
+.site-header h1 .accent{color:#60a5fa;}
+.header-meta{font-family:var(--font-mono);font-size:12px;color:#6b7280;}
+.header-meta .sep{margin:0 7px;color:#374151;}
+
+/* STATS */
+.stats-bar{background:#fff;border-bottom:1px solid var(--border-base);}
+.stat-cell{padding:10px 20px;border-right:1px solid var(--border-base);display:flex;align-items:center;gap:10px;}
+.stat-cell:last-child{border-right:none;}
+.stat-num{font-family:var(--font-mono);font-size:20px;font-weight:600;line-height:1;color:var(--txt-strong);}
+.stat-lbl{font-size:11px;color:var(--txt-muted);line-height:1.4;}
+
+/* TOOLBAR */
+.toolbar-bar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--border-base);padding:8px 0;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.btn-tool{font-family:var(--font-mono);font-size:11px;padding:5px 11px;background:none;border:1px solid var(--border-strong);border-radius:var(--radius);color:var(--txt-muted);cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;line-height:1.4;}
+.btn-tool:hover{border-color:var(--c-primary);color:var(--c-primary);}
+.btn-tool.primary{background:var(--c-primary);border-color:var(--c-primary);color:#fff;}
+.btn-tool.primary:hover{background:#1d4ed8;border-color:#1d4ed8;}
+.btn-tool.success{border-color:var(--c-compat-bd);color:var(--c-compat);background:var(--c-compat-bg);}
+.btn-tool.success:hover{border-color:var(--c-compat);}
+.btn-tool.danger{border-color:var(--c-conflict-bd);color:var(--c-conflict);background:var(--c-conflict-bg);}
+.btn-tool.danger:hover{border-color:var(--c-conflict);}
+.tb-div{width:1px;height:20px;background:var(--border-base);flex-shrink:0;margin:0 2px;}
+
+.search-wrap{position:relative;}
+.search-input{font-family:var(--font-mono);font-size:12px;padding:5px 10px 5px 26px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--bg-page);color:var(--txt-strong);width:200px;outline:none;transition:border-color .15s;}
+.search-input:focus{border-color:var(--c-primary);background:#fff;}
+.search-input::placeholder{color:var(--txt-dim);}
+.search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--txt-dim);font-size:12px;pointer-events:none;line-height:1;font-family:var(--font-mono);}
+
+.loaded-chip{display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--txt-muted);padding:4px 9px;border:1px solid var(--c-compat-bd);border-radius:var(--radius);background:var(--c-compat-bg);max-width:200px;}
+.loaded-chip.is-visible{display:inline-flex;}
+.loaded-chip-dot{width:6px;height:6px;border-radius:50%;background:var(--c-compat);flex-shrink:0;}
+.loaded-chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--c-compat);font-weight:600;}
+.loaded-chip-clear{margin-left:2px;cursor:pointer;color:var(--txt-dim);flex-shrink:0;background:none;border:none;padding:0;line-height:1;font-size:11px;transition:color .1s;}
+.loaded-chip-clear:hover{color:var(--c-conflict);}
+
+/* LAYOUT */
+.editor-layout{display:grid;grid-template-columns:268px 1fr;min-height:calc(100vh - 160px);}
+
+/* SIDEBAR */
+.sidebar-tree{background:var(--bg-card);border-right:1px solid var(--border-base);display:flex;flex-direction:column;position:sticky;top:49px;height:calc(100vh - 49px);overflow:hidden;}
+.sidebar-top{padding:9px 12px 8px;border-bottom:1px solid var(--border-base);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.sidebar-label{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-dim);}
+.sidebar-scroll{flex:1;overflow-y:auto;}
+
+.tree-group{border-bottom:1px solid var(--border-base);}
+.tree-group-hd{display:flex;align-items:center;padding:7px 10px 7px 12px;cursor:pointer;background:var(--bg-card-alt);user-select:none;transition:background .1s;}
+.tree-group-hd:hover{background:#f1f3f6;}
+.tree-group-hd.selected{background:var(--c-primary-bg);}
+.tree-toggle{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:var(--txt-dim);font-size:9px;flex-shrink:0;margin-right:6px;transition:transform .15s;font-family:var(--font-mono);}
+.tree-toggle.open{transform:rotate(90deg);}
+.tree-group-badge{font-family:var(--font-mono);font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px;flex-shrink:0;margin-right:7px;}
+.tree-group-name{flex:1;font-size:11px;font-weight:600;color:var(--txt-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tree-group-cnt{font-family:var(--font-mono);font-size:10px;color:var(--txt-dim);margin-right:5px;flex-shrink:0;}
+.tree-group-actions{display:none;gap:2px;align-items:center;}
+.tree-group-hd:hover .tree-group-actions{display:flex;}
+
+.btn-icon-sm{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:3px;background:none;color:var(--txt-dim);cursor:pointer;font-size:11px;transition:all .1s;line-height:1;padding:0;font-family:var(--font-mono);flex-shrink:0;}
+.btn-icon-sm:hover{background:var(--border-base);color:var(--txt-strong);border-color:var(--border-strong);}
+.btn-icon-sm.del:hover{background:var(--c-conflict-bg);color:var(--c-conflict);border-color:var(--c-conflict-bd);}
+
+.tree-items{display:none;}
+.tree-items.open{display:block;}
+.tree-item{display:flex;align-items:center;padding:5px 10px 5px 34px;cursor:pointer;transition:background .1s;border-left:2px solid transparent;}
+.tree-item:hover{background:#f7f8fa;}
+.tree-item.selected{background:var(--c-primary-bg);border-left-color:var(--c-primary);}
+.tree-item-key{font-family:var(--font-mono);font-size:10px;color:var(--txt-dim);min-width:34px;flex-shrink:0;}
+.tree-item-name{flex:1;font-family:var(--font-mono);font-size:11px;color:var(--txt-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tree-item.selected .tree-item-name{color:var(--c-primary);font-weight:500;}
+.tree-link-dots{display:flex;gap:3px;margin-right:5px;align-items:center;}
+.ldot{width:6px;height:6px;border-radius:2px;flex-shrink:0;}
+.ldot.compat{background:var(--c-compat);}
+.ldot.conflict{background:var(--c-conflict);}
+.tree-item-actions{display:none;gap:2px;}
+.tree-item:hover .tree-item-actions{display:flex;}
+
+/* EDITOR AREA */
+.editor-area{padding:20px 24px 40px;max-width:860px;}
+.editor-breadcrumb{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--txt-dim);margin-bottom:14px;}
+.editor-breadcrumb .crumb{color:var(--txt-muted);cursor:pointer;}
+.editor-breadcrumb .crumb:hover{color:var(--c-primary);}
+.editor-breadcrumb .crumb.active{color:var(--txt-strong);font-weight:600;cursor:default;}
+.editor-breadcrumb .sep{color:var(--border-strong);}
+
+.editor-card{background:var(--bg-card);border:1px solid var(--border-base);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;}
+.editor-card-hd{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border-base);background:var(--bg-card-alt);}
+.editor-card-title{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-dim);flex:1;}
+.editor-card-body{padding:14px 16px;}
+
+.field-wrap{margin-bottom:13px;}
+.field-wrap:last-child{margin-bottom:0;}
+.field-label{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-dim);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.badge-req{font-size:9px;background:var(--c-conflict-bg);color:var(--c-conflict);border:1px solid var(--c-conflict-bd);padding:0 5px;border-radius:2px;font-weight:600;font-family:var(--font-mono);}
+.field-input{width:100%;font-family:var(--font-mono);font-size:12px;padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--bg-page);color:var(--txt-strong);outline:none;transition:border-color .15s;}
+.field-input:focus{border-color:var(--c-primary);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.field-input.sans{font-family:var(--font-sans);font-size:13px;}
+.field-input::placeholder{color:var(--txt-dim);}
+textarea.field-input{resize:vertical;min-height:72px;line-height:1.6;}
+.field-input[readonly]{opacity:.5;cursor:not-allowed;}
+
+.group-banner{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border-base);border-radius:var(--radius);margin-bottom:14px;}
+.group-banner-badge{font-family:var(--font-mono);font-size:18px;font-weight:600;padding:6px 13px;border-radius:var(--radius);flex-shrink:0;}
+.group-banner-name{font-size:14px;font-weight:700;color:var(--txt-strong);margin-bottom:2px;}
+.group-banner-sub{font-family:var(--font-mono);font-size:11px;color:var(--txt-dim);}
+
+.item-banner{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-card-alt);border:1px solid var(--border-base);border-radius:var(--radius);margin-bottom:14px;}
+.item-banner-key{font-family:var(--font-mono);font-size:12px;font-weight:600;padding:3px 9px;border-radius:3px;flex-shrink:0;border:1px solid;}
+.item-banner-file{font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--txt-strong);}
+.item-banner-group{font-size:11px;color:var(--txt-dim);margin-top:1px;}
+
+.links-col-label{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+.links-col-label.compat{color:var(--c-compat);}
+.links-col-label.conflict{color:var(--c-conflict);}
+
+.link-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid transparent;margin:0 4px 5px 0;}
+.link-pill.compat{background:var(--c-compat-bg);border-color:var(--c-compat-bd);color:var(--c-compat);}
+.link-pill.conflict{background:var(--c-conflict-bg);border-color:var(--c-conflict-bd);color:var(--c-conflict);}
+.link-pill-x{font-size:10px;cursor:pointer;color:inherit;background:none;border:none;padding:0;line-height:1;opacity:.55;}
+.link-pill-x:hover{opacity:1;}
+
+.group-item-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border-base);cursor:pointer;transition:background .1s;}
+.group-item-row:last-child{border-bottom:none;}
+.group-item-row:hover{background:#f7f8fa;}
+.gi-key{font-family:var(--font-mono);font-size:11px;color:var(--txt-dim);min-width:36px;flex-shrink:0;padding-top:1px;}
+.gi-file{font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--txt-strong);margin-bottom:3px;line-height:1.4;}
+.gi-summary{font-size:12px;color:var(--txt-muted);line-height:1.5;}
+.gi-tags{margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;}
+.gi-actions{display:none;gap:4px;margin-left:auto;flex-shrink:0;padding-top:1px;}
+.group-item-row:hover .gi-actions{display:flex;}
+
+.empty-msg{font-family:var(--font-mono);font-size:11px;color:var(--txt-dim);padding:5px 0;}
+.editor-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;gap:8px;text-align:center;}
+.welcome-icon{font-size:36px;opacity:.2;margin-bottom:4px;}
+.welcome-title{font-size:15px;font-weight:600;color:var(--txt-muted);}
+.welcome-sub{font-size:13px;color:var(--txt-dim);}
+
+.section-sep{display:flex;align-items:center;gap:10px;margin:16px 0 12px;}
+.section-sep-line{flex:1;height:1px;background:var(--border-base);}
+.section-sep-label{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--txt-dim);white-space:nowrap;letter-spacing:.08em;text-transform:uppercase;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(17,19,24,.55);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;width:640px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.16);animation:mIn .18s ease;}
+@keyframes mIn{from{opacity:0;transform:scale(.97) translateY(6px);}to{opacity:1;transform:none;}}
+.modal-hd{display:flex;align-items:flex-start;gap:10px;padding:13px 18px;border-bottom:1px solid var(--border-base);background:var(--bg-card-alt);flex-shrink:0;}
+.modal-title{font-size:14px;font-weight:700;color:var(--txt-strong);flex:1;}
+.modal-subtitle{font-family:var(--font-mono);font-size:11px;color:var(--txt-muted);margin-top:2px;}
+.modal-body{flex:1;overflow-y:auto;padding:16px 18px;}
+.modal-ft{padding:10px 18px;border-top:1px solid var(--border-base);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;background:var(--bg-card-alt);}
+
+.m-tabs{display:flex;border:1px solid var(--border-strong);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+.m-tab{flex:1;padding:6px 12px;border:none;background:var(--bg-page);font-family:var(--font-mono);font-size:11px;color:var(--txt-muted);cursor:pointer;transition:all .12s;border-right:1px solid var(--border-strong);}
+.m-tab:last-child{border-right:none;}
+.m-tab.active.compat{background:var(--c-compat-bg);color:var(--c-compat);font-weight:600;}
+.m-tab.active.conflict{background:var(--c-conflict-bg);color:var(--c-conflict);font-weight:600;}
+
+.cb-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.cb-item{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border:1px solid var(--border-base);border-radius:var(--radius);cursor:pointer;transition:all .1s;user-select:none;background:var(--bg-card-alt);}
+.cb-item:hover{border-color:var(--border-strong);background:var(--bg-card);}
+.cb-item.chk-compat{background:var(--c-compat-bg);border-color:var(--c-compat-bd);}
+.cb-item.chk-conflict{background:var(--c-conflict-bg);border-color:var(--c-conflict-bd);}
+.cb-item input[type=checkbox]{accent-color:var(--c-primary);margin-top:2px;flex-shrink:0;cursor:pointer;}
+.cb-ref{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--txt-strong);}
+.cb-file{font-family:var(--font-mono);font-size:10px;color:var(--txt-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cb-group{font-size:10px;color:var(--txt-dim);}
+
+.val-ok{text-align:center;padding:28px;}
+.val-ok-icon{font-size:38px;color:var(--c-compat);margin-bottom:8px;}
+.val-ok-title{font-size:15px;font-weight:700;color:var(--c-compat);margin-bottom:4px;}
+.val-ok-sub{font-family:var(--font-mono);font-size:12px;color:var(--txt-dim);}
+.val-issue{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border:1px solid var(--c-conflict-bd);background:var(--c-conflict-bg);border-radius:var(--radius);margin-bottom:6px;}
+.val-issue-ref{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--c-conflict);flex-shrink:0;min-width:80px;}
+.val-issue-desc{font-size:12px;color:var(--txt-body);}
+.val-issue-tag{display:inline-block;font-family:var(--font-mono);font-size:9px;font-weight:600;padding:1px 6px;border-radius:2px;margin-left:6px;background:var(--c-conflict-bg);color:var(--c-conflict);border:1px solid var(--c-conflict-bd);}
+
+#drop-overlay{position:fixed;inset:0;z-index:1000;background:rgba(17,19,24,.72);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s;}
+#drop-overlay.is-active{opacity:1;pointer-events:auto;}
+.drop-box{background:#fff;border:2px dashed var(--c-primary);border-radius:10px;padding:36px 52px;text-align:center;}
+.drop-box-icon{font-size:28px;margin-bottom:10px;}
+.drop-box-title{font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--txt-strong);margin-bottom:3px;}
+.drop-box-sub{font-size:12px;color:var(--txt-muted);}
+
+#load-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);z-index:2000;font-family:var(--font-mono);font-size:12px;padding:8px 16px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:all .22s;border:1px solid transparent;}
+#load-toast.is-visible{opacity:1;transform:translateX(-50%) translateY(0);}
+#load-toast.is-success{background:var(--c-compat-bg);border-color:var(--c-compat-bd);color:var(--c-compat);}
+#load-toast.is-error{background:var(--c-conflict-bg);border-color:var(--c-conflict-bd);color:var(--c-conflict);}
+#load-toast.is-info{background:var(--c-primary-bg);border-color:var(--c-primary-bd);color:var(--c-primary);}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container-fluid px-4">
+    <div class="header-eyebrow" id="headerEyebrow">Asguard01 · Engineering Documentation System</div>
+    <h1>Guide Map <span class="accent">Editor</span></h1>
+    <div class="header-meta" id="headerMeta">Не загружено<span class="sep">·</span>Загрузите JSON-карту для начала работы</div>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="container-fluid px-0">
+    <div class="d-flex flex-wrap">
+      <div class="stat-cell"><div><div class="stat-num" id="stat-groups">—</div><div class="stat-lbl">Групп</div></div></div>
+      <div class="stat-cell"><div><div class="stat-num" id="stat-items">—</div><div class="stat-lbl">Гайдов</div></div></div>
+      <div class="stat-cell"><div><div class="stat-num" id="stat-links">—</div><div class="stat-lbl">Связей</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar-bar">
+  <div class="container-fluid px-4">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <label class="btn-tool">&#8593; Загрузить JSON<input type="file" id="jsonFileInput" accept=".json" hidden></label>
+      <button class="btn-tool success" id="btn-export">&#8595; Сохранить JSON</button>
+      <div class="loaded-chip" id="loadedChip">
+        <span class="loaded-chip-dot"></span>
+        <span class="loaded-chip-name" id="loadedChipName"></span>
+        <button class="loaded-chip-clear" id="btnChipClear">&#x2715;</button>
+      </div>
+      <div class="tb-div"></div>
+      <button class="btn-tool primary" id="btn-add-group">+ Новая группа</button>
+      <button class="btn-tool" id="btn-validate">&#8857; Валидация</button>
+      <div style="margin-left:auto;">
+        <div class="search-wrap">
+          <span class="search-icon">&#8981;</span>
+          <input class="search-input" type="text" id="sidebar-search" placeholder="Поиск по файлу...">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="editor-layout">
+  <div class="sidebar-tree">
+    <div class="sidebar-top">
+      <span class="sidebar-label">Структура карты</span>
+      <button class="btn-icon-sm" id="btn-collapse-all" title="Свернуть всё">&#8679;</button>
+    </div>
+    <div class="sidebar-scroll" id="sidebar-scroll">
+      <div style="padding:28px 14px;text-align:center;"><span class="empty-msg">Загрузите JSON-карту</span></div>
+    </div>
+  </div>
+  <div class="editor-area" id="editor-area">
+    <div class="editor-welcome">
+      <div class="welcome-icon">&#9707;</div>
+      <div class="welcome-title">Выберите элемент для редактирования</div>
+      <div class="welcome-sub">Загрузите карту и выберите группу или гайд из дерева слева</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="links-modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div><div class="modal-title">Редактор связей</div><div class="modal-subtitle" id="modal-item-label"></div></div>
+      <button class="btn-icon-sm" onclick="closeModal('links-modal')" style="margin-left:auto;margin-top:2px;">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-tabs">
+        <button class="m-tab compat active" id="tab-compat" onclick="switchLinksTab('compat',this)">&#10003; Дружит &middot; <span id="mc-compat">0</span></button>
+        <button class="m-tab conflict" id="tab-conflict" onclick="switchLinksTab('conflict',this)">&#10007; Конфликтует &middot; <span id="mc-conflict">0</span></button>
+      </div>
+      <div class="cb-grid" id="links-cb-grid"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-tool" onclick="closeModal('links-modal')">Отмена</button>
+      <button class="btn-tool primary" onclick="applyLinksModal()">Применить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="validate-modal">
+  <div class="modal-box" style="width:560px;">
+    <div class="modal-hd">
+      <div class="modal-title">Валидация карты</div>
+      <button class="btn-icon-sm" onclick="closeModal('validate-modal')" style="margin-left:auto;">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="validate-body"></div>
+    <div class="modal-ft"><button class="btn-tool primary" onclick="closeModal('validate-modal')">Закрыть</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="json-modal">
+  <div class="modal-box" style="width:700px;">
+    <div class="modal-hd">
+      <div class="modal-title">Предпросмотр JSON</div>
+      <button class="btn-icon-sm" onclick="closeModal('json-modal')" style="margin-left:auto;">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <pre id="json-preview-text" style="font-family:var(--font-mono);font-size:11px;color:var(--txt-body);background:var(--bg-page);border:1px solid var(--border-base);border-radius:var(--radius);padding:14px;max-height:55vh;overflow:auto;white-space:pre;line-height:1.6;margin:0;"></pre>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-tool" onclick="closeModal('json-modal')">Закрыть</button>
+      <button class="btn-tool success" onclick="doExport()">&#8595; Скачать</button>
+    </div>
+  </div>
+</div>
+
+<div id="drop-overlay">
+  <div class="drop-box">
+    <div class="drop-box-icon">&#8853;</div>
+    <div class="drop-box-title">Отпустите JSON-файл</div>
+    <div class="drop-box-sub">guides_map.json &middot; любой совместимый формат</div>
+  </div>
+</div>
+<div id="load-toast"></div>
+
+<script>
+var state={project:'',version:'',structure:[]};
+var selectedCtx=null,modalCtx=null,modalLinkType='compat';
+var G_COLORS=['#2563eb','#16a34a','#d97706','#7c3aed','#dc2626','#0891b2','#db2777','#65a30d','#ea580c'];
+function gc(i){return G_COLORS[i%G_COLORS.length];}
+
+function getItemByRef(ref){
+  var m=ref.match(/^G(\d+)\.(\d+)$/);if(!m)return null;
+  var g=state.structure[+m[1]-1];if(!g)return null;
+  var it=(g.items||[])[+m[2]-1];
+  return it?{group:g,item:it}:null;
+}
+function getRef(groupId,itemId){
+  var gi=state.structure.findIndex(function(g){return g.group_id===groupId;});if(gi<0)return null;
+  var ii=(state.structure[gi].items||[]).findIndex(function(it){return it.item_id===+itemId;});if(ii<0)return null;
+  return 'G'+(gi+1)+'.'+(ii+1);
+}
+function allRefs(){
+  var res=[];
+  state.structure.forEach(function(g,gi){
+    (g.items||[]).forEach(function(it,ii){res.push({ref:'G'+(gi+1)+'.'+(ii+1),group:g,item:it});});
+  });
+  return res;
+}
+function normIds(){
+  state.structure.forEach(function(g,gi){
+    g.group_id='G'+(gi+1);
+    (g.items||[]).forEach(function(it,ii){it.item_id=ii+1;});
+  });
+}
+function countStats(){
+  var items=0,links=0;
+  state.structure.forEach(function(g){
+    (g.items||[]).forEach(function(it){items++;links+=(it['дружит']||[]).length+(it['конфликтует']||[]).length;});
+  });
+  document.getElementById('stat-groups').textContent=state.structure.length||'—';
+  document.getElementById('stat-items').textContent=items||'—';
+  document.getElementById('stat-links').textContent=links||'—';
+}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escA(s){return(s||'').replace(/"/g,'&quot;');}
+
+var toastTimer;
+function showToast(msg,type){
+  type=type||'success';
+  var t=document.getElementById('load-toast');
+  t.textContent=msg;t.className='is-visible is-'+type;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('is-visible');},3200);
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('show');});
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay.show').forEach(function(m){m.classList.remove('show');});});
+
+function loadMap(data,filename){
+  state.project=data.project||'';state.version=data.version||'';state.structure=data.structure||[];
+  normIds();selectedCtx=null;renderSidebar();renderWelcome();countStats();
+  var total=state.structure.reduce(function(s,g){return s+(g.items||[]).length;},0);
+  document.getElementById('headerEyebrow').textContent=state.project||'Guide Map Editor';
+  document.getElementById('headerMeta').innerHTML='Версия '+esc(state.version||'—')+'<span class="sep">&middot;</span>'+state.structure.length+' групп<span class="sep">&middot;</span>'+total+' документов';
+  if(filename){
+    document.getElementById('loadedChipName').textContent=filename;
+    document.getElementById('loadedChip').classList.add('is-visible');
+    showToast('✓ Загружено: '+filename+' · '+state.structure.length+' групп · '+total+' файлов','success');
+  }
+}
+
+document.getElementById('jsonFileInput').addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(ev){try{loadMap(JSON.parse(ev.target.result),f.name);}catch(err){showToast('✗ Ошибка: '+err.message,'error');}};
+  r.readAsText(f,'utf-8');this.value='';
+});
+
+document.getElementById('btn-export').addEventListener('click',function(){
+  document.getElementById('json-preview-text').textContent=JSON.stringify(buildJSON(),null,2);
+  document.getElementById('json-modal').classList.add('show');
+});
+
+function doExport(){
+  var blob=new Blob([JSON.stringify(buildJSON(),null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(state.project||'guides_map').replace(/\s+/g,'_')+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+  showToast('✓ JSON сохранён','success');closeModal('json-modal');
+}
+
+function buildJSON(){
+  return{project:state.project,version:state.version,
+    structure:state.structure.map(function(g,gi){return{
+      group_id:'G'+(gi+1),group_name:g.group_name,
+      items:(g.items||[]).map(function(it,ii){return{item_id:ii+1,file:it.file,summary:it.summary,'дружит':it['дружит']||[],'конфликтует':it['конфликтует']||[]};})
+    };})
+  };
+}
+
+document.getElementById('btnChipClear').addEventListener('click',function(){
+  state={project:'',version:'',structure:[]};selectedCtx=null;
+  renderSidebar();renderWelcome();countStats();
+  document.getElementById('headerEyebrow').textContent='Asguard01 · Engineering Documentation System';
+  document.getElementById('headerMeta').innerHTML='Не загружено<span class="sep">&middot;</span>Загрузите JSON-карту для начала работы';
+  document.getElementById('loadedChip').classList.remove('is-visible');
+  document.getElementById('jsonFileInput').value='';
+  showToast('↺ Карта сброшена','info');
+});
+
+function renderSidebar(){
+  var q=(document.getElementById('sidebar-search').value||'').toLowerCase();
+  var scroll=document.getElementById('sidebar-scroll');
+  if(!state.structure.length){scroll.innerHTML='<div style="padding:28px 14px;text-align:center;"><span class="empty-msg">Загрузите JSON-карту</span></div>';return;}
+  scroll.innerHTML='';
+  state.structure.forEach(function(g,gi){
+    var color=gc(gi);
+    var items=(g.items||[]).filter(function(it){return!q||it.file.toLowerCase().includes(q);});
+    if(q&&!items.length&&!g.group_name.toLowerCase().includes(q))return;
+    var isGSel=selectedCtx&&selectedCtx.type==='group'&&selectedCtx.groupId===g.group_id;
+    var groupEl=document.createElement('div');groupEl.className='tree-group';
+    var hd=document.createElement('div');
+    hd.className='tree-group-hd'+(isGSel?' selected':'');
+    hd.innerHTML='<span class="tree-toggle open">&#9658;</span>'
+      +'<span class="tree-group-badge" style="background:'+color+'18;color:'+color+';border:1px solid '+color+'30;">'+g.group_id+'</span>'
+      +'<span class="tree-group-name">'+esc(g.group_name)+'</span>'
+      +'<span class="tree-group-cnt">'+((g.items||[]).length)+'</span>'
+      +'<div class="tree-group-actions">'
+      +'<button class="btn-icon-sm" data-action="add-item">+</button>'
+      +'<button class="btn-icon-sm del" data-action="del-group">&times;</button>'
+      +'</div>';
+    var itemsEl=document.createElement('div');itemsEl.className='tree-items open';
+    hd.addEventListener('click',function(e){
+      if(e.target.closest('[data-action]'))return;
+      var tog=hd.querySelector('.tree-toggle');
+      if(itemsEl.classList.contains('open')){itemsEl.classList.remove('open');tog.classList.remove('open');}
+      else{itemsEl.classList.add('open');tog.classList.add('open');}
+      selectGroup(g.group_id);
+    });
+    hd.querySelector('[data-action="add-item"]').addEventListener('click',function(e){e.stopPropagation();addItem(g.group_id);});
+    hd.querySelector('[data-action="del-group"]').addEventListener('click',function(e){e.stopPropagation();if(confirm('Удалить группу "'+g.group_name+'" и все её гайды?'))deleteGroup(g.group_id);});
+    items.forEach(function(it){
+      var ref=getRef(g.group_id,it.item_id);
+      var isSel=selectedCtx&&selectedCtx.type==='item'&&selectedCtx.groupId===g.group_id&&selectedCtx.itemId===+it.item_id;
+      var fLen=(it['дружит']||[]).length,cLen=(it['конфликтует']||[]).length;
+      var row=document.createElement('div');row.className='tree-item'+(isSel?' selected':'');
+      row.innerHTML='<span class="tree-item-key">'+ref+'</span>'
+        +'<span class="tree-item-name">'+esc(it.file)+'</span>'
+        +'<div class="tree-link-dots">'+(fLen?'<span class="ldot compat" title="'+fLen+' дружит"></span>':'')+(cLen?'<span class="ldot conflict" title="'+cLen+' конфликт"></span>':'')+'</div>'
+        +'<div class="tree-item-actions"><button class="btn-icon-sm del">&times;</button></div>';
+      row.addEventListener('click',function(e){if(e.target.closest('.tree-item-actions'))return;selectItem(g.group_id,it.item_id);});
+      row.querySelector('.tree-item-actions button').addEventListener('click',function(e){e.stopPropagation();if(confirm('Удалить гайд "'+it.file+'"?'))deleteItem(g.group_id,it.item_id);});
+      itemsEl.appendChild(row);
+    });
+    groupEl.appendChild(hd);groupEl.appendChild(itemsEl);scroll.appendChild(groupEl);
+  });
+}
+document.getElementById('sidebar-search').addEventListener('input',renderSidebar);
+document.getElementById('btn-collapse-all').addEventListener('click',function(){
+  document.querySelectorAll('.tree-items').forEach(function(el){el.classList.remove('open');});
+  document.querySelectorAll('.tree-toggle').forEach(function(el){el.classList.remove('open');});
+});
+
+function selectGroup(groupId){selectedCtx={type:'group',groupId:groupId};renderSidebar();renderGroupEditor(groupId);}
+function selectItem(groupId,itemId){selectedCtx={type:'item',groupId:groupId,itemId:+itemId};renderSidebar();renderItemEditor(groupId,+itemId);}
+
+function renderWelcome(){
+  document.getElementById('editor-area').innerHTML='<div class="editor-welcome"><div class="welcome-icon">&#9707;</div><div class="welcome-title">Выберите элемент для редактирования</div><div class="welcome-sub">Выберите группу или гайд из дерева слева</div></div>';
+}
+
+function renderGroupEditor(groupId){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});if(!g)return;
+  var gi=state.structure.indexOf(g);var color=gc(gi);
+  var area=document.getElementById('editor-area');
+  area.innerHTML='<div class="editor-breadcrumb"><span class="crumb active">'+esc(g.group_id)+'</span><span class="sep">/</span><span class="crumb active">'+esc(g.group_name)+'</span></div>'
+    +'<div class="group-banner">'
+    +'<span class="group-banner-badge" style="background:'+color+'18;color:'+color+';border:1px solid '+color+'30;">'+g.group_id+'</span>'
+    +'<div style="flex:1;"><div class="group-banner-name">'+esc(g.group_name)+'</div><div class="group-banner-sub">'+((g.items||[]).length)+' гайдов</div></div>'
+    +'<button class="btn-tool primary" id="ge-add-btn">+ Добавить гайд</button>'
+    +'<button class="btn-tool danger" id="ge-del-btn">✕ Удалить группу</button>'
+    +'</div>'
+    +'<div class="editor-card">'
+    +'<div class="editor-card-hd"><span class="editor-card-title">Параметры группы</span></div>'
+    +'<div class="editor-card-body">'
+    +'<div class="row g-3">'
+    +'<div class="col-3"><div class="field-wrap"><div class="field-label">ID</div><input class="field-input" id="ge-id" value="'+escA(g.group_id)+'" readonly></div></div>'
+    +'<div class="col-9"><div class="field-wrap"><div class="field-label">Название <span class="badge-req">обяз.</span></div><input class="field-input" id="ge-name" value="'+escA(g.group_name)+'" placeholder="guides_group_name"></div></div>'
+    +'</div>'
+    +'<div style="margin-top:10px;"><button class="btn-tool primary" id="ge-save-btn">✓ Сохранить</button></div>'
+    +'</div></div>'
+    +'<div class="section-sep"><div class="section-sep-line"></div><span class="section-sep-label">Гайды ('+((g.items||[]).length)+')</span><div class="section-sep-line"></div></div>'
+    +'<div class="editor-card" id="ge-items-list"></div>';
+  document.getElementById('ge-add-btn').addEventListener('click',function(){addItem(groupId);});
+  document.getElementById('ge-del-btn').addEventListener('click',function(){if(confirm('Удалить группу?'))deleteGroup(groupId);});
+  document.getElementById('ge-save-btn').addEventListener('click',function(){saveGroupEditor(groupId);});
+  renderGeItems(groupId);
+}
+
+function renderGeItems(groupId){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});
+  var c=document.getElementById('ge-items-list');if(!c||!g)return;
+  if(!(g.items||[]).length){c.innerHTML='<div style="padding:16px;"><span class="empty-msg">Нет гайдов. Нажмите «+ Добавить гайд».</span></div>';return;}
+  c.innerHTML='';
+  g.items.forEach(function(it,ii){
+    var gi=state.structure.indexOf(g);var ref='G'+(gi+1)+'.'+(ii+1);
+    var fLen=(it['дружит']||[]).length,cLen=(it['конфликтует']||[]).length;
+    var row=document.createElement('div');row.className='group-item-row';
+    var tagsHtml=(it['дружит']||[]).map(function(r){return'<span class="link-pill compat">'+esc(r)+'</span>';}).join('')
+      +(it['конфликтует']||[]).map(function(r){return'<span class="link-pill conflict">'+esc(r)+'</span>';}).join('');
+    row.innerHTML='<span class="gi-key">'+ref+'</span>'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div class="gi-file">'+esc(it.file)+'</div>'
+      +'<div class="gi-summary">'+esc(it.summary||'')+'</div>'
+      +(tagsHtml?'<div class="gi-tags">'+tagsHtml+'</div>':'')
+      +'</div>'
+      +'<div class="gi-actions">'
+      +'<button class="btn-tool" data-action="edit">&#9998; Ред.</button>'
+      +'<button class="btn-tool danger" data-action="del">&#x2715;</button>'
+      +'</div>';
+    row.querySelector('[data-action="edit"]').addEventListener('click',function(e){e.stopPropagation();selectItem(g.group_id,it.item_id);});
+    row.querySelector('[data-action="del"]').addEventListener('click',function(e){e.stopPropagation();if(confirm('Удалить?'))deleteItem(g.group_id,it.item_id);});
+    row.addEventListener('click',function(){selectItem(g.group_id,it.item_id);});
+    c.appendChild(row);
+  });
+}
+
+function saveGroupEditor(groupId){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});if(!g)return;
+  var v=document.getElementById('ge-name').value.trim();
+  if(!v){showToast('✗ Название не может быть пустым','error');return;}
+  g.group_name=v;renderSidebar();countStats();
+  showToast('✓ Группа сохранена','success');renderGroupEditor(groupId);
+}
+
+function renderItemEditor(groupId,itemId){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});if(!g)return;
+  var it=g.items.find(function(x){return x.item_id===+itemId;});if(!it)return;
+  var ref=getRef(groupId,itemId)||'—';
+  var gi=state.structure.indexOf(g);var color=gc(gi);
+  var friends=it['дружит']||[];var conflicts=it['конфликтует']||[];
+  var area=document.getElementById('editor-area');
+  var friendsHtml=friends.length?friends.map(function(r){
+    return'<span class="link-pill compat">'+esc(r)+' <button class="link-pill-x" data-ref="'+escA(r)+'" data-type="compat" data-gid="'+escA(groupId)+'" data-iid="'+itemId+'">&#x2715;</button></span>';
+  }).join(''):'<span class="empty-msg">Нет совместимых</span>';
+  var conflictsHtml=conflicts.length?conflicts.map(function(r){
+    return'<span class="link-pill conflict">'+esc(r)+' <button class="link-pill-x" data-ref="'+escA(r)+'" data-type="conflict" data-gid="'+escA(groupId)+'" data-iid="'+itemId+'">&#x2715;</button></span>';
+  }).join(''):'<span class="empty-msg">&#10003; Конфликтов нет</span>';
+
+  area.innerHTML='<div class="editor-breadcrumb">'
+    +'<span class="crumb" id="bc-group">'+esc(g.group_id)+'</span>'
+    +'<span class="sep">/</span>'
+    +'<span class="crumb active">'+esc(it.file)+'</span></div>'
+    +'<div class="item-banner">'
+    +'<span class="item-banner-key" style="color:'+color+';background:'+color+'14;border-color:'+color+'30;">'+ref+'</span>'
+    +'<div><div class="item-banner-file">'+esc(it.file)+'</div><div class="item-banner-group">'+esc(g.group_name)+'</div></div>'
+    +'</div>'
+    +'<div class="editor-card">'
+    +'<div class="editor-card-hd"><span class="editor-card-title">Основные данные</span></div>'
+    +'<div class="editor-card-body">'
+    +'<div class="field-wrap"><div class="field-label">Файл <span class="badge-req">обяз.</span></div>'
+    +'<input class="field-input" id="ie-file" value="'+escA(it.file)+'" placeholder="guide_name.md"></div>'
+    +'<div class="field-wrap"><div class="field-label">Summary / Описание</div>'
+    +'<textarea class="field-input sans" id="ie-summary" placeholder="Краткое описание...">'+esc(it.summary||'')+'</textarea></div>'
+    +'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">'
+    +'<button class="btn-tool primary" id="ie-save-btn">&#10003; Сохранить</button>'
+    +'<button class="btn-tool danger" id="ie-del-btn">&#x2715; Удалить</button>'
+    +'</div></div></div>'
+    +'<div class="editor-card">'
+    +'<div class="editor-card-hd"><span class="editor-card-title">Связи</span>'
+    +'<button class="btn-tool primary" id="ie-links-btn" style="margin-left:auto;">&#8853; Редактировать связи</button></div>'
+    +'<div class="editor-card-body"><div class="row g-3">'
+    +'<div class="col-6"><div class="links-col-label compat">&#10003; Дружит &middot; '+friends.length+'</div><div id="ie-friends">'+friendsHtml+'</div></div>'
+    +'<div class="col-6"><div class="links-col-label conflict">&#10007; Конфликтует &middot; '+conflicts.length+'</div><div id="ie-conflicts">'+conflictsHtml+'</div></div>'
+    +'</div></div></div>'
+    +'<div class="editor-card">'
+    +'<div class="editor-card-hd"><span class="editor-card-title">Входящие ссылки</span></div>'
+    +'<div class="editor-card-body" id="ie-backlinks"></div>'
+    +'</div>';
+
+  document.getElementById('bc-group').addEventListener('click',function(){selectGroup(groupId);});
+  document.getElementById('ie-save-btn').addEventListener('click',function(){saveItemEditor(groupId,itemId);});
+  document.getElementById('ie-del-btn').addEventListener('click',function(){if(confirm('Удалить гайд?'))deleteItem(groupId,itemId);});
+  document.getElementById('ie-links-btn').addEventListener('click',function(){openLinksModal(groupId,itemId);});
+  document.querySelectorAll('.link-pill-x').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      removeLinkEntry(btn.dataset.gid,+btn.dataset.iid,btn.dataset.ref,btn.dataset.type);
+    });
+  });
+  renderBacklinks(ref);
+}
+
+function renderBacklinks(targetRef){
+  var c=document.getElementById('ie-backlinks');if(!c)return;
+  var bls=[];
+  allRefs().forEach(function(x){
+    if((x.item['дружит']||[]).includes(targetRef))bls.push({ref:x.ref,group:x.group,item:x.item,t:'compat'});
+    if((x.item['конфликтует']||[]).includes(targetRef))bls.push({ref:x.ref,group:x.group,item:x.item,t:'conflict'});
+  });
+  if(!bls.length){c.innerHTML='<span class="empty-msg">Никто не ссылается на этот гайд</span>';return;}
+  c.innerHTML='';
+  bls.forEach(function(bl){
+    var row=document.createElement('div');row.className='group-item-row';row.style.cursor='pointer';
+    row.innerHTML='<span class="gi-key" style="color:'+(bl.t==='compat'?'var(--c-compat)':'var(--c-conflict)')+'">'+bl.ref+'</span>'
+      +'<div style="flex:1;min-width:0;"><div class="gi-file">'+esc(bl.item.file)+'</div><div class="gi-summary">'+esc(bl.group.group_name)+'</div></div>'
+      +'<span class="link-pill '+bl.t+'" style="flex-shrink:0;font-size:10px;padding:2px 7px;">'+(bl.t==='compat'?'дружит':'конфликт')+'</span>';
+    row.addEventListener('click',function(){selectItem(bl.group.group_id,bl.item.item_id);});
+    c.appendChild(row);
+  });
+}
+
+function removeLinkEntry(groupId,itemId,ref,type){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});if(!g)return;
+  var it=g.items.find(function(x){return x.item_id===+itemId;});if(!it)return;
+  var key=type==='compat'?'дружит':'конфликтует';
+  it[key]=(it[key]||[]).filter(function(r){return r!==ref;});
+  renderItemEditor(groupId,+itemId);renderSidebar();countStats();
+  showToast('✓ Связь '+ref+' удалена','info');
+}
+
+function saveItemEditor(groupId,itemId){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});if(!g)return;
+  var it=g.items.find(function(x){return x.item_id===+itemId;});if(!it)return;
+  var fv=document.getElementById('ie-file').value.trim();
+  if(!fv){showToast('✗ Имя файла пустое','error');return;}
+  it.file=fv;it.summary=document.getElementById('ie-summary').value.trim();
+  renderSidebar();countStats();renderItemEditor(groupId,+itemId);
+  showToast('✓ Гайд сохранён','success');
+}
+
+document.getElementById('btn-add-group').addEventListener('click',function(){
+  var newG={group_id:'',group_name:'guides_new_group',items:[]};
+  state.structure.push(newG);normIds();renderSidebar();countStats();
+  selectGroup(newG.group_id);showToast('✓ Новая группа создана','success');
+});
+
+function deleteGroup(groupId){
+  var idx=state.structure.findIndex(function(x){return x.group_id===groupId;});if(idx<0)return;
+  state.structure.splice(idx,1);normIds();selectedCtx=null;
+  renderSidebar();renderWelcome();countStats();showToast('Группа удалена','info');
+}
+function addItem(groupId){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});if(!g)return;
+  if(!g.items)g.items=[];
+  var it={item_id:g.items.length+1,file:'new_guide.md',summary:'','дружит':[],'конфликтует':[]};
+  g.items.push(it);normIds();renderSidebar();countStats();
+  selectItem(groupId,it.item_id);showToast('✓ Новый гайд добавлен','success');
+}
+function deleteItem(groupId,itemId){
+  var g=state.structure.find(function(x){return x.group_id===groupId;});if(!g)return;
+  var idx=g.items.findIndex(function(x){return x.item_id===+itemId;});if(idx<0)return;
+  g.items.splice(idx,1);normIds();
+  selectedCtx={type:'group',groupId:groupId};
+  renderSidebar();renderGroupEditor(groupId);countStats();showToast('Гайд удалён','info');
+}
+
+function openLinksModal(groupId,itemId){
+  modalCtx={groupId:groupId,itemId:+itemId};modalLinkType='compat';
+  var g=state.structure.find(function(x){return x.group_id===groupId;});
+  var it=g?g.items.find(function(x){return x.item_id===+itemId;}):null;if(!it)return;
+  document.getElementById('modal-item-label').textContent=getRef(groupId,+itemId)+' · '+it.file;
+  updateMc(it);
+  document.getElementById('tab-compat').className='m-tab compat active';
+  document.getElementById('tab-conflict').className='m-tab conflict';
+  renderCbGrid(it);
+  document.getElementById('links-modal').classList.add('show');
+}
+function updateMc(it){
+  document.getElementById('mc-compat').textContent=(it['дружит']||[]).length;
+  document.getElementById('mc-conflict').textContent=(it['конфликтует']||[]).length;
+}
+function switchLinksTab(type,btn){
+  modalLinkType=type;
+  document.getElementById('tab-compat').className='m-tab compat'+(type==='compat'?' active':'');
+  document.getElementById('tab-conflict').className='m-tab conflict'+(type==='conflict'?' active':'');
+  if(!modalCtx)return;
+  var g=state.structure.find(function(x){return x.group_id===modalCtx.groupId;});
+  var it=g?g.items.find(function(x){return x.item_id===+modalCtx.itemId;}):null;
+  if(it)renderCbGrid(it);
+}
+function renderCbGrid(it){
+  var grid=document.getElementById('links-cb-grid');grid.innerHTML='';
+  var selfRef=getRef(modalCtx.groupId,+modalCtx.itemId);
+  var curKey=modalLinkType==='compat'?'дружит':'конфликтует';
+  var oppKey=modalLinkType==='compat'?'конфликтует':'дружит';
+  var curList=it[curKey]||[];var oppList=it[oppKey]||[];
+  allRefs().forEach(function(x){
+    if(x.ref===selfRef)return;
+    var chk=curList.includes(x.ref);var opp=oppList.includes(x.ref);
+    var label=document.createElement('label');
+    label.className='cb-item'+(chk?(modalLinkType==='compat'?' chk-compat':' chk-conflict'):'');
+    label.innerHTML='<input type="checkbox"'+(chk?' checked':'')+(opp?' disabled title="Занято в противоположных"':'')
+      +' data-ref="'+escA(x.ref)+'">'
+      +'<div style="overflow:hidden;min-width:0;">'
+      +'<div class="cb-ref">'+x.ref+(opp?' <span style="color:var(--txt-dim);font-size:9px;">[занято]</span>':'')+'</div>'
+      +'<div class="cb-file">'+esc(x.item.file)+'</div>'
+      +'<div class="cb-group">'+esc(x.group.group_name)+'</div>'
+      +'</div>';
+    label.querySelector('input').addEventListener('change',function(e){
+      label.classList.toggle(modalLinkType==='compat'?'chk-compat':'chk-conflict',e.target.checked);
+    });
+    grid.appendChild(label);
+  });
+}
+function applyLinksModal(){
+  if(!modalCtx)return;
+  var g=state.structure.find(function(x){return x.group_id===modalCtx.groupId;});
+  var it=g?g.items.find(function(x){return x.item_id===+modalCtx.itemId;}):null;if(!it)return;
+  var key=modalLinkType==='compat'?'дружит':'конфликтует';
+  var checked=Array.from(document.querySelectorAll('#links-cb-grid input[type=checkbox]:checked')).map(function(c){return c.dataset.ref;});
+  it[key]=checked;updateMc(it);closeModal('links-modal');
+  renderItemEditor(modalCtx.groupId,+modalCtx.itemId);renderSidebar();countStats();
+  showToast('✓ Связи обновлены: '+checked.length+' шт.','success');
+}
+
+document.getElementById('btn-validate').addEventListener('click',function(){
+  var refs=new Set(allRefs().map(function(x){return x.ref;}));
+  var issues=[];
+  allRefs().forEach(function(x){
+    (x.item['дружит']||[]).forEach(function(r){if(!refs.has(r))issues.push({src:x.ref,target:r,type:'broken-compat',file:x.item.file});});
+    (x.item['конфликтует']||[]).forEach(function(r){if(!refs.has(r))issues.push({src:x.ref,target:r,type:'broken-conflict',file:x.item.file});});
+    (x.item['дружит']||[]).forEach(function(r){if((x.item['конфликтует']||[]).includes(r))issues.push({src:x.ref,target:r,type:'dup',file:x.item.file});});
+  });
+  var labels={'broken-compat':'битая дружба','broken-conflict':'битый конфликт','dup':'дубль'};
+  var body=document.getElementById('validate-body');
+  if(!issues.length){
+    body.innerHTML='<div class="val-ok"><div class="val-ok-icon">&#10003;</div>'
+      +'<div class="val-ok-title">Карта валидна</div>'
+      +'<div class="val-ok-sub">Все '+refs.size+' элементов проверены. Ошибок нет.</div></div>';
+  }else{
+    body.innerHTML='<div style="margin-bottom:12px;padding:9px 12px;background:var(--c-conflict-bg);border:1px solid var(--c-conflict-bd);border-radius:var(--radius);font-family:var(--font-mono);font-size:12px;color:var(--c-conflict);">&#10007; Найдено проблем: '+issues.length+'</div>'
+      +issues.map(function(iss){return'<div class="val-issue"><div class="val-issue-ref">'+iss.src+' &rarr; '+iss.target+'</div><div class="val-issue-desc">'+esc(iss.file)+'<span class="val-issue-tag">'+(labels[iss.type]||iss.type)+'</span></div></div>';}).join('');
+  }
+  document.getElementById('validate-modal').classList.add('show');
+});
+
+var dropOverlay=document.getElementById('drop-overlay'),dragCounter=0;
+document.addEventListener('dragenter',function(e){if([].slice.call(e.dataTransfer.types).includes('Files')){dragCounter++;dropOverlay.classList.add('is-active');}});
+document.addEventListener('dragleave',function(){dragCounter--;if(dragCounter<=0){dragCounter=0;dropOverlay.classList.remove('is-active');}});
+document.addEventListener('dragover',function(e){e.preventDefault();});
+document.addEventListener('drop',function(e){
+  e.preventDefault();dragCounter=0;dropOverlay.classList.remove('is-active');
+  var f=e.dataTransfer.files[0];if(!f)return;
+  if(!f.name.endsWith('.json')){showToast('✗ Нужен .json файл','error');return;}
+  var r=new FileReader();
+  r.onload=function(ev){try{loadMap(JSON.parse(ev.target.result),f.name);}catch(err){showToast('✗ Ошибка: '+err.message,'error');}};
+  r.readAsText(f,'utf-8');
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
