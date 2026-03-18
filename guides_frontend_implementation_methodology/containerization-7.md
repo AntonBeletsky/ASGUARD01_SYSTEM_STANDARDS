@@ -6,12 +6,12 @@
 
 ## Changelog v6 → v7
 
-- **§4.7 AbortController** — расширен с одного примера до полного раздела: правила размещения, форматы передачи `signal`, легальные исключения, антипаттерны
-- **§4.9 Lifecycle** — новый раздел: `destroy()` как обязательный контракт виджета, правила вызова
-- **§4.10 Listeners outside `_bind()`** — новый раздел: как обращаться с listeners в helper-методах
-- **§5.2** — passive listeners теперь явно объединяют `signal` и `passive` в один объект
-- **§8 Pre-Commit Checklist** — добавлены 6 новых пунктов по AbortController и `style=`
-- **Запрет inline `style=`** — явно запрещён во всём документе, добавлен в checklist
+- **§4.7 AbortController** — expanded from a single example to a full section: placement rules, `signal` passing formats, legal exceptions, anti-patterns
+- **§4.9 Lifecycle** — new section: `destroy()` as the mandatory widget contract, call rules
+- **§4.10 Listeners outside `_bind()`** — new section: how to handle listeners in helper methods
+- **§5.2** — passive listeners now explicitly combine `signal` and `passive` into one object
+- **§8 Pre-Commit Checklist** — 6 new items added for AbortController and `style=`
+- **Inline `style=` ban** — explicitly prohibited throughout the document, added to checklist
 
 ---
 
@@ -843,7 +843,7 @@ document.addEventListener('click', e => { ... }, sig);
 document.addEventListener('keydown', e => { ... }, sig);
 ```
 
-#### 4.7.6 Антипаттерны
+#### 4.7.6 Anti-patterns
 
 ```js
 // ❌ AC declared but destroy() never called — abort() never fires, AC is useless
