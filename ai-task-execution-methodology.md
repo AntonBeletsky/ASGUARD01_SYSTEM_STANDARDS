@@ -1,97 +1,97 @@
 # AI Task Execution Methodology
-## Системный подход к выполнению сложных задач с LLM
+## A Systematic Approach to Executing Complex Tasks with LLMs
 
 ---
 
-## Философия
+## Philosophy
 
-Любая нетривиальная задача — это три отдельных этапа, которые нельзя смешивать:
+Any non-trivial task consists of three separate stages that must never be mixed:
 
 ```
-АНАЛИЗ → ПЛАН → ИСПОЛНЕНИЕ
+ANALYSIS → PLAN → EXECUTION
 ```
 
-Смешивание этапов — главная причина ошибок. LLM склонна сразу "делать" вместо того, чтобы сначала понять полный масштаб работы. Это приводит к пропускам, домино-ошибкам и переделкам.
+Mixing stages is the primary cause of errors. LLMs tend to immediately "do" things rather than first understanding the full scope of the work. This leads to omissions, domino errors, and rework.
 
 ---
 
-## Структура работы
+## Workflow Structure
 
-### Фаза 0 — Загрузка контекста
+### Phase 0 — Context Loading
 
-Перед любой работой загружается и явно подтверждается весь контекст:
+Before any work begins, all context is loaded and explicitly confirmed:
 
-- **Спецификация / гайд** — правила, которым должен соответствовать результат
-- **Материалы** — файлы, код, данные, которые нужно обработать
-- **Ограничения** — что трогать нельзя, что критично, приоритеты
+- **Specification / guide** — the rules the result must conform to
+- **Materials** — files, code, data to be processed
+- **Constraints** — what must not be touched, what is critical, priorities
 
-**Правило:** на этом этапе ничего не делается. Только читается и подтверждается загрузка.
+**Rule:** nothing gets done at this stage. Only reading and confirming that loading is complete.
 
 ```
-Пользователь: загрузи гайд, ничего не делай
-AI: [читает] → "Гайд загружен ✓"
+User: load the guide, do nothing
+AI: [reads] → "Guide loaded ✓"
 
-Пользователь: загрузи файлы, это материалы для работы
-AI: [читает все файлы] → таблица файлов с количеством строк, назначением
+User: load the files, these are the working materials
+AI: [reads all files] → table of files with line counts and purpose
 ```
 
-**Почему важно:** если контекст загружен неполностью или неправильно понят — весь дальнейший анализ будет неверным.
+**Why it matters:** if context is loaded incompletely or misunderstood — all subsequent analysis will be wrong.
 
 ---
 
-### Фаза 1 — Анализ
+### Phase 1 — Analysis
 
-Систематическое исследование всех материалов **против** спецификации.
+Systematic examination of all materials **against** the specification.
 
-#### 1.1 Определить категории нарушений
+#### 1.1 Define Violation Categories
 
-Сначала составляется таксономия — исчерпывающий список типов проблем. Без неё анализ будет неполным.
-
-```
-Например для рефакторинга кода:
-- CSS_PREFIX — аббревиатуры в именах классов
-- KEYFRAME_PREFIX — аббревиатуры в @keyframes
-- DATA_CUSTOM — кастомные атрибуты без префикса
-- DATA_ACTION_VALUE — неправильный формат значений
-- ID_PREFIX — id без префикса виджета
-- ID_DEAD — мёртвые id (есть в HTML, нигде не используются)
-- ID_JS_HOOK — id как JS-хук (нарушение Law Zero)
-- JS_VAR — аббревиатуры в именах переменных
-```
-
-#### 1.2 Проанализировать каждый файл по каждой категории
-
-Последовательный проход: файл × категория. Не перескакивать.
-
-**Техника:** при анализе задавать вопросы послойно:
-1. Что нарушено в CSS?
-2. Что нарушено в HTML?
-3. Что нарушено в JS?
-4. Какие id живые, какие мёртвые?
-5. Где домино-зависимости?
-
-#### 1.3 Домино-анализ
-
-Для каждого нарушения: что ещё сломается, если исправить только это место?
+First, build a taxonomy — an exhaustive list of problem types. Without it, the analysis will be incomplete.
 
 ```
-Нарушение: CSS токен --msg-bubble-radius → --messages-bubble-radius
-
-Домино:
-├── CSS строки 165,166: var(--msg-bubble-radius) в дочерних правилах
-├── JS строка 978: getPropertyValue('--msg-bubble-radius')
-└── (нет HTML — токен не используется в атрибутах)
+Example for code refactoring:
+- CSS_PREFIX — abbreviations in class names
+- KEYFRAME_PREFIX — abbreviations in @keyframes
+- DATA_CUSTOM — custom attributes without a prefix
+- DATA_ACTION_VALUE — incorrect value format
+- ID_PREFIX — id without widget prefix
+- ID_DEAD — dead ids (present in HTML, unused anywhere)
+- ID_JS_HOOK — id used as a JS hook (violates Law Zero)
+- JS_VAR — abbreviations in variable names
 ```
 
-**Правило:** домино должно быть исчерпывающим. Неполное домино = сломанный код после исправления.
+#### 1.2 Analyze Each File Against Each Category
+
+Sequential pass: file × category. No skipping ahead.
+
+**Technique:** ask layered questions during analysis:
+1. What is violated in CSS?
+2. What is violated in HTML?
+3. What is violated in JS?
+4. Which ids are live, which are dead?
+5. Where are the domino dependencies?
+
+#### 1.3 Domino Analysis
+
+For each violation: what else will break if only this one location is fixed?
+
+```
+Violation: CSS token --msg-bubble-radius → --messages-bubble-radius
+
+Domino:
+├── CSS lines 165,166: var(--msg-bubble-radius) in child rules
+├── JS line 978: getPropertyValue('--msg-bubble-radius')
+└── (no HTML — token is not used in attributes)
+```
+
+**Rule:** the domino must be exhaustive. An incomplete domino = broken code after the fix.
 
 ---
 
-### Фаза 2 — Карта задач
+### Phase 2 — Task Map
 
-Анализ превращается в структурированный артефакт. Это не просто список — это машиночитаемая карта с зависимостями.
+The analysis is turned into a structured artifact. This is not just a list — it is a machine-readable map with dependencies.
 
-#### Структура карты
+#### Map Structure
 
 ```json
 {
@@ -115,13 +115,13 @@ AI: [читает все файлы] → таблица файлов с коли
           },
           "current": "--msg-bubble-radius",
           "expected": "--messages-bubble-radius",
-          "description": "Аббревиатура 'msg' вместо 'messages'. §7.1",
+          "description": "Abbreviation 'msg' instead of 'messages'. §7.1",
           "rule_ref": "§7.1",
           "dependencies": [
             {
               "issue_id": "widget-002",
               "file": "widget.html",
-              "description": "CSS строка 165: var(--msg-bubble-radius) — потребитель токена"
+              "description": "CSS line 165: var(--msg-bubble-radius) — token consumer"
             }
           ],
           "status": "pending"
@@ -132,387 +132,387 @@ AI: [читает все файлы] → таблица файлов с коли
 }
 ```
 
-#### Обязательные поля
+#### Required Fields
 
-| Поле | Назначение |
-|------|-----------|
-| `id` | Уникальный идентификатор для ссылок в домино |
-| `severity` | CRITICAL / HIGH / MEDIUM / LOW — определяет порядок исполнения |
-| `location.lines` | Точные строки — без этого нет возможности найти и проверить |
-| `location.context` | Дословный фрагмент кода — для идентификации без открытия файла |
-| `current` / `expected` | Что есть сейчас → что должно быть |
-| `dependencies` | Домино с ссылками на issue_id, не просто текст |
-| `status` | `pending` / `in-progress` / `done` — трекинг прогресса |
+| Field | Purpose |
+|-------|---------|
+| `id` | Unique identifier for domino references |
+| `severity` | CRITICAL / HIGH / MEDIUM / LOW — determines execution order |
+| `location.lines` | Exact line numbers — without these, finding and verifying is impossible |
+| `location.context` | Verbatim code fragment — for identification without opening the file |
+| `current` / `expected` | What exists now → what it should be |
+| `dependencies` | Domino with references to issue_id, not just plain text |
+| `status` | `pending` / `in-progress` / `done` — progress tracking |
 
 #### Severity
 
 ```
-CRITICAL — код сломан или нарушает инвариант архитектуры
-           Пример: JS ищет DOM через id вместо data-атрибутов
+CRITICAL — code is broken or violates an architectural invariant
+           Example: JS looks up DOM via id instead of data-attributes
 
-HIGH     — именование нарушает стандарт, масштабируемость под угрозой
-           Пример: аббревиатуры в CSS классах, токенах, id
+HIGH     — naming violates the standard, scalability is at risk
+           Example: abbreviations in CSS classes, tokens, ids
 
-MEDIUM   — мусор, не влияет на работу но засоряет код
-           Пример: мёртвые id, которые нигде не используются
+MEDIUM   — noise, does not affect functionality but pollutes the code
+           Example: dead ids that are not used anywhere
 
-LOW      — стилистическое отклонение
+LOW      — stylistic deviation
 ```
 
-#### Типы изменений
+#### Change Types
 
 ```
-RENAME   — переименовать, сохранив функцию
-DELETE   — удалить полностью
-REPLACE  — заменить одну конструкцию другой
-ADD      — добавить недостающее
-MOVE     — переместить в другое место
+RENAME   — rename while preserving function
+DELETE   — remove entirely
+REPLACE  — substitute one construct for another
+ADD      — add something missing
+MOVE     — relocate to a different place
 ```
 
 ---
 
-### Фаза 3 — План исполнения
+### Phase 3 — Execution Plan
 
-Карта задач превращается в интерактивный трекер с группировкой.
+The task map is turned into an interactive tracker with grouping.
 
-#### Структура плана
+#### Plan Structure
 
 ```
-Файл A (группа)
-  ├── CSS prefix (подгруппа)
-  │   ├── [ ] issue-001 — --msg-* → --messages-* (домино: 3)
-  │   └── [ ] issue-002 — .msg-* → .messages-* (домино: 11)
-  ├── @keyframes (подгруппа)
+File A (group)
+  ├── CSS prefix (subgroup)
+  │   ├── [ ] issue-001 — --msg-* → --messages-* (domino: 3)
+  │   └── [ ] issue-002 — .msg-* → .messages-* (domino: 11)
+  ├── @keyframes (subgroup)
   │   └── [ ] issue-003 — msg-bubble-in → messages-bubble-in
-  └── id prefix (подгруппа)
+  └── id prefix (subgroup)
       └── [ ] issue-004 — id="msg-seller-name" → messages-seller-name
 
-Файл B (группа)
+File B (group)
   └── ...
 ```
 
-**Правило группировки:**
-- Один файл = одна группа
-- Один тип нарушения = одна подгруппа
-- Один конкретный issue = один item со статусом
-- Домино выполняется сразу вместе с parent issue — не отдельно
+**Grouping rules:**
+- One file = one group
+- One violation type = one subgroup
+- One specific issue = one item with a status
+- Domino is executed together with the parent issue — not separately
 
-#### Приоритет исполнения
+#### Execution Priority
 
 ```
-1. CRITICAL (Law Zero — архитектурные нарушения)
-2. HIGH (именование — много домино, высокий риск коллизий)
-3. MEDIUM (мёртвый код — безопасно, но нужно очистить)
-4. LOW (стилистика)
+1. CRITICAL (Law Zero — architectural violations)
+2. HIGH (naming — many dominos, high collision risk)
+3. MEDIUM (dead code — safe, but needs cleanup)
+4. LOW (stylistics)
 ```
 
-Внутри severity — по количеству домино (больше зависимостей = раньше).
+Within a severity level — order by number of dominos (more dependencies = executed sooner).
 
 ---
 
-### Фаза 4 — Исполнение
+### Phase 4 — Execution
 
-#### Принципы
+#### Principles
 
-**1. Один файл за раз**
+**1. One file at a time**
 
-Не переключаться между файлами на полпути. Файл открывается, все его issues закрываются, файл валидируется, только потом следующий.
+Do not switch between files mid-way. A file is opened, all its issues are resolved, the file is validated, then move on to the next.
 
-**2. Домино выполняется сразу**
+**2. Domino is executed immediately**
 
-Если issue-001 имеет 3 домино-зависимости — все 4 изменения делаются в одном проходе. Не "сначала parent, потом домино потом".
+If issue-001 has 3 domino dependencies — all 4 changes are made in a single pass. Not "parent first, domino later."
 
-**3. Несколько проходов по файлу**
+**3. Multiple passes per file**
 
-Сложные файлы обрабатываются послойно:
+Complex files are processed in layers:
 ```
-Проход 1: CSS (токены + классы + keyframes)
-Проход 2: HTML атрибуты
-Проход 3: JS строки и выражения
-Проход 4: id (мёртвые удалить, живые переименовать)
+Pass 1: CSS (tokens + classes + keyframes)
+Pass 2: HTML attributes
+Pass 3: JS strings and expressions
+Pass 4: ids (remove dead ones, rename live ones)
 ```
 
-Почему не всё сразу: регулярные выражения и замены строк могут конфликтовать. Послойная обработка изолирует риски.
+Why not all at once: regular expressions and string replacements can conflict. Layered processing isolates the risk.
 
-**4. Порядок замен внутри прохода**
+**4. Order of replacements within a pass**
 
-Всегда от длинного к короткому:
+Always from longest to shortest:
 ```python
-# ❌ Неправильно
+# ❌ Wrong
 replacements = ['.msg-msg', '.msg-msg--sent', '.msg-msg--recv']
-# При замене .msg-msg → .messages-bubble 
-# паттерн уже не найдёт .msg-msg--sent
+# When replacing .msg-msg → .messages-bubble
+# the pattern will no longer match .msg-msg--sent
 
-# ✅ Правильно
+# ✅ Correct
 replacements = [
-    ('.msg-msg--sent', '.messages-bubble--sent'),  # специфичнее — первым
+    ('.msg-msg--sent', '.messages-bubble--sent'),  # more specific — first
     ('.msg-msg--recv', '.messages-bubble--received'),
-    ('.msg-msg', '.messages-bubble'),               # общее — последним
+    ('.msg-msg', '.messages-bubble'),               # general — last
 ]
 ```
 
-**5. Валидация после каждого файла**
+**5. Validate after each file**
 
-Не откладывать до конца. Ошибка в файле A не должна влиять на уверенность в файле B.
+Do not defer to the end. An error in file A must not affect confidence in file B.
 
 ---
 
-### Фаза 5 — Валидация
+### Phase 5 — Validation
 
-#### Уровни валидации
+#### Validation Levels
 
-**1. Автоматическая — поиск паттернов**
+**1. Automated — pattern search**
 
 ```python
-# Ищем оставшиеся аббревиатуры
+# Search for remaining abbreviations
 import re
 remaining = [line for line in src.split('\n') 
              if re.search(r'\bmsg-', line) 
              and not line.strip().startswith(('#', '//', '<!--', '*'))]
 ```
 
-Исключать комментарии — они не влияют на работу кода, но засоряют результаты.
+Exclude comments — they do not affect code behavior but pollute results.
 
-**2. Семантическая — проверка легальных исключений**
+**2. Semantic — checking for legitimate exceptions**
 
-Не все паттерны — нарушения. Для каждого "оставшегося" вхождения нужно понять контекст:
-
-```
-document.querySelector('.widget-container')  ← ЛЕГАЛЬНО (bootstrap по классу контейнера)
-document.querySelector('#some-id')           ← НАРУШЕНИЕ (Law Zero)
-
-id="aria-title-for-modal"                    ← ЛЕГАЛЬНО (ARIA ссылка)
-id="my-btn"  + JS: document.getElementById  ← НАРУШЕНИЕ (JS hook)
-```
-
-**3. Итоговый отчёт**
+Not all pattern matches are violations. For each "remaining" occurrence, understand the context:
 
 ```
-ФАЙЛ                    СТАТУС    КРИТИКАЛ  HIGH  MEDIUM
+document.querySelector('.widget-container')  ← LEGAL (bootstrap by container class)
+document.querySelector('#some-id')           ← VIOLATION (Law Zero)
+
+id="aria-title-for-modal"                    ← LEGAL (ARIA reference)
+id="my-btn"  + JS: document.getElementById  ← VIOLATION (JS hook)
+```
+
+**3. Final Report**
+
+```
+FILE                    STATUS    CRITICAL  HIGH  MEDIUM
 messages.html           ✅ CLEAN     0        0      0
 my-reviews.html         ✅ CLEAN     0        0      0
-mywallet.html           ✅ CLEAN     0        0      0  (Law Zero: 2 легальных)
+mywallet.html           ✅ CLEAN     0        0      0  (Law Zero: 2 legal)
 ...
 ```
 
 ---
 
-## ТЗ для создания карты
+## Requirements Specification for Creating a Task Map
 
-При постановке задачи создания карты нарушений нужно специфицировать:
+When specifying the task of creating a violation map, the following must be defined:
 
-### Обязательные элементы ТЗ
+### Required Spec Elements
 
 ```markdown
-1. Покрываемые файлы — список всех файлов для анализа
+1. Files in scope — list of all files to be analyzed
 
-2. Спецификация — документ/гайд, против которого анализируем
+2. Specification — the document/guide to analyze against
 
-3. Категории нарушений — исчерпывающий список с кодами
-   (без этого анализ будет неполным)
+3. Violation categories — exhaustive list with codes
+   (without this, the analysis will be incomplete)
 
-4. Severity шкала — что считается CRITICAL, HIGH, MEDIUM, LOW
+4. Severity scale — what counts as CRITICAL, HIGH, MEDIUM, LOW
 
-5. Типы изменений — RENAME, DELETE, REPLACE, ADD, MOVE
+5. Change types — RENAME, DELETE, REPLACE, ADD, MOVE
 
-6. Схема JSON — точная структура выходного артефакта с типами
+6. JSON schema — exact structure of the output artifact with field types
 
-7. Правила для id нарушений — формат issue_id, правила нумерации
+7. Rules for issue ids — issue_id format, numbering rules
 
-8. Правила для dependencies — как ссылаться, что обязательно указывать
+8. Rules for dependencies — how to reference, what must be included
 
-9. Требования к полю context — максимальная длина, что включать
+9. Requirements for the context field — maximum length, what to include
 
-10. Что НЕ входит в карту — чёткие ограничения scope
+10. What is NOT in the map — clear scope boundaries
 ```
 
-### Улучшения ТЗ против наивного подхода
+### Spec Improvements Over a Naive Approach
 
-| Проблема наивного ТЗ | Решение |
-|---------------------|---------|
-| Нет схемы JSON | Указать типы каждого поля, привести пример |
-| Нет уникальных ID | Формат: `{widget}-{N:03d}`, нумерация по severity |
-| Нет разделения current/expected | Два поля, не одно "описание" |
-| Домино — просто текст | Domino содержит `issue_id` — проверяемая ссылка |
-| Нет валидации карты | Все `issue_id` в dependencies должны существовать |
-| Нет поля context | Точный код-фрагмент ≤120 символов |
-| Нет severity | Нельзя определить порядок исполнения |
-| Нет change_type | RENAME и DELETE — разные операции |
+| Naive Spec Problem | Solution |
+|--------------------|----------|
+| No JSON schema | Specify each field's type, provide an example |
+| No unique IDs | Format: `{widget}-{N:03d}`, numbered by severity |
+| No current/expected separation | Two fields, not a single "description" |
+| Domino is just text | Domino contains `issue_id` — a verifiable reference |
+| No map validation | All `issue_id` in dependencies must exist in the map |
+| No context field | Exact code fragment ≤120 characters |
+| No severity | Cannot determine execution order |
+| No change_type | RENAME and DELETE are different operations |
 
 ---
 
-## Шаблоны для часто встречающихся задач
+## Templates for Common Task Types
 
-### Рефакторинг по гайду
-
-```
-Фаза 0: загрузить гайд + все файлы
-Фаза 1: анализ файл × категория нарушений
-Фаза 2: JSON карта с домино
-Фаза 3: интерактивный план (группа=файл, подгруппа=тип нарушения)
-Фаза 4: исполнение CRITICAL → HIGH → MEDIUM, файл за файлом
-Фаза 5: автоматическая валидация паттернов + ручная проверка исключений
-```
-
-### Аудит кодовой базы
+### Refactoring Against a Guide
 
 ```
-Фаза 0: загрузить стандарт качества + файлы
-Фаза 1: анализ по измерениям (безопасность, производительность, доступность, именование)
-Фаза 2: карта с severity и effort оценками
-Фаза 3: план сгруппированный по измерениям, не по файлам
-Фаза 4: quick wins сначала (HIGH severity + LOW effort)
-Фаза 5: регрессионные тесты
+Phase 0: load guide + all files
+Phase 1: analyze file × violation category
+Phase 2: JSON map with dominos
+Phase 3: interactive plan (group=file, subgroup=violation type)
+Phase 4: execution CRITICAL → HIGH → MEDIUM, file by file
+Phase 5: automated pattern validation + manual exception review
 ```
 
-### Миграция API
+### Codebase Audit
 
 ```
-Фаза 0: документация старого и нового API + список файлов
-Фаза 1: найти все использования deprecated методов
-Фаза 2: карта замен с breaking changes помечены как CRITICAL
-Фаза 3: план по файлам, breaking changes выделены в отдельный батч
-Фаза 4: исполнение, тесты после каждого файла
-Фаза 5: grep на старые паттерны + smoke test
+Phase 0: load quality standard + files
+Phase 1: analyze by dimension (security, performance, accessibility, naming)
+Phase 2: map with severity and effort estimates
+Phase 3: plan grouped by dimension, not by file
+Phase 4: quick wins first (HIGH severity + LOW effort)
+Phase 5: regression tests
 ```
 
-### Большой переименование (brand/namespace)
+### API Migration
 
 ```
-Фаза 0: список старых имён + новые имена + файлы
-Фаза 1: найти ВСЕ вхождения включая комментарии, документацию, тесты
-Фаза 2: карта с разделением по типам файлов и контекстам
-Фаза 3: план: сначала типы/интерфейсы, потом реализация, потом тесты, потом документация
-Фаза 4: замены от длинного к короткому, валидация после каждого файла
-Фаза 5: grep финальный, сборка, тесты
+Phase 0: documentation for old and new API + file list
+Phase 1: find all usages of deprecated methods
+Phase 2: replacement map with breaking changes marked as CRITICAL
+Phase 3: plan by files, breaking changes isolated into a separate batch
+Phase 4: execution, tests after each file
+Phase 5: grep for old patterns + smoke test
 ```
 
----
-
-## Чеклист для AI при получении задачи
+### Large-Scale Rename (brand/namespace)
 
 ```
-□ Я загрузил и прочитал ВСЮ спецификацию (не только начало)?
-□ Я загрузил ВСЕ файлы, о которых говорит задача?
-□ Я составил исчерпывающую таксономию типов нарушений?
-□ Для каждого нарушения я нашёл ВСЕ домино-зависимости?
-□ Карта содержит точные номера строк (не "около" или "в методе X")?
-□ Все issue_id в dependencies реально существуют в карте?
-□ Порядок исполнения определён по severity?
-□ Для каждого файла есть план последовательных проходов?
-□ Валидация запланирована после каждого файла, не только в конце?
-□ Я знаю что является ЛЕГАЛЬНЫМ исключением для каждого паттерна?
+Phase 0: list of old names + new names + files
+Phase 1: find ALL occurrences including comments, documentation, tests
+Phase 2: map split by file type and context
+Phase 3: plan: types/interfaces first, then implementation, then tests, then documentation
+Phase 4: replacements from longest to shortest, validate after each file
+Phase 5: final grep, build, tests
 ```
 
 ---
 
-## Анти-паттерны
-
-### ❌ Анализировать и исправлять одновременно
+## AI Checklist Upon Receiving a Task
 
 ```
-Плохо: "Нашёл нарушение — сразу исправил — нашёл следующее..."
-Хорошо: Полный анализ → полная карта → исполнение карты
+□ Have I loaded and read the ENTIRE specification (not just the beginning)?
+□ Have I loaded ALL files mentioned in the task?
+□ Have I compiled an exhaustive taxonomy of violation types?
+□ For each violation, have I found ALL domino dependencies?
+□ Does the map contain exact line numbers (not "around" or "in method X")?
+□ Do all issue_ids in dependencies actually exist in the map?
+□ Is the execution order determined by severity?
+□ Does each file have a plan of sequential passes?
+□ Is validation planned after each file, not just at the end?
+□ Do I know what constitutes a LEGAL exception for each pattern?
 ```
-
-Причина: при одновременном анализе и исправлении теряется целостная картина. Неизвестно, сколько ещё нарушений впереди, невозможно правильно расставить приоритеты.
-
-### ❌ Описательные домино вместо ссылочных
-
-```
-Плохо:  "dependencies": [{"description": "обновить JS"}]
-Хорошо: "dependencies": [{"issue_id": "messages-012", "description": "..."}]
-```
-
-Причина: описательное домино нельзя проверить. Ссылочное домино можно валидировать автоматически.
-
-### ❌ Замены в неправильном порядке
-
-```
-Плохо: .msg-msg → потом .msg-msg--sent (уже не найдёт)
-Хорошо: .msg-msg--sent сначала, потом .msg-msg
-```
-
-### ❌ Валидация только в конце
-
-```
-Плохо: обработать 8 файлов → проверить всё разом
-Хорошо: файл → валидация → следующий файл
-```
-
-Причина: ошибка в файле 2 может не проявиться до файла 7. Изолированная валидация локализует проблему.
-
-### ❌ Игнорировать комментарии при валидации
-
-```
-Плохо: grep находит 3 вхождения — паника
-Хорошо: проверить что все 3 в комментариях — ок
-```
-
-### ❌ Карта без номеров строк
-
-```
-Плохо:  "location": {"scope": "JS:_bubble"}
-Хорошо: "location": {"lines": {"start": 712, "end": 725}, "context": "bbl.className = ['msg-msg..."}
-```
-
-Причина: без строк нельзя найти место автоматически, нельзя проверить после исправления.
 
 ---
 
-## Работа с большими файлами
+## Anti-Patterns
 
-При работе с файлами > 500 строк:
+### ❌ Analyzing and Fixing Simultaneously
 
-**Читать целиком перед началом работы.** Не начинать с первой строки и идти вниз — сначала получить полную картину.
+```
+Bad:  "Found a violation — fixed it immediately — found the next one..."
+Good: Full analysis → full map → execute the map
+```
 
-**Работать пакетами паттернов**, не по одному:
+Reason: when analyzing and fixing simultaneously, the overall picture is lost. It is unknown how many more violations remain ahead, making it impossible to prioritize correctly.
+
+### ❌ Descriptive Dominos Instead of Reference-Based
+
+```
+Bad:  "dependencies": [{"description": "update JS"}]
+Good: "dependencies": [{"issue_id": "messages-012", "description": "..."}]
+```
+
+Reason: a descriptive domino cannot be verified. A reference-based domino can be validated automatically.
+
+### ❌ Replacements in the Wrong Order
+
+```
+Bad:  .msg-msg → then .msg-msg--sent (will no longer be found)
+Good: .msg-msg--sent first, then .msg-msg
+```
+
+### ❌ Validation Only at the End
+
+```
+Bad:  process 8 files → verify everything at once
+Good: file → validate → next file
+```
+
+Reason: an error in file 2 may not surface until file 7. Isolated validation localizes the problem.
+
+### ❌ Ignoring Comments During Validation
+
+```
+Bad:  grep finds 3 occurrences — panic
+Good: verify that all 3 are in comments — ok
+```
+
+### ❌ Map Without Line Numbers
+
+```
+Bad:  "location": {"scope": "JS:_bubble"}
+Good: "location": {"lines": {"start": 712, "end": 725}, "context": "bbl.className = ['msg-msg..."}
+```
+
+Reason: without line numbers, the location cannot be found automatically, nor can it be verified after the fix.
+
+---
+
+## Working with Large Files
+
+When working with files > 500 lines:
+
+**Read the entire file before starting.** Do not start from the first line and work downward — first get the full picture.
+
+**Work in pattern batches**, not one at a time:
 ```python
-# Все токены в одном словаре
+# All tokens in one dictionary
 token_map = {
     '--msg-bubble-radius': '--messages-bubble-radius',
     '--msg-bubble-sent-bg': '--messages-bubble-sent-bg',
-    # ...14 токенов сразу
+    # ...14 tokens at once
 }
 for old, new in token_map.items():
     src = src.replace(old, new)
 ```
 
-**Разбивать на логические проходы** (CSS → HTML → JS), не на произвольные чанки.
+**Split into logical passes** (CSS → HTML → JS), not arbitrary chunks.
 
-**Подтверждать результат каждого прохода** до следующего:
+**Confirm the result of each pass** before proceeding to the next:
 ```
-После прохода 1 (CSS): grep показывает 0 оставшихся токенов
-После прохода 2 (HTML): grep показывает 0 оставшихся классов в атрибутах
+After pass 1 (CSS): grep shows 0 remaining tokens
+After pass 2 (HTML): grep shows 0 remaining classes in attributes
 ...
 ```
 
 ---
 
-## Метрики качества исполнения
+## Execution Quality Metrics
 
-### После завершения работы задать себе вопросы:
+### After Completing the Work, Ask Yourself:
 
 ```
-1. Количество issues в карте == количество закрытых issues?
-2. Grep по всем паттернам нарушений возвращает 0 (кроме комментариев)?
-3. Все id в HTML имеют правильный префикс виджета?
-4. Все data-action значения в kebab-case verb-noun формате?
-5. Нет document.querySelector('#...') или getElementById для логики?
-6. Все addEventListener имеют signal (AbortController) или { once: true }?
-7. Семантика кода не изменилась — только именование?
+1. Does the number of issues in the map equal the number of closed issues?
+2. Does grep for all violation patterns return 0 (excluding comments)?
+3. Do all ids in HTML have the correct widget prefix?
+4. Are all data-action values in kebab-case verb-noun format?
+5. Are there no document.querySelector('#...') or getElementById calls used for logic?
+6. Do all addEventListener calls have a signal (AbortController) or { once: true }?
+7. Has the code semantics not changed — only naming?
 ```
 
-### Численные показатели
+### Numerical Indicators
 
-Зафиксировать до и после:
-- Количество файлов
-- Суммарное количество строк
-- Количество issues по severity
-- Количество файлов с нулём нарушений
+Record before and after:
+- Number of files
+- Total line count
+- Number of issues by severity
+- Number of files with zero violations
 
-Это позволяет объективно оценить объём работы и её полноту.
+This allows for an objective assessment of the scope and completeness of the work.
 
 ---
 
-*Методология создана на основе рефакторинга 9 виджетов (9 007 строк, 84 нарушения) против стандарта containerization-6.*
+*This methodology was developed based on the refactoring of 9 widgets (9,007 lines, 84 violations) against the containerization-6 standard.*
