@@ -1,0 +1,432 @@
+{
+  "document": {
+    "title": "Паттерны проектирования — Практический учебник",
+    "subtitle": "С примерами на C# и UML-диаграммами",
+    "source": "https://refactoring.guru/ru/design-patterns",
+    "sections": [
+      {
+        "id": "frontmatter",
+        "title": "Вводные разделы",
+        "children": [
+          { "id": "toc",       "title": "Оглавление" },
+          { "id": "preface",   "title": "Предисловие" },
+          {
+            "id": "how_to_use",
+            "title": "Как пользоваться этой книгой",
+            "children": [
+              { "id": "how_chapter_structure", "title": "Структура каждой главы" },
+              { "id": "how_text_notations",    "title": "Условные обозначения в тексте" },
+              { "id": "how_code_notations",    "title": "Условные обозначения в коде" }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "intro",
+        "title": "Введение в паттерны проектирования",
+        "children": [
+          { "id": "intro_what",       "title": "Что такое паттерн проектирования?" },
+          { "id": "intro_history",    "title": "История паттернов проектирования" },
+          { "id": "intro_why",        "title": "Зачем знать паттерны?" },
+          { "id": "intro_criticism",  "title": "Критика паттернов" },
+          {
+            "id": "intro_classification",
+            "title": "Классификация паттернов",
+            "children": [
+              { "id": "intro_creational",  "title": "Порождающие паттерны" },
+              { "id": "intro_structural",  "title": "Структурные паттерны" },
+              { "id": "intro_behavioral",  "title": "Поведенческие паттерны" }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "uml_guide",
+        "title": "Как читать UML-диаграммы",
+        "note": "Объяснение каждого символа простым языком — специально для тех, кто видит диаграммы впервые",
+        "children": [
+          {
+            "id": "uml_elements",
+            "title": "Основные элементы UML-диаграммы классов",
+            "children": [
+              { "id": "uml_class_box",    "title": "Прямоугольник класса — что внутри?" },
+              { "id": "uml_interface",    "title": "Интерфейс — чем отличается от класса?" },
+              { "id": "uml_abstract",     "title": "Абстрактный класс — что означает курсив?" }
+            ]
+          },
+          {
+            "id": "uml_relations",
+            "title": "Типы связей между классами",
+            "children": [
+              { "id": "uml_inheritance",    "title": "Стрелка наследования (закрытый треугольник) — «является»" },
+              { "id": "uml_realization",    "title": "Стрелка реализации интерфейса (пунктир + треугольник) — «реализует»" },
+              { "id": "uml_association",    "title": "Ассоциация (обычная стрелка) — «использует»" },
+              { "id": "uml_dependency",     "title": "Зависимость (пунктирная стрелка) — «зависит от»" },
+              { "id": "uml_aggregation",    "title": "Агрегация (ромб незакрашенный) — «содержит, но не владеет»" },
+              { "id": "uml_composition",    "title": "Композиция (ромб закрашенный) — «владеет и уничтожает»" }
+            ]
+          },
+          {
+            "id": "uml_access",
+            "title": "Модификаторы доступа на диаграмме",
+            "children": [
+              { "id": "uml_public",    "title": "+ публичный (public)" },
+              { "id": "uml_private",   "title": "- приватный (private)" },
+              { "id": "uml_protected", "title": "# защищённый (protected)" }
+            ]
+          },
+          { "id": "uml_multiplicity",  "title": "Множественность (кратность) связей" },
+          { "id": "uml_stereotypes",   "title": "Примечания и стереотипы («interface», «abstract»)" }
+        ]
+      },
+
+      {
+        "id": "part1",
+        "title": "Часть I — Порождающие паттерны",
+        "name_en": "Creational Patterns",
+        "description": "Отвечают за удобное и безопасное создание новых объектов или целых семейств объектов.",
+        "chapter": "Глава 1",
+        "patterns": [
+          {
+            "id": "factory_method",
+            "num": "1.1",
+            "name": "Фабричный метод",
+            "name_en": "Factory Method",
+            "sections": [
+              { "id": "annotation",  "title": "Аннотация" },
+              { "id": "problem",     "title": "Проблема" },
+              { "id": "solution",    "title": "Решение" },
+              {
+                "id": "structure",
+                "title": "Структура паттерна",
+                "children": [
+                  { "id": "uml_diagram",     "title": "UML-диаграмма" },
+                  { "id": "uml_legend",      "title": "Расшифровка обозначений на диаграмме" },
+                  { "id": "uml_classes",     "title": "Классы и интерфейсы на этой диаграмме" },
+                  { "id": "uml_links",       "title": "Связи между элементами" },
+                  { "id": "uml_roles",       "title": "Участники и их роли" }
+                ]
+              },
+              { "id": "applicability", "title": "Применимость" },
+              {
+                "id": "pros_cons",
+                "title": "Преимущества и недостатки",
+                "children": [
+                  { "id": "pros", "title": "Преимущества" },
+                  { "id": "cons", "title": "Недостатки" }
+                ]
+              },
+              {
+                "id": "csharp",
+                "title": "Реализация на C#",
+                "children": [
+                  { "id": "basic_example",    "title": "Базовый пример кода" },
+                  { "id": "real_example",     "title": "Пример из реальной задачи" },
+                  { "id": "code_comments",    "title": "Комментарии к коду" }
+                ]
+              },
+              { "id": "relations", "title": "Связь с другими паттернами" }
+            ]
+          },
+          {
+            "id": "abstract_factory",
+            "num": "1.2",
+            "name": "Абстрактная фабрика",
+            "name_en": "Abstract Factory",
+            "sections": [
+              { "id": "annotation",    "title": "Аннотация" },
+              { "id": "problem",       "title": "Проблема" },
+              { "id": "solution",      "title": "Решение" },
+              {
+                "id": "structure",
+                "title": "Структура паттерна",
+                "children": [
+                  { "id": "uml_diagram", "title": "UML-диаграмма" },
+                  { "id": "uml_legend",  "title": "Расшифровка обозначений на диаграмме" },
+                  { "id": "uml_classes", "title": "Классы и интерфейсы на этой диаграмме" },
+                  { "id": "uml_links",   "title": "Связи между элементами" },
+                  { "id": "uml_roles",   "title": "Участники и их роли" }
+                ]
+              },
+              { "id": "applicability", "title": "Применимость" },
+              {
+                "id": "pros_cons",
+                "title": "Преимущества и недостатки",
+                "children": [
+                  { "id": "pros", "title": "Преимущества" },
+                  { "id": "cons", "title": "Недостатки" }
+                ]
+              },
+              {
+                "id": "csharp",
+                "title": "Реализация на C#",
+                "children": [
+                  { "id": "basic_example",  "title": "Базовый пример кода" },
+                  { "id": "real_example",   "title": "Пример из реальной задачи" },
+                  { "id": "code_comments",  "title": "Комментарии к коду" }
+                ]
+              },
+              { "id": "relations", "title": "Связь с другими паттернами" }
+            ]
+          },
+          {
+            "id": "builder",
+            "num": "1.3",
+            "name": "Строитель",
+            "name_en": "Builder",
+            "sections": [
+              { "id": "annotation",    "title": "Аннотация" },
+              { "id": "problem",       "title": "Проблема" },
+              { "id": "solution",      "title": "Решение" },
+              { "id": "structure",     "title": "Структура паттерна",
+                "children": [
+                  { "id": "uml_diagram", "title": "UML-диаграмма" },
+                  { "id": "uml_legend",  "title": "Расшифровка обозначений на диаграмме" },
+                  { "id": "uml_classes", "title": "Классы и интерфейсы на этой диаграмме" },
+                  { "id": "uml_links",   "title": "Связи между элементами" },
+                  { "id": "uml_roles",   "title": "Участники и их роли" }
+                ]
+              },
+              { "id": "applicability", "title": "Применимость" },
+              { "id": "pros_cons",     "title": "Преимущества и недостатки",
+                "children": [
+                  { "id": "pros", "title": "Преимущества" },
+                  { "id": "cons", "title": "Недостатки" }
+                ]
+              },
+              { "id": "csharp",        "title": "Реализация на C#",
+                "children": [
+                  { "id": "basic_example",  "title": "Базовый пример кода" },
+                  { "id": "real_example",   "title": "Пример из реальной задачи" },
+                  { "id": "code_comments",  "title": "Комментарии к коду" }
+                ]
+              },
+              { "id": "relations",     "title": "Связь с другими паттернами" }
+            ]
+          },
+          {
+            "id": "prototype",
+            "num": "1.4",
+            "name": "Прототип",
+            "name_en": "Prototype",
+            "sections": [
+              { "id": "annotation",    "title": "Аннотация" },
+              { "id": "problem",       "title": "Проблема" },
+              { "id": "solution",      "title": "Решение" },
+              { "id": "structure",     "title": "Структура паттерна",
+                "children": [
+                  { "id": "uml_diagram", "title": "UML-диаграмма" },
+                  { "id": "uml_legend",  "title": "Расшифровка обозначений на диаграмме" },
+                  { "id": "uml_classes", "title": "Классы и интерфейсы на этой диаграмме" },
+                  { "id": "uml_links",   "title": "Связи между элементами" },
+                  { "id": "uml_roles",   "title": "Участники и их роли" }
+                ]
+              },
+              { "id": "applicability", "title": "Применимость" },
+              { "id": "pros_cons",     "title": "Преимущества и недостатки",
+                "children": [
+                  { "id": "pros", "title": "Преимущества" },
+                  { "id": "cons", "title": "Недостатки" }
+                ]
+              },
+              { "id": "csharp",        "title": "Реализация на C#",
+                "children": [
+                  { "id": "basic_example",  "title": "Базовый пример кода" },
+                  { "id": "real_example",   "title": "Пример из реальной задачи" },
+                  { "id": "code_comments",  "title": "Комментарии к коду" }
+                ]
+              },
+              { "id": "relations",     "title": "Связь с другими паттернами" }
+            ]
+          },
+          {
+            "id": "singleton",
+            "num": "1.5",
+            "name": "Одиночка",
+            "name_en": "Singleton",
+            "sections": [
+              { "id": "annotation",    "title": "Аннотация" },
+              { "id": "problem",       "title": "Проблема" },
+              { "id": "solution",      "title": "Решение" },
+              { "id": "structure",     "title": "Структура паттерна",
+                "children": [
+                  { "id": "uml_diagram", "title": "UML-диаграмма" },
+                  { "id": "uml_legend",  "title": "Расшифровка обозначений на диаграмме" },
+                  { "id": "uml_classes", "title": "Классы и интерфейсы на этой диаграмме" },
+                  { "id": "uml_links",   "title": "Связи между элементами" },
+                  { "id": "uml_roles",   "title": "Участники и их роли" }
+                ]
+              },
+              { "id": "applicability", "title": "Применимость" },
+              { "id": "pros_cons",     "title": "Преимущества и недостатки",
+                "children": [
+                  { "id": "pros", "title": "Преимущества" },
+                  { "id": "cons", "title": "Недостатки" }
+                ]
+              },
+              { "id": "csharp",        "title": "Реализация на C#",
+                "children": [
+                  { "id": "basic_example",  "title": "Базовый пример кода" },
+                  { "id": "real_example",   "title": "Пример из реальной задачи" },
+                  { "id": "code_comments",  "title": "Комментарии к коду" }
+                ]
+              },
+              { "id": "relations",     "title": "Связь с другими паттернами" }
+            ]
+          }
+        ]
+      },
+
+      {
+        "id": "part2",
+        "title": "Часть II — Структурные паттерны",
+        "name_en": "Structural Patterns",
+        "description": "Отвечают за построение удобных в поддержке иерархий классов.",
+        "chapter": "Глава 2",
+        "pattern_template": {
+          "note": "Каждый паттерн ниже имеет идентичную структуру разделов",
+          "sections": [
+            "Аннотация",
+            "Проблема",
+            "Решение",
+            {
+              "title": "Структура паттерна",
+              "children": [
+                "UML-диаграмма",
+                "Расшифровка обозначений на диаграмме",
+                "Классы и интерфейсы на этой диаграмме",
+                "Связи между элементами",
+                "Участники и их роли"
+              ]
+            },
+            "Применимость",
+            {
+              "title": "Преимущества и недостатки",
+              "children": ["Преимущества", "Недостатки"]
+            },
+            {
+              "title": "Реализация на C#",
+              "children": ["Базовый пример кода", "Пример из реальной задачи", "Комментарии к коду"]
+            },
+            "Связь с другими паттернами"
+          ]
+        },
+        "patterns": [
+          { "id": "adapter",   "num": "2.1", "name": "Адаптер",       "name_en": "Adapter" },
+          { "id": "bridge",    "num": "2.2", "name": "Мост",          "name_en": "Bridge" },
+          { "id": "composite", "num": "2.3", "name": "Компоновщик",   "name_en": "Composite" },
+          { "id": "decorator", "num": "2.4", "name": "Декоратор",     "name_en": "Decorator" },
+          { "id": "facade",    "num": "2.5", "name": "Фасад",         "name_en": "Facade" },
+          { "id": "flyweight", "num": "2.6", "name": "Легковес",      "name_en": "Flyweight" },
+          { "id": "proxy",     "num": "2.7", "name": "Заместитель",   "name_en": "Proxy" }
+        ]
+      },
+
+      {
+        "id": "part3",
+        "title": "Часть III — Поведенческие паттерны",
+        "name_en": "Behavioral Patterns",
+        "description": "Решают задачи эффективного и безопасного взаимодействия между объектами программы.",
+        "chapter": "Глава 3",
+        "pattern_template": {
+          "note": "Каждый паттерн ниже имеет идентичную структуру разделов",
+          "sections": [
+            "Аннотация",
+            "Проблема",
+            "Решение",
+            {
+              "title": "Структура паттерна",
+              "children": [
+                "UML-диаграмма",
+                "Расшифровка обозначений на диаграмме",
+                "Классы и интерфейсы на этой диаграмме",
+                "Связи между элементами",
+                "Участники и их роли"
+              ]
+            },
+            "Применимость",
+            {
+              "title": "Преимущества и недостатки",
+              "children": ["Преимущества", "Недостатки"]
+            },
+            {
+              "title": "Реализация на C#",
+              "children": ["Базовый пример кода", "Пример из реальной задачи", "Комментарии к коду"]
+            },
+            "Связь с другими паттернами"
+          ]
+        },
+        "patterns": [
+          { "id": "chain_of_responsibility", "num": "3.1",  "name": "Цепочка обязанностей", "name_en": "Chain of Responsibility" },
+          { "id": "command",                 "num": "3.2",  "name": "Команда",               "name_en": "Command" },
+          { "id": "iterator",                "num": "3.3",  "name": "Итератор",              "name_en": "Iterator" },
+          { "id": "mediator",                "num": "3.4",  "name": "Посредник",             "name_en": "Mediator" },
+          { "id": "memento",                 "num": "3.5",  "name": "Снимок",                "name_en": "Memento" },
+          { "id": "observer",                "num": "3.6",  "name": "Наблюдатель",           "name_en": "Observer" },
+          { "id": "state",                   "num": "3.7",  "name": "Состояние",             "name_en": "State" },
+          { "id": "strategy",                "num": "3.8",  "name": "Стратегия",             "name_en": "Strategy" },
+          { "id": "template_method",         "num": "3.9",  "name": "Шаблонный метод",       "name_en": "Template Method" },
+          { "id": "visitor",                 "num": "3.10", "name": "Посетитель",            "name_en": "Visitor" }
+        ]
+      },
+
+      {
+        "id": "backmatter",
+        "title": "Конечные разделы",
+        "children": [
+          { "id": "conclusion", "title": "Заключение" },
+          { "id": "appendix_a", "title": "Приложение А. Сводная таблица всех паттернов" },
+          { "id": "appendix_b", "title": "Приложение Б. Шаблон UML — справочный лист" },
+          {
+            "id": "appendix_c",
+            "title": "Приложение В. Сравнение похожих паттернов",
+            "children": [
+              { "id": "compare_1", "title": "Фабричный метод vs. Абстрактная фабрика vs. Строитель" },
+              { "id": "compare_2", "title": "Адаптер vs. Декоратор vs. Заместитель" },
+              { "id": "compare_3", "title": "Стратегия vs. Состояние vs. Шаблонный метод" },
+              { "id": "compare_4", "title": "Наблюдатель vs. Посредник vs. Цепочка обязанностей" }
+            ]
+          },
+          { "id": "appendix_d", "title": "Приложение Г. Глоссарий терминов" },
+          { "id": "references",  "title": "Список литературы и источников" }
+        ]
+      }
+    ],
+
+    "meta": {
+      "total_patterns": 23,
+      "sections_per_pattern": 8,
+      "subsections_per_pattern": 13,
+      "uml_symbols_covered": 9,
+      "appendices": 4,
+      "pattern_section_template": {
+        "1": "Аннотация",
+        "2": "Проблема",
+        "3": "Решение",
+        "4": {
+          "title": "Структура паттерна",
+          "4.1": "UML-диаграмма",
+          "4.2": "Расшифровка обозначений на диаграмме",
+          "4.2.1": "Классы и интерфейсы на этой диаграмме",
+          "4.2.2": "Связи между элементами",
+          "4.2.3": "Участники и их роли"
+        },
+        "5": "Применимость",
+        "6": {
+          "title": "Преимущества и недостатки",
+          "6.1": "Преимущества",
+          "6.2": "Недостатки"
+        },
+        "7": {
+          "title": "Реализация на C#",
+          "7.1": "Базовый пример кода",
+          "7.2": "Пример из реальной задачи",
+          "7.3": "Комментарии к коду"
+        },
+        "8": "Связь с другими паттернами"
+      }
+    }
+  }
+}

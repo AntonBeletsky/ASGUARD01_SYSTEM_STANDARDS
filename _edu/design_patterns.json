@@ -1,0 +1,197 @@
+{
+  "catalog": {
+    "title": "Каталог паттернов проектирования",
+    "source": "https://refactoring.guru/ru/design-patterns/catalog",
+    "types": [
+      {
+        "id": "creational",
+        "name": "Порождающие",
+        "name_en": "Creational",
+        "description": "Отвечают за удобное и безопасное создание новых объектов или даже целых семейств объектов.",
+        "patterns": [
+          {
+            "id": "factory-method",
+            "name": "Фабричный метод",
+            "name_en": "Factory Method",
+            "also_known_as": "Виртуальный конструктор",
+            "url": "https://refactoring.guru/ru/design-patterns/factory-method",
+            "description": "Определяет общий интерфейс для создания объектов в суперклассе, позволяя подклассам изменять тип создаваемых объектов. Позволяет делегировать создание объектов подклассам."
+          },
+          {
+            "id": "abstract-factory",
+            "name": "Абстрактная фабрика",
+            "name_en": "Abstract Factory",
+            "url": "https://refactoring.guru/ru/design-patterns/abstract-factory",
+            "description": "Позволяет создавать семейства связанных объектов, не привязываясь к конкретным классам создаваемых объектов. Гарантирует совместимость создаваемых продуктов."
+          },
+          {
+            "id": "builder",
+            "name": "Строитель",
+            "name_en": "Builder",
+            "url": "https://refactoring.guru/ru/design-patterns/builder",
+            "description": "Позволяет создавать сложные объекты пошагово. Даёт возможность использовать один и тот же код строительства для получения разных представлений объектов."
+          },
+          {
+            "id": "prototype",
+            "name": "Прототип",
+            "name_en": "Prototype",
+            "also_known_as": "Клон",
+            "url": "https://refactoring.guru/ru/design-patterns/prototype",
+            "description": "Позволяет копировать объекты, не вдаваясь в подробности их реализации. Создаёт новые объекты путём клонирования существующих."
+          },
+          {
+            "id": "singleton",
+            "name": "Одиночка",
+            "name_en": "Singleton",
+            "url": "https://refactoring.guru/ru/design-patterns/singleton",
+            "description": "Гарантирует, что у класса есть только один экземпляр, и предоставляет к нему глобальную точку доступа. Контролирует собственное создание и жизненный цикл."
+          }
+        ]
+      },
+      {
+        "id": "structural",
+        "name": "Структурные",
+        "name_en": "Structural",
+        "description": "Отвечают за построение удобных в поддержке иерархий классов.",
+        "patterns": [
+          {
+            "id": "adapter",
+            "name": "Адаптер",
+            "name_en": "Adapter",
+            "also_known_as": "Обёртка, Wrapper",
+            "url": "https://refactoring.guru/ru/design-patterns/adapter",
+            "description": "Позволяет объектам с несовместимыми интерфейсами работать вместе. Преобразует интерфейс одного класса в интерфейс, ожидаемый клиентами."
+          },
+          {
+            "id": "bridge",
+            "name": "Мост",
+            "name_en": "Bridge",
+            "url": "https://refactoring.guru/ru/design-patterns/bridge",
+            "description": "Разделяет один или несколько классов на две отдельные иерархии — абстракцию и реализацию, позволяя изменять их независимо друг от друга."
+          },
+          {
+            "id": "composite",
+            "name": "Компоновщик",
+            "name_en": "Composite",
+            "also_known_as": "Дерево, Tree",
+            "url": "https://refactoring.guru/ru/design-patterns/composite",
+            "description": "Позволяет сгруппировать объекты в древовидную структуру, а затем работать с ней так, как будто это единичный объект. Отдельные объекты и их группы имеют одинаковый интерфейс."
+          },
+          {
+            "id": "decorator",
+            "name": "Декоратор",
+            "name_en": "Decorator",
+            "also_known_as": "Обёртка, Wrapper",
+            "url": "https://refactoring.guru/ru/design-patterns/decorator",
+            "description": "Позволяет динамически добавлять объектам новую функциональность, оборачивая их в полезные «обёртки», не изменяя их классы."
+          },
+          {
+            "id": "facade",
+            "name": "Фасад",
+            "name_en": "Facade",
+            "url": "https://refactoring.guru/ru/design-patterns/facade",
+            "description": "Предоставляет простой интерфейс к сложной системе классов, библиотеке или фреймворку. Скрывает сложность подсистемы за единым упрощённым интерфейсом."
+          },
+          {
+            "id": "flyweight",
+            "name": "Легковес",
+            "name_en": "Flyweight",
+            "also_known_as": "Приспособленец",
+            "url": "https://refactoring.guru/ru/design-patterns/flyweight",
+            "description": "Позволяет вместить большее количество объектов в отведённую оперативную память. Экономит RAM, разделяя общее состояние объектов между ними, вместо хранения одинаковых данных в каждом объекте."
+          },
+          {
+            "id": "proxy",
+            "name": "Заместитель",
+            "name_en": "Proxy",
+            "url": "https://refactoring.guru/ru/design-patterns/proxy",
+            "description": "Позволяет подставлять вместо реальных объектов специальные объекты-заменители. Контролирует доступ к оригинальному объекту, позволяя выполнять действия до или после обращения к нему."
+          }
+        ]
+      },
+      {
+        "id": "behavioral",
+        "name": "Поведенческие",
+        "name_en": "Behavioral",
+        "description": "Решают задачи эффективного и безопасного взаимодействия между объектами программы.",
+        "patterns": [
+          {
+            "id": "chain-of-responsibility",
+            "name": "Цепочка обязанностей",
+            "name_en": "Chain of Responsibility",
+            "also_known_as": "CoR, Chain of Command",
+            "url": "https://refactoring.guru/ru/design-patterns/chain-of-responsibility",
+            "description": "Позволяет передавать запросы последовательно по цепочке обработчиков. Каждый обработчик решает, обработать запрос самому или передать его дальше по цепи."
+          },
+          {
+            "id": "command",
+            "name": "Команда",
+            "name_en": "Command",
+            "also_known_as": "Действие, Транзакция, Action, Transaction",
+            "url": "https://refactoring.guru/ru/design-patterns/command",
+            "description": "Превращает запросы в объекты, позволяя передавать их как аргументы при вызове методов, ставить запросы в очередь, логировать и поддерживать отмену операций."
+          },
+          {
+            "id": "iterator",
+            "name": "Итератор",
+            "name_en": "Iterator",
+            "url": "https://refactoring.guru/ru/design-patterns/iterator",
+            "description": "Даёт возможность последовательно обходить элементы составных объектов, не раскрывая их внутреннего представления. Предоставляет единый интерфейс обхода различных коллекций."
+          },
+          {
+            "id": "mediator",
+            "name": "Посредник",
+            "name_en": "Mediator",
+            "also_known_as": "Контроллер, Controller",
+            "url": "https://refactoring.guru/ru/design-patterns/mediator",
+            "description": "Позволяет уменьшить связанность множества классов между собой, благодаря перемещению этих связей в единый класс-посредник. Объекты общаются не напрямую, а через посредника."
+          },
+          {
+            "id": "memento",
+            "name": "Снимок",
+            "name_en": "Memento",
+            "also_known_as": "Хранитель, Snapshot",
+            "url": "https://refactoring.guru/ru/design-patterns/memento",
+            "description": "Позволяет делать снимки состояния объектов, не раскрывая подробностей их реализации. Обеспечивает возможность отмены и восстановления состояния объекта."
+          },
+          {
+            "id": "observer",
+            "name": "Наблюдатель",
+            "name_en": "Observer",
+            "also_known_as": "Слушатель, Event-Subscriber, Listener",
+            "url": "https://refactoring.guru/ru/design-patterns/observer",
+            "description": "Создаёт механизм подписки, позволяющий одним объектам следить и реагировать на события, происходящие в других объектах. Реализует принцип «издатель–подписчик»."
+          },
+          {
+            "id": "state",
+            "name": "Состояние",
+            "name_en": "State",
+            "url": "https://refactoring.guru/ru/design-patterns/state",
+            "description": "Позволяет объектам менять поведение в зависимости от своего состояния. Извне создаётся впечатление, что изменился класс объекта."
+          },
+          {
+            "id": "strategy",
+            "name": "Стратегия",
+            "name_en": "Strategy",
+            "url": "https://refactoring.guru/ru/design-patterns/strategy",
+            "description": "Определяет семейство схожих алгоритмов и помещает каждый из них в собственный класс. После этого алгоритмы можно взаимозаменять прямо во время исполнения программы."
+          },
+          {
+            "id": "template-method",
+            "name": "Шаблонный метод",
+            "name_en": "Template Method",
+            "url": "https://refactoring.guru/ru/design-patterns/template-method",
+            "description": "Определяет скелет алгоритма, перекладывая ответственность за некоторые его шаги на подклассы. Позволяет подклассам переопределять шаги алгоритма, не меняя его общей структуры."
+          },
+          {
+            "id": "visitor",
+            "name": "Посетитель",
+            "name_en": "Visitor",
+            "url": "https://refactoring.guru/ru/design-patterns/visitor",
+            "description": "Позволяет добавлять в программу новые операции, не изменяя классы объектов, над которыми эти операции могут выполняться. Операция выносится в отдельный класс-посетитель."
+          }
+        ]
+      }
+    ]
+  }
+}
