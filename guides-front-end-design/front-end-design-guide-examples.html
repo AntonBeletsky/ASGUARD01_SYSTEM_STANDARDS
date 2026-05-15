@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Front-End Design Guide — Примеры</title>
+<style>
+  :root {
+    --bg: #0f0f11;
+    --bg-2: #18181c;
+    --bg-3: #222228;
+    --border: rgba(255,255,255,0.08);
+    --border-2: rgba(255,255,255,0.14);
+    --text: #e8e8f0;
+    --text-2: #9898b0;
+    --text-3: #5a5a72;
+    --accent: #7c6fff;
+    --accent-2: #5a4fff;
+    --good: #22c55e;
+    --good-bg: rgba(34,197,94,0.08);
+    --good-border: rgba(34,197,94,0.25);
+    --bad: #ef4444;
+    --bad-bg: rgba(239,68,68,0.08);
+    --bad-border: rgba(239,68,68,0.25);
+    --yellow: #f59e0b;
+    --blue: #3b82f6;
+    --mono: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Sidebar */
+  nav {
+    width: 260px;
+    min-width: 260px;
+    background: var(--bg-2);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0;
+    flex-shrink: 0;
+  }
+
+  .nav-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .nav-logo span {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .nav-logo h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--text-2);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(124,111,255,0.08); }
+  nav a .num {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-3);
+    min-width: 20px;
+  }
+
+  /* Main content */
+  main {
+    flex: 1;
+    max-width: 900px;
+    padding: 48px 56px;
+    overflow-x: hidden;
+  }
+
+  .page-header {
+    margin-bottom: 64px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-header .kicker {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .page-header h1 {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  .page-header p {
+    font-size: 16px;
+    color: var(--text-2);
+    max-width: 600px;
+    line-height: 1.7;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 80px;
+    scroll-margin-top: 32px;
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .section-sub {
+    font-size: 14px;
+    color: var(--text-2);
+    margin-bottom: 28px;
+    max-width: 680px;
+    line-height: 1.65;
+  }
+
+  /* Principle block */
+  .principle {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .principle-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .principle-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .tag-rule { background: rgba(124,111,255,0.15); color: var(--accent); }
+  .principle-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Good/bad panels */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .compare-panel {
+    padding: 20px;
+  }
+  .compare-panel + .compare-panel {
+    border-left: 1px solid var(--border);
+  }
+  .panel-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .panel-label.bad { color: var(--bad); }
+  .panel-label.good { color: var(--good); }
+  .panel-label::before {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .demo-box {
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .demo-bad { background: var(--bad-bg); border: 1px solid var(--bad-border); }
+  .demo-good { background: var(--good-bg); border: 1px solid var(--good-border); }
+
+  .explain {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .explain strong { color: var(--text); }
+
+  /* Code block */
+  .code {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: #c4b5fd;
+    overflow-x: auto;
+    margin-top: 10px;
+  }
+  .code .k { color: #f472b6; }
+  .code .s { color: #86efac; }
+  .code .c { color: var(--text-3); font-style: italic; }
+  .code .p { color: #93c5fd; }
+  .code .v { color: #fde68a; }
+  .code .n { color: var(--text); }
+
+  /* Full-width panel */
+  .full-panel {
+    padding: 20px;
+  }
+  .full-panel .panel-label { margin-bottom: 14px; }
+
+  /* Divider between sections */
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 80px;
+  }
+
+  /* =========================================
+     DEMO COMPONENTS (inline examples)
+  ========================================= */
+
+  /* Typography demos */
+  .typo-bad-scale { font-size: 14px; color: var(--text); }
+  .typo-bad-scale h2 { font-size: 22px; }
+  .typo-bad-scale h3 { font-size: 21px; }
+  .typo-bad-scale h4 { font-size: 19px; }
+  .typo-bad-scale p { font-size: 15px; }
+
+  .typo-good-scale { font-size: 14px; color: var(--text); }
+  .typo-good-scale h2 { font-size: 24px; font-weight: 700; }
+  .typo-good-scale h3 { font-size: 19px; font-weight: 600; }
+  .typo-good-scale p { font-size: 14px; line-height: 1.6; color: var(--text-2); }
+
+  /* Spacing demos */
+  .space-bad { display: flex; flex-direction: column; gap: 0; width: 100%; }
+  .space-bad-item { padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+
+  .space-good { display: flex; flex-direction: column; width: 100%; }
+  .space-good-item { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+
+  /* Button hierarchy demos */
+  .btn-demo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn-tertiary { background: transparent; color: var(--text-2); }
+  .btn-disabled { background: var(--bg-3); color: var(--text-3); cursor: not-allowed; }
+  .btn-loading { background: var(--bg-3); color: var(--text-2); cursor: wait; }
+
+  /* States demo */
+  .states-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .state-btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--sans);
+  }
+  .state-idle { background: var(--accent); color: #fff; }
+  .state-hover { background: var(--accent-2); color: #fff; box-shadow: 0 0 0 3px rgba(124,111,255,0.3); }
+  .state-focus { background: var(--accent); color: #fff; outline: 2px solid #fff; outline-offset: 2px; }
+  .state-active { background: var(--accent-2); color: #fff; transform: scale(0.97); }
+  .state-disabled { background: var(--bg-3); color: var(--text-3); cursor: not-allowed; }
+  .state-loading { background: var(--bg-3); color: var(--text-2); cursor: wait; }
+  .state-error { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad-border); cursor: pointer; }
+  .state-success { background: var(--good-bg); color: var(--good); border: 1px solid var(--good-border); }
+  .spinner {
+    width: 12px; height: 12px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--text-2);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Color contrast */
+  .contrast-bad {
+    background: #aaa;
+    color: #ccc;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .contrast-good {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .contrast-ratio {
+    font-size: 11px;
+    margin-top: 6px;
+    font-family: var(--mono);
+  }
+  .ratio-bad { color: var(--bad); }
+  .ratio-good { color: var(--good); }
+
+  /* Color independence */
+  .color-bad { display: flex; gap: 8px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .dot-red { background: var(--bad); }
+  .dot-green { background: var(--good); }
+  .color-status { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+
+  .color-good .status-ok {
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+    color: var(--good);
+  }
+  .color-good .status-err {
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+    color: var(--bad);
+  }
+
+  /* Proximity Gestalt */
+  .proximity-bad { display: flex; flex-wrap: wrap; gap: 4px; }
+  .prox-item {
+    background: var(--bg-3);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+
+  .proximity-good { display: flex; gap: 20px; }
+  .prox-group { display: flex; flex-direction: column; gap: 4px; }
+  .prox-group-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 2px; }
+
+  /* Scanning F-pattern */
+  .fpattern-bad p { font-size: 13px; color: var(--text-2); line-height: 1.7; }
+  .fpattern-bad p strong { color: var(--text); }
+
+  .fpattern-good { font-size: 13px; line-height: 1.7; }
+  .fpattern-good .lead { color: var(--text); font-weight: 600; }
+  .fpattern-good .rest { color: var(--text-2); }
+
+  /* Measure */
+  .measure-bad { font-size: 13px; color: var(--text-2); line-height: 1.7; }
+  .measure-good { font-size: 13px; color: var(--text-2); line-height: 1.7; max-width: 65ch; }
+
+  /* Token architecture */
+  .token-chain {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .token-level {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-3);
+  }
+  .token-level .lbl { color: var(--text-3); font-size: 10px; min-width: 80px; }
+  .token-level .val { color: #c4b5fd; }
+  .token-arrow { color: var(--text-3); text-align: center; font-size: 10px; }
+
+  /* Hick's Law progressive disclosure */
+  .hick-bad { display: flex; flex-wrap: wrap; gap: 6px; }
+  .hick-btn { padding: 6px 10px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; color: var(--text-2); cursor: pointer; }
+  .hick-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .hick-good { display: flex; flex-direction: column; gap: 8px; }
+  .hick-main { display: flex; gap: 8px; }
+  .hick-more { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: none; }
+  .hick-expanded { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+  /* Rhythm */
+  .rhythm-bad { display: flex; flex-direction: column; }
+  .rhythm-bad > * { padding: 3px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .rhythm-bad .r1 { margin-bottom: 3px; }
+  .rhythm-bad .r2 { margin-bottom: 11px; }
+  .rhythm-bad .r3 { margin-bottom: 5px; }
+
+  .rhythm-good { display: flex; flex-direction: column; }
+  .rhythm-good > * { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+
+  /* Semantic HTML */
+  .sem-bad { display: flex; gap: 8px; }
+  .div-btn {
+    display: inline-flex; align-items: center; padding: 8px 14px;
+    background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; color: var(--text); cursor: pointer;
+    font-family: var(--sans);
+  }
+  .div-btn:focus { outline: none; }
+
+  .sem-good { display: flex; gap: 8px; }
+  .real-btn {
+    display: inline-flex; align-items: center; padding: 8px 14px;
+    background: var(--accent); border: none; border-radius: 6px;
+    font-size: 13px; color: #fff; cursor: pointer;
+    font-family: var(--sans);
+  }
+  .real-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+  /* XSS demo */
+  .xss-demo { display: flex; flex-direction: column; gap: 8px; }
+  .xss-input {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    width: 100%;
+  }
+  .xss-output {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+
+  /* Grid */
+  .grid-bad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .grid-bad-item { background: var(--bg-3); padding: 12px; border-radius: 6px; font-size: 12px; color: var(--text-2); text-align: center; }
+  .grid-good { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 400px) { .grid-good { grid-template-columns: 1fr 1fr; } }
+  .grid-good-item { background: var(--good-bg); border: 1px solid var(--good-border); padding: 12px; border-radius: 6px; font-size: 12px; color: var(--good); text-align: center; }
+
+  /* Focus demo */
+  .focus-bad-btn {
+    padding: 8px 14px; background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; color: var(--text); cursor: pointer;
+    font-family: var(--sans);
+  }
+  .focus-bad-btn:focus { outline: none; }
+
+  .focus-good-btn {
+    padding: 8px 14px; background: var(--accent); border: none;
+    border-radius: 6px; font-size: 13px; color: #fff; cursor: pointer;
+    font-family: var(--sans);
+  }
+  .focus-good-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+  /* Animation timing */
+  .anim-demo { display: flex; gap: 12px; }
+  .anim-btn {
+    padding: 8px 14px; background: var(--accent); border: none;
+    border-radius: 6px; font-size: 12px; color: #fff; cursor: pointer;
+    font-family: var(--sans);
+  }
+  .anim-slow { transition: transform 2s ease; }
+  .anim-slow:hover { transform: scale(1.05); }
+  .anim-good-t { transition: transform 0.15s ease-out; }
+  .anim-good-t:hover { transform: scale(1.05); }
+
+  /* Event delegation */
+  .delegation-demo { display: flex; flex-direction: column; gap: 12px; }
+
+  /* Specificity */
+  .specificity-chain { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .spec-item {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .spec-score {
+    font-size: 20px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .spec-label {
+    font-size: 10px;
+    color: var(--text-3);
+    display: block;
+    font-family: var(--sans);
+  }
+  .spec-arrow { color: var(--text-3); }
+
+  /* Responsive / breakpoints */
+  .bp-bad { font-size: 12px; font-family: var(--mono); }
+  .bp-good { font-size: 12px; font-family: var(--mono); }
+
+  /* Form label */
+  .label-bad input {
+    background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 12px; font-size: 13px; color: var(--text); width: 100%;
+    font-family: var(--sans);
+  }
+  .label-bad input::placeholder { color: var(--text-3); }
+  .label-good label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 4px; }
+  .label-good input {
+    background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 12px; font-size: 13px; color: var(--text); width: 100%;
+    font-family: var(--sans);
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    .spinner { animation: none; border: 2px solid var(--text-2); }
+  }
+
+  /* Info callout */
+  .callout {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #93c5fd;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 3px; }
+
+  /* Responsive main */
+  @media (max-width: 1024px) {
+    nav { width: 200px; min-width: 200px; }
+    main { padding: 32px 32px; }
+  }
+  @media (max-width: 768px) {
+    nav { display: none; }
+    main { padding: 24px 20px; }
+    .compare { grid-template-columns: 1fr; }
+    .compare-panel + .compare-panel { border-left: none; border-top: 1px solid var(--border); }
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .badge-wcag { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .badge-law { background: rgba(124,111,255,0.15); color: #c4b5fd; }
+
+  /* hick expanded hidden by default */
+  #hick-extra { display: none; }
+  #hick-extra.shown { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav id="sidebar">
+  <div class="nav-logo">
+    <span>Справочник</span>
+    <h1>Front-End Design Guide — Примеры</h1>
+  </div>
+  <a href="#perception" class="active"><span class="num">I</span> Восприятие</a>
+  <a href="#hierarchy"><span class="num">II</span> Иерархия</a>
+  <a href="#typography"><span class="num">III</span> Типографика</a>
+  <a href="#color"><span class="num">IV</span> Цвет</a>
+  <a href="#space"><span class="num">V</span> Пространство</a>
+  <a href="#components"><span class="num">VI</span> Компоненты</a>
+  <a href="#interaction"><span class="num">VII</span> Взаимодействие</a>
+  <a href="#accessibility"><span class="num">VIII</span> Доступность</a>
+  <a href="#css"><span class="num">IX</span> CSS Архитектура</a>
+  <a href="#engineering"><span class="num">X</span> Инжиниринг</a>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+  <div class="page-header">
+    <div class="kicker">Примеры по гайду</div>
+    <h1>Хорошо и плохо<br>в дизайне интерфейсов</h1>
+    <p>Каждый раздел — живые примеры принципа. Левая колонка: нарушение. Правая: правильная реализация. Объяснение — почему это важно.</p>
+  </div>
+
+
+  <!-- ============================================================
+       I. ВОСПРИЯТИЕ
+  ============================================================ -->
+  <section class="section" id="perception">
+    <div class="section-header">
+      <span class="section-num">I</span>
+      <h2 class="section-title">Восприятие</h2>
+    </div>
+    <p class="section-sub">Дизайн — это управление вниманием. Мозг обрабатывает визуальные атрибуты ещё до сознательного восприятия (150–200 мс). Нарушение этих законов делает интерфейс «неудобным» без очевидной причины.</p>
+
+    <!-- Pre-attentive: слишком много атрибутов -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Правило</span>
+        <span class="principle-name">Преаттентивные атрибуты — не более 2–3 для одного элемента</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:8px;">
+            <button style="background:#ff0;color:#f00;font-size:18px;font-weight:900;font-style:italic;text-transform:uppercase;border:4px dashed #00f;border-radius:20px;padding:10px 20px;animation:spin 3s linear infinite;cursor:pointer;font-family:var(--sans)">НАЖМИ МЕНЯ!</button>
+            <button style="background:#0f0;color:#fff;font-size:16px;font-weight:700;border:3px solid #ff0;border-radius:12px;padding:8px 18px;cursor:pointer;font-family:var(--sans)">ТОЖЕ ВАЖНОЕ</button>
+          </div>
+          <p class="explain">Жёлтый фон + красный текст + огромный размер + жирность + курсив + caps + синяя рамка + анимация — <strong>7 атрибутов одновременно</strong>. Когда всё кричит — ничто не слышно.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:8px;align-items:flex-start;">
+            <button class="btn btn-primary">Оплатить — $14.99</button>
+            <button class="btn btn-secondary">Сохранить черновик</button>
+          </div>
+          <p class="explain">Один выделенный элемент (цвет + размер). Второй — тихий. <strong>Иерархия очевидна за 150 мс</strong>. Не нужно думать, что важнее.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gestalt: Proximity -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Гештальт</span>
+        <span class="principle-name">Близость (Proximity) — пространство создаёт группы</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;padding:12px;">
+            <div class="proximity-bad">
+              <div class="prox-item">Имя</div>
+              <div class="prox-item">Войти</div>
+              <div class="prox-item">Email</div>
+              <div class="prox-item">Регистрация</div>
+              <div class="prox-item">Пароль</div>
+              <div class="prox-item">Забыли пароль?</div>
+            </div>
+          </div>
+          <p class="explain">Все элементы на одном расстоянии. Мозг <strong>не понимает группировку</strong> — какие поля относятся к логину, а какие к регистрации?</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;padding:12px;">
+            <div class="proximity-good">
+              <div class="prox-group">
+                <div class="prox-group-label">Логин</div>
+                <div class="prox-item">Email</div>
+                <div class="prox-item">Пароль</div>
+                <div class="prox-item" style="color:var(--accent);font-size:11px;">Забыли пароль?</div>
+              </div>
+              <div class="prox-group">
+                <div class="prox-group-label">Новый пользователь</div>
+                <div class="prox-item">Имя</div>
+                <div class="prox-item" style="background:var(--accent);color:#fff;">Регистрация</div>
+              </div>
+            </div>
+          </div>
+          <p class="explain">Расстояние между группами <strong>больше</strong>, чем внутри. Граница читается без рамок и цвета — только через пространство.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- F-pattern -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Сканирование</span>
+        <span class="principle-name">F-паттерн — важное в начале строки и сверху</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;flex-direction:column;gap:6px;padding:14px;">
+            <div class="fpattern-bad">
+              <p>Наш сервис помогает командам автоматизировать процессы уже <strong>15 лет</strong>.</p>
+              <p>Работаем с клиентами по всему миру. Первый месяц бесплатно, затем скидка <strong>30%</strong> при оплате годовой подписки.</p>
+            </div>
+          </div>
+          <p class="explain">Ключевые данные («15 лет», «30%») <strong>в конце предложений</strong>. При быстром сканировании их не заметят.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;flex-direction:column;gap:6px;padding:14px;">
+            <div class="fpattern-good">
+              <p><span class="lead">15 лет</span> <span class="rest">разработки ПО для международных клиентов.</span></p>
+              <p><span class="lead">Сэкономьте 30%</span> <span class="rest">при оплате годовой подписки сегодня.</span></p>
+            </div>
+          </div>
+          <p class="explain"><strong>Самое важное — в начале строки</strong>. Пользователь сканирует взглядом вниз по левому краю и сразу видит ценность.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hick's Law -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Закон Хика</span>
+        <span class="principle-name">Прогрессивное раскрытие против паралича выбора</span>
+        <span class="badge badge-law">T = a + b × log₂(n+1)</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;flex-direction:column;gap:8px;padding:14px;">
+            <div class="hick-bad">
+              <button class="hick-btn">Экспорт CSV</button>
+              <button class="hick-btn">Экспорт XLS</button>
+              <button class="hick-btn">Экспорт PDF</button>
+              <button class="hick-btn">Печать</button>
+              <button class="hick-btn">Поделиться ссылкой</button>
+              <button class="hick-btn">Отправить на email</button>
+              <button class="hick-btn">Сохранить шаблон</button>
+              <button class="hick-btn">Дублировать</button>
+              <button class="hick-btn">Архивировать</button>
+              <button class="hick-btn">Удалить</button>
+            </div>
+          </div>
+          <p class="explain"><strong>10 равнозначных опций</strong> одновременно. Время принятия решения растёт логарифмически — пользователь замирает.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;flex-direction:column;gap:8px;padding:14px;">
+            <div class="hick-good">
+              <div class="hick-main">
+                <button class="hick-btn" style="background:var(--accent);color:#fff;border-color:var(--accent)">Экспорт CSV</button>
+                <button class="hick-btn" onclick="var el=document.getElementById('hick-extra');el.classList.toggle('shown');this.textContent=el.classList.contains('shown')?'Закрыть ▲':'Ещё опции ▼'">Ещё опции ▼</button>
+              </div>
+              <div id="hick-extra" class="hick-expanded">
+                <button class="hick-btn">XLS</button>
+                <button class="hick-btn">PDF</button>
+                <button class="hick-btn">Печать</button>
+                <button class="hick-btn">Email</button>
+                <button class="hick-btn">Ссылка</button>
+              </div>
+            </div>
+          </div>
+          <p class="explain"><strong>Главное действие видно сразу</strong>. Остальное скрыто до явного намерения. Нажмите «Ещё опции» чтобы увидеть раскрытие.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       II. ИЕРАРХИЯ
+  ============================================================ -->
+  <section class="section" id="hierarchy">
+    <div class="section-header">
+      <span class="section-num">II</span>
+      <h2 class="section-title">Иерархия</h2>
+    </div>
+    <p class="section-sub">Иерархия отвечает на один вопрос: «что пользователь должен заметить первым?» На каждом визуальном уровне должен быть один и только один самый весомый элемент.</p>
+
+    <!-- Два primary-действия -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Правило</span>
+        <span class="principle-name">На экране не должно быть двух primary-действий</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:16px;">
+            <div class="btn-demo" style="justify-content:center;">
+              <button class="btn btn-primary">Купить за $49</button>
+              <button class="btn btn-primary">Добавить в корзину</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);text-align:center;">Два одинаково весомых CTA</div>
+          </div>
+          <p class="explain">Два заполненных кнопки одного размера и цвета <strong>уничтожают иерархию</strong>. Пользователь теряется — глаз не знает, куда идти.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:16px;">
+            <div class="btn-demo" style="justify-content:center;">
+              <button class="btn btn-primary">Купить за $49</button>
+              <button class="btn btn-secondary">В корзину</button>
+              <button class="btn btn-tertiary">Сохранить</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);text-align:center;">Primary → Secondary → Tertiary</div>
+          </div>
+          <p class="explain"><strong>Один заполненный (primary)</strong>, один контурный (secondary), один текстовый (tertiary). Иерархия действий читается мгновенно.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Правило 3 секунд -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Тест</span>
+        <span class="principle-name">Правило 3 секунд — что запоминается при первом взгляде?</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — 3 одинаково «тяжёлых» блока</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;padding:12px;gap:8px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;">
+              <div style="background:var(--bad);color:#fff;padding:10px;border-radius:6px;font-size:12px;text-align:center;font-weight:700;">СКИДКА 30%</div>
+              <div style="background:#f59e0b;color:#000;padding:10px;border-radius:6px;font-size:12px;text-align:center;font-weight:700;">НОВИНКА!</div>
+              <div style="background:#3b82f6;color:#fff;padding:10px;border-radius:6px;font-size:12px;text-align:center;font-weight:700;">ТОП ПРОДАЖ</div>
+            </div>
+          </div>
+          <p class="explain">Три ярких блока с одинаковым весом. <strong>Закройте глаза на 3 секунды и откройте</strong> — что вы запомнили? Всё кричит одновременно.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — один доминирующий элемент</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;padding:12px;gap:8px;flex-direction:column;">
+            <div style="background:var(--good);color:#fff;padding:14px 20px;border-radius:8px;font-size:18px;font-weight:700;width:100%;text-align:center;">Скидка 30%</div>
+            <div style="display:flex;gap:8px;width:100%;">
+              <div style="background:var(--bg-3);color:var(--text-2);padding:8px;border-radius:6px;font-size:11px;text-align:center;flex:1;">Новинка</div>
+              <div style="background:var(--bg-3);color:var(--text-2);padding:8px;border-radius:6px;font-size:11px;text-align:center;flex:1;">Топ продаж</div>
+            </div>
+          </div>
+          <p class="explain">Один крупный доминирующий элемент, остальные подчинённые. <strong>За 3 секунды запоминается именно он</strong> — и это именно то, что нужно.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       III. ТИПОГРАФИКА
+  ============================================================ -->
+  <section class="section" id="typography">
+    <div class="section-header">
+      <span class="section-num">III</span>
+      <h2 class="section-title">Типографика</h2>
+    </div>
+    <p class="section-sub">Типографика — не выбор шрифта, а система отношений между текстовыми элементами. Размеры, межстрочный интервал, длина строки и ритм — всё это управляется через математику, не интуицию.</p>
+
+    <!-- Модульный масштаб -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Масштаб</span>
+        <span class="principle-name">Размеры текста — математическая прогрессия, не случайные числа</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — хаотичные размеры</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;flex-direction:column;gap:4px;padding:14px;">
+            <div class="typo-bad-scale">
+              <h2>Заголовок страницы</h2>
+              <h3>Подзаголовок раздела</h3>
+              <h4>Заголовок карточки</h4>
+              <p>Основной текст описания.</p>
+            </div>
+          </div>
+          <div class="code">
+<span class="c">/* Хаотичные px без системы */</span>
+h2 { font-size: <span class="v">22px</span>; }
+h3 { font-size: <span class="v">21px</span>; }
+h4 { font-size: <span class="v">19px</span>; }
+p  { font-size: <span class="v">15px</span>; }
+          </div>
+          <p class="explain">Разница между h2 и h3 — всего 1px. <strong>Иерархия не читается</strong>. Нет ощущения системы.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — модульный масштаб 1.25 (Major Third)</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;flex-direction:column;gap:4px;padding:14px;">
+            <div class="typo-good-scale">
+              <h2>Заголовок страницы</h2>
+              <h3>Подзаголовок раздела</h3>
+              <p>Основной текст описания компонента.</p>
+            </div>
+          </div>
+          <div class="code">
+<span class="c">/* Прогрессия: 14 × 1.25 × 1.25 = 21.8 ≈ 22px */</span>
+<span class="c">/* Базовый: 14px, коэф. Major Third: 1.25 */</span>
+--text-base: <span class="v">14px</span>;   <span class="c">/* p */</span>
+--text-lg:   <span class="v">17.5px</span>; <span class="c">/* sub */</span>
+--text-xl:   <span class="v">21.9px</span>; <span class="c">/* h2 */</span>
+          </div>
+          <p class="explain">Каждый уровень = предыдущий × 1.25. <strong>Иерархия читается без цветов и весов</strong>. Максимум 3–4 уровня в одном компоненте.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Длина строки -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Мера</span>
+        <span class="principle-name">Длина строки: 45–75 символов для основного текста</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — слишком широко</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;padding:14px;">
+            <div class="measure-bad">Пользователь сканирует текст по F-паттерну. Когда строка слишком длинная, глаз теряется при возврате на следующую строку и начинает читать ту же строку повторно.</div>
+          </div>
+          <p class="explain">Ширина не ограничена. Глаз устаёт при переходе на следующую строку — это <strong>читабельность ниже нуля</strong>.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — max-width: 65ch</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;padding:14px;">
+            <div class="measure-good">Пользователь сканирует текст по F-паттерну. Когда строка слишком длинная, глаз теряется при возврате на следующую строку и начинает читать ту же строку повторно.</div>
+          </div>
+          <div class="code">p { max-width: <span class="v">65ch</span>; }</div>
+          <p class="explain"><code>65ch</code> = ширина 65 символов текущего шрифта. <strong>Физически ограничивает строку</strong> без зависимости от px.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Вертикальный ритм -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Ритм</span>
+        <span class="principle-name">Вертикальный ритм — все отступы кратны базовому юниту</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — магические числа</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;padding:12px;flex-direction:column;gap:0;width:100%;">
+            <div class="rhythm-bad" style="width:100%;">
+              <div class="r1" style="margin-bottom:3px;">Заголовок раздела</div>
+              <div class="r2" style="margin-bottom:11px;font-size:12px;color:var(--text-2);">Описание</div>
+              <div class="r3" style="margin-bottom:5px;">Ещё элемент</div>
+              <div style="">Последний</div>
+            </div>
+          </div>
+          <div class="code">
+margin-bottom: <span class="v">3px</span>;  <span class="c">/* магия */</span>
+margin-bottom: <span class="v">11px</span>; <span class="c">/* откуда? */</span>
+margin-bottom: <span class="v">5px</span>;  <span class="c">/* почему? */</span>
+          </div>
+          <p class="explain">3px, 11px, 5px — числа без системы. <strong>Хаотичный ритм создаёт ощущение небрежности</strong> даже при хорошем контенте.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — шаг 4px</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;padding:12px;flex-direction:column;gap:0;width:100%;">
+            <div class="rhythm-good" style="width:100%;">
+              <div>Заголовок раздела</div>
+              <div style="font-size:12px;color:var(--text-2);">Описание</div>
+              <div>Ещё элемент</div>
+              <div>Последний</div>
+            </div>
+          </div>
+          <div class="code">
+<span class="c">/* Шаг 4px: 4, 8, 12, 16, 24, 32... */</span>
+--space-sm: <span class="v">8px</span>;
+--space-md: <span class="v">16px</span>;
+--space-lg: <span class="v">24px</span>;
+
+margin-bottom: <span class="v">var(--space-md)</span>;
+          </div>
+          <p class="explain">Все отступы кратны 4px. <strong>Равномерный ритм воспринимается как аккуратность и профессионализм</strong> — даже если пользователь не понимает, почему.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       IV. ЦВЕТ
+  ============================================================ -->
+  <section class="section" id="color">
+    <div class="section-header">
+      <span class="section-num">IV</span>
+      <h2 class="section-title">Цвет</h2>
+    </div>
+    <p class="section-sub">Цвет — последний инструмент иерархии, не первый. Он несёт функциональный смысл, а не только эстетический. Без выполнения требований контрастности WCAG — это не дизайн, это нарушение доступности.</p>
+
+    <!-- Контрастность -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">WCAG</span>
+        <span class="principle-name">Контрастность текста — минимум 4.5:1 для обычного текста</span>
+        <span class="badge badge-wcag">WCAG AA</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — недостаточный контраст</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:8px;">
+            <div class="contrast-bad">Этот текст плохо читается на фоне</div>
+            <div class="contrast-ratio ratio-bad">Контраст: ~1.4:1 ✗ (минимум 4.5:1)</div>
+          </div>
+          <p class="explain">Серый текст на светло-сером фоне. <strong>Нечитаемо для 8% мужчин с цветовой слепотой</strong> и для всех при ярком освещении или плохом экране.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — высокий контраст</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:8px;">
+            <div class="contrast-good">Этот текст отлично читается на тёмном фоне</div>
+            <div class="contrast-ratio ratio-good">Контраст: ~21:1 ✓ (максимально возможный)</div>
+          </div>
+          <p class="explain">Белый текст на тёмном фоне. <strong>Проходит WCAG AAA</strong>. Используйте браузерные инструменты (DevTools → Accessibility) для проверки.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Независимость от цвета -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Доступность</span>
+        <span class="principle-name">Смысл не должен передаваться только цветом</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — только цвет</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:8px;align-items:flex-start;">
+            <div class="color-bad">
+              <div class="color-status"><span class="dot dot-green"></span> Сервер 1</div>
+              <div class="color-status"><span class="dot dot-red"></span> Сервер 2</div>
+              <div class="color-status"><span class="dot dot-green"></span> Сервер 3</div>
+            </div>
+          </div>
+          <p class="explain">Зелёная/красная точка без текстового пояснения. Для человека с дейтеранопией (красно-зелёная слепота) <strong>все точки выглядят одинаково</strong>.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — цвет + иконка + текст</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:8px;align-items:flex-start;" class="color-good">
+            <div class="status-ok" style="color:var(--good);display:flex;align-items:center;gap:6px;font-size:13px;">
+              <span style="font-size:14px;">✓</span> <span class="dot dot-green"></span> Сервер 1 — в сети
+            </div>
+            <div class="status-err" style="color:var(--bad);display:flex;align-items:center;gap:6px;font-size:13px;">
+              <span style="font-size:14px;">✕</span> <span class="dot dot-red"></span> Сервер 2 — ошибка
+            </div>
+            <div class="status-ok" style="color:var(--good);display:flex;align-items:center;gap:6px;font-size:13px;">
+              <span style="font-size:14px;">✓</span> <span class="dot dot-green"></span> Сервер 3 — в сети
+            </div>
+          </div>
+          <p class="explain">Цвет + иконка + текст. <strong>Уберите цвет — смысл сохраняется</strong>. Это правило независимости от цвета.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Архитектура токенов -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Архитектура</span>
+        <span class="principle-name">Трёхуровневая система токенов цвета</span>
+      </div>
+      <div class="full-panel">
+        <div class="compare">
+          <div class="compare-panel">
+            <div class="panel-label bad">Плохо — захардкоженные значения</div>
+            <div class="code">
+.button { background: <span class="v">#3B82F6</span>; }
+.link   { color: <span class="v">#3B82F6</span>; }
+.badge  { border-color: <span class="v">#3B82F6</span>; }
+
+<span class="c">/* Сменить тему = найти 47 вхождений #3B82F6 */</span>
+            </div>
+            <p class="explain">Один и тот же hex в десятках мест. <strong>Смена темы = рефакторинг всего кода</strong>. Нет возможности отличить «синий для брендинга» от «синий для информации».</p>
+          </div>
+          <div class="compare-panel">
+            <div class="panel-label good">Хорошо — токены в 3 уровня</div>
+            <div class="token-chain">
+              <div class="token-level">
+                <span class="lbl">Примитив</span>
+                <span class="val">--color-blue-500: <span style="color:#86efac">#3B82F6</span></span>
+              </div>
+              <div class="token-arrow">↓ ссылается</div>
+              <div class="token-level">
+                <span class="lbl">Семантика</span>
+                <span class="val">--color-primary: var(--color-blue-500)</span>
+              </div>
+              <div class="token-arrow">↓ ссылается</div>
+              <div class="token-level">
+                <span class="lbl">Компонент</span>
+                <span class="val">--btn-bg: var(--color-primary)</span>
+              </div>
+            </div>
+            <p class="explain" style="margin-top:12px;"><strong>Смена темы = изменить только уровень 2</strong>. Компоненты не трогаются. Каждый токен ссылается на уровень выше, никогда на примитив напрямую.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       V. ПРОСТРАНСТВО
+  ============================================================ -->
+  <section class="section" id="space">
+    <div class="section-header">
+      <span class="section-num">V</span>
+      <h2 class="section-title">Пространство</h2>
+    </div>
+    <p class="section-sub">Пространство — не пустота. Это активный элемент дизайна. Все отступы должны быть кратны единому базовому юниту (4px или 8px). Случайные значения — признак отсутствия системы.</p>
+
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Базовый юнит</span>
+        <span class="principle-name">Mobile-first адаптивность — min-width, не max-width</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — Desktop First (max-width)</div>
+          <div class="demo-box demo-bad" style="align-items:flex-start;padding:14px;flex-direction:column;gap:8px;">
+            <div class="grid-bad" style="width:100%;">
+              <div class="grid-bad-item">Карточка 1</div>
+              <div class="grid-bad-item">Карточка 2</div>
+              <div class="grid-bad-item">Карточка 3</div>
+            </div>
+          </div>
+          <div class="code">
+.grid { grid-template-columns: <span class="v">1fr 1fr 1fr</span>; }
+<span class="c">/* Потом «ломаем» под мобайл: */</span>
+@media (max-width: <span class="v">768px</span>) {
+  .grid { grid-template-columns: <span class="v">1fr</span>; }
+}
+          </div>
+          <p class="explain">Начинаем с десктопа и «урезаем» под мобайл. <strong>Мышление от большего к меньшему</strong> — потом не хватает контента и появляются костыли.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — Mobile First (min-width)</div>
+          <div class="demo-box demo-good" style="align-items:flex-start;padding:14px;flex-direction:column;gap:8px;">
+            <div class="grid-good" style="width:100%;">
+              <div class="grid-good-item">Карточка 1</div>
+              <div class="grid-good-item">Карточка 2</div>
+            </div>
+          </div>
+          <div class="code">
+<span class="c">/* Начинаем с мобайла: */</span>
+.grid { grid-template-columns: <span class="v">1fr</span>; }
+<span class="c">/* Расширяем на больших экранах: */</span>
+@media (min-width: <span class="v">768px</span>) {
+  .grid { grid-template-columns: <span class="v">1fr 1fr 1fr</span>; }
+}
+          </div>
+          <p class="explain"><strong>Начинаем с наименьшего контейнера, расширяем через min-width</strong>. Компонент корректно работает в любом размере без переопределений.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       VI. КОМПОНЕНТЫ
+  ============================================================ -->
+  <section class="section" id="components">
+    <div class="section-header">
+      <span class="section-num">VI</span>
+      <h2 class="section-title">Компоненты</h2>
+    </div>
+    <p class="section-sub">Компонент — самодостаточная единица интерфейса. Он решает одну задачу и не знает о внешнем контексте. Каждое интерактивное состояние должно быть реализовано явно.</p>
+
+    <!-- Все состояния -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Состояния</span>
+        <span class="principle-name">Машина состояний — каждое состояние визуально различимо</span>
+      </div>
+      <div class="full-panel">
+        <div class="panel-label bad" style="margin-bottom:10px;">Плохо — disabled выглядит как active</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-primary">Отправить</button>
+          <button class="btn btn-primary" disabled>Отправить</button>
+        </div>
+        <p class="explain" style="margin-bottom:16px;"><strong>Два состояния неразличимы</strong>. Пользователь не понимает, почему кнопка не реагирует — активна она или нет.</p>
+
+        <div class="panel-label good" style="margin-bottom:10px;">Хорошо — 8 различимых состояний</div>
+        <div class="states-row">
+          <div style="text-align:center;">
+            <button class="state-btn state-idle">Отправить</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">idle</div>
+          </div>
+          <div style="text-align:center;">
+            <button class="state-btn state-hover">Отправить</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">hover</div>
+          </div>
+          <div style="text-align:center;">
+            <button class="state-btn state-focus">Отправить</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">focus</div>
+          </div>
+          <div style="text-align:center;">
+            <button class="state-btn state-active" style="transform:scale(0.97);">Отправить</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">active</div>
+          </div>
+          <div style="text-align:center;">
+            <button class="state-btn state-disabled" disabled>Отправить</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">disabled</div>
+          </div>
+          <div style="text-align:center;">
+            <button class="state-btn state-loading"><span class="spinner"></span> Отправка...</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">loading</div>
+          </div>
+          <div style="text-align:center;">
+            <button class="state-btn state-error">✕ Ошибка сети</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">error</div>
+          </div>
+          <div style="text-align:center;">
+            <button class="state-btn state-success">✓ Отправлено</button>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;">success</div>
+          </div>
+        </div>
+        <p class="explain" style="margin-top:12px;"><strong>Если состояние визуально неотличимо от другого — оно не реализовано</strong>, оно просто отсутствует.</p>
+      </div>
+    </div>
+
+    <!-- Изоляция -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Изоляция</span>
+        <span class="principle-name">Компонент не знает о своём внешнем контексте</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — внешние отступы внутри компонента</div>
+          <div class="code">
+<span class="c">/* Компонент знает, где он живёт */</span>
+.<span class="p">card</span> {
+  margin-top: <span class="v">40px</span>;   <span class="c">/* ← НАРУШЕНИЕ */</span>
+  margin-left: <span class="v">24px</span>;  <span class="c">/* ← НАРУШЕНИЕ */</span>
+  padding: <span class="v">16px</span>;
+}
+          </div>
+          <p class="explain"><code>margin-top/left</code> — это знание о внешнем контексте. <strong>Перенесите компонент в другое место — вёрстка сломается</strong>.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — только внутренние отступы</div>
+          <div class="code">
+<span class="c">/* Компонент изолирован */</span>
+.<span class="p">card</span> {
+  padding: <span class="v">16px</span>;  <span class="c">/* ← только внутри */</span>
+}
+
+<span class="c">/* Контекст управляет расположением */</span>
+.<span class="p">page-grid</span> {
+  gap: <span class="v">24px</span>;  <span class="c">/* ← снаружи */</span>
+}
+          </div>
+          <p class="explain">Компонент управляет только своим внутренним пространством. <strong>Внешние отступы — ответственность родителя</strong> (gap, margin от контейнера).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEM именование -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Именование</span>
+        <span class="principle-name">Изоляция через пространство имён — префикс компонента</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — глобальные имена</div>
+          <div class="code">
+data-filter=<span class="s">"5"</span>
+--color-primary
+.title
+.card
+
+<span class="c">/* Коллизия: у двух компонентов есть .title */</span>
+<span class="c">/* Чьи стили применятся? */</span>
+          </div>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — префикс компонента</div>
+          <div class="code">
+data-reviews-filter=<span class="s">"5"</span>
+--reviews-star-color
+.reviews-title
+.reviews-card
+
+<span class="c">/* Нет коллизий, сразу понятно,</span>
+<span class="c">   кому принадлежит каждый элемент */</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       VII. ВЗАИМОДЕЙСТВИЕ
+  ============================================================ -->
+  <section class="section" id="interaction">
+    <div class="section-header">
+      <span class="section-num">VII</span>
+      <h2 class="section-title">Взаимодействие</h2>
+    </div>
+    <p class="section-sub">Каждое действие пользователя должно иметь немедленный видимый отклик. Анимация должна быть мотивированной — объяснять что-то, а не украшать.</p>
+
+    <!-- Время отклика -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Обратная связь</span>
+        <span class="principle-name">Время отклика определяет тип визуальной обратной связи</span>
+      </div>
+      <div class="full-panel">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--good-bg);border:1px solid var(--good-border);border-radius:6px;">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--good);min-width:80px;">&lt; 100 мс</span>
+            <span style="font-size:13px;color:var(--text);">«Мгновенно» — доп. обратная связь не нужна (hover-смена цвета достаточна)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:6px;">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--yellow);min-width:80px;">100–300 мс</span>
+            <span style="font-size:13px;color:var(--text);">Нужен hover-state, ripple-эффект, смена курсора</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:6px;">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--yellow);min-width:80px;">300 мс–1 с</span>
+            <span style="font-size:13px;color:var(--text);">Нужен индикатор загрузки: spinner или skeleton screen</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bad-bg);border:1px solid var(--bad-border);border-radius:6px;">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--bad);min-width:80px;">&gt; 1 секунды</span>
+            <span style="font-size:13px;color:var(--text);">Прогресс-бар + возможность отменить операцию</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bad-bg);border:1px solid var(--bad-border);border-radius:6px;">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--bad);min-width:80px;">&gt; 10 секунд</span>
+            <span style="font-size:13px;color:var(--text);">Уведомление + возможность уйти и вернуться</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Анимация -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Анимация</span>
+        <span class="principle-name">Скорость анимации — 100–300 мс. Медленнее — перестаёт быть отзывчивым</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — слишком медленно (2 сек)</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:8px;">
+            <button class="anim-btn anim-slow">Наведите мышь</button>
+            <p style="font-size:11px;color:var(--text-3);">transition: 2s ease</p>
+          </div>
+          <p class="explain">Анимация длиннее 500 мс <strong>перестаёт ощущаться как отклик</strong> — становится препятствием. Пользователь ждёт, пока элемент «соизволит» отреагировать.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — 150 мс (micro-interaction)</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:8px;">
+            <button class="anim-btn anim-good-t">Наведите мышь</button>
+            <p style="font-size:11px;color:var(--text-3);">transition: 0.15s ease-out</p>
+          </div>
+          <p class="explain">150 мс — граница «мгновенного» отклика. Анимация <strong>подтверждает действие, не задерживает</strong>. Параметры: micro-interaction 100–200 мс, ease-in-out.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSS анимация vs JS -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Перфоманс</span>
+        <span class="principle-name">Анимируйте только transform и opacity — без reflow</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — анимация layout-свойств</div>
+          <div class="code">
+<span class="c">/* Вызывают Layout + Paint + Composite */</span>
+.<span class="p">element</span> {
+  transition: <span class="v">width</span> 0.3s,
+              <span class="v">height</span> 0.3s,
+              <span class="v">margin</span> 0.3s,
+              <span class="v">top</span> 0.3s;
+}
+          </div>
+          <p class="explain">Анимация width, height, top, margin вызывает <strong>полный пересчёт layout</strong> на каждый кадр. Дёргается на слабых устройствах.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — только compositor-слой</div>
+          <div class="code">
+<span class="c">/* Compositor Layer — нет reflow/repaint */</span>
+.<span class="p">element</span> {
+  transition: <span class="v">transform</span> 0.2s ease-out,
+              <span class="v">opacity</span>  0.2s ease-out;
+}
+
+<span class="c">/* transform заменяет position: */</span>
+.<span class="p">element--visible</span> {
+  transform: <span class="v">translateX(0)</span>;
+  opacity: <span class="v">1</span>;
+}
+          </div>
+          <p class="explain"><code>transform</code> и <code>opacity</code> обрабатываются GPU в отдельном compositor-слое. <strong>Никакого reflow, 60 fps на любом устройстве</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       VIII. ДОСТУПНОСТЬ
+  ============================================================ -->
+  <section class="section" id="accessibility">
+    <div class="section-header">
+      <span class="section-num">VIII</span>
+      <h2 class="section-title">Доступность</h2>
+    </div>
+    <p class="section-sub">Доступность — не фича, а базовое требование к качеству. Как отсутствие ошибок компиляции. Нативный HTML даёт клавиатурную навигацию, ARIA-роли и управление фокусом бесплатно.</p>
+
+    <!-- Семантический HTML -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Семантика</span>
+        <span class="principle-name">Нативные HTML-элементы вместо div с обработчиками</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — div вместо button</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:10px;align-items:flex-start;">
+            <div class="div-btn" onclick="alert('clicked')">Отправить форму</div>
+            <p style="font-size:11px;color:var(--text-3);">Tab — не фокусируется. Enter — не срабатывает. Screen reader не говорит «кнопка».</p>
+          </div>
+          <div class="code">
+<span class="c">/* div требует всё добавлять вручную */</span>
+&lt;<span class="p">div</span> onclick=<span class="s">"submit()"</span>
+     tabindex=<span class="s">"0"</span>
+     role=<span class="s">"button"</span>
+     onkeydown=<span class="s">"..."</span>&gt;
+  Отправить
+&lt;/<span class="p">div</span>&gt;
+          </div>
+          <p class="explain"><code>&lt;div&gt;</code> не фокусируется по Tab, не реагирует на Enter/Space, не объявляется screen reader как кнопка. <strong>Всё это нужно добавлять вручную через ARIA и JS</strong>.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — нативный button</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:10px;align-items:flex-start;">
+            <button class="real-btn" onclick="this.textContent='✓ Отправлено';setTimeout(()=>this.textContent='Отправить форму',2000)">Отправить форму</button>
+            <p style="font-size:11px;color:var(--text-3);">Нажмите Tab → Enter для активации. Попробуйте с клавиатуры.</p>
+          </div>
+          <div class="code">
+<span class="c">/* Всё из коробки бесплатно: */</span>
+&lt;<span class="p">button</span> type=<span class="s">"submit"</span>&gt;
+  Отправить
+&lt;/<span class="p">button</span>&gt;
+
+<span class="c">/* ✓ Tab-фокус    ✓ Enter/Space
+   ✓ ARIA role=button
+   ✓ disabled-состояние */</span>
+          </div>
+          <p class="explain">Нативный <code>&lt;button&gt;</code> даёт всё бесплатно. <strong>Попробуйте Tab → Enter</strong> — кнопка выше работает с клавиатуры.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Focus visible -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Фокус</span>
+        <span class="principle-name">:focus-visible всегда должен быть видим и высококонтрастным</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — outline: none</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:10px;">
+            <button class="focus-bad-btn">Нажмите Tab, потом здесь</button>
+          </div>
+          <div class="code">
+button:focus {
+  outline: <span class="v">none</span>; <span class="c">/* ← НАРУШЕНИЕ */</span>
+}
+          </div>
+          <p class="explain">Уберите outline для «красоты» — и клавиатурный пользователь <strong>не видит, где он находится</strong>. WCAG нарушение, юридический риск.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — высококонтрастный :focus-visible</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:10px;">
+            <button class="focus-good-btn">Нажмите Tab, потом здесь</button>
+          </div>
+          <div class="code">
+<span class="c">/* :focus-visible — только при навигации
+   с клавиатуры, не при клике мышью */</span>
+button:focus-visible {
+  outline: <span class="v">3px solid #fff</span>;
+  outline-offset: <span class="v">3px</span>;
+}
+          </div>
+          <p class="explain"><code>:focus-visible</code> показывается только при клавиатурной навигации, не при клике мышью. <strong>Нажмите Tab и наведите на кнопку выше</strong> — кольцо фокуса должно быть заметным.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Label для инпутов -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Форма</span>
+        <span class="principle-name">Все поля формы обязаны иметь явные &lt;label&gt;</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — placeholder вместо label</div>
+          <div class="demo-box demo-bad" style="flex-direction:column;gap:8px;align-items:stretch;">
+            <div class="label-bad">
+              <input type="email" placeholder="Введите email" style="width:100%;">
+            </div>
+          </div>
+          <p class="explain">Placeholder исчезает при вводе. Screen reader не объявит назначение поля. <strong>Placeholder — подсказка, не метка</strong>.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — явный &lt;label&gt;</div>
+          <div class="demo-box demo-good" style="flex-direction:column;gap:8px;align-items:stretch;">
+            <div class="label-good">
+              <label for="email-demo">Email адрес</label>
+              <input type="email" id="email-demo" placeholder="user@example.com" style="width:100%;">
+            </div>
+          </div>
+          <div class="code">
+&lt;<span class="p">label</span> for=<span class="s">"email"</span>&gt;Email адрес&lt;/<span class="p">label</span>&gt;
+&lt;<span class="p">input</span> type=<span class="s">"email"</span> id=<span class="s">"email"</span>
+       placeholder=<span class="s">"user@example.com"</span>&gt;
+          </div>
+          <p class="explain"><strong>Label всегда виден</strong>, кликабелен (фокусирует поле), читается screen reader. Нажмите на текст «Email адрес» — поле получит фокус.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       IX. CSS АРХИТЕКТУРА
+  ============================================================ -->
+  <section class="section" id="css">
+    <div class="section-header">
+      <span class="section-num">IX</span>
+      <h2 class="section-title">CSS Архитектура</h2>
+    </div>
+    <p class="section-sub">CSS — не таблица стилей, а язык описания дизайн-системы. Специфичность, токены и скоупинг — это фундамент, а не опциональные практики.</p>
+
+    <!-- Специфичность -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Специфичность</span>
+        <span class="principle-name">Принцип минимальной специфичности — никаких ID в CSS</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — ID-селекторы</div>
+          <div class="code">
+<span class="c">/* Специфичность: 1-0-0 */</span>
+#<span class="p">header</span> { background: <span class="v">blue</span>; }
+
+<span class="c">/* Чтобы переопределить — нужен ещё ID
+   или !important — начинается война */</span>
+#<span class="p">header</span>#<span class="p">header</span> { background: <span class="v">red</span>; }
+          </div>
+          <div style="margin-top:10px;">
+            <div class="specificity-chain">
+              <div class="spec-item">
+                <span class="spec-score" style="color:var(--bad);">1-0-0</span>
+                <span class="spec-label">#header</span>
+              </div>
+              <span class="spec-arrow">→ трудно переопределить</span>
+            </div>
+          </div>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — только классы</div>
+          <div class="code">
+<span class="c">/* Специфичность: 0-1-0 */</span>
+.<span class="p">header</span> { background: <span class="v">blue</span>; }
+
+<span class="c">/* Легко переопределить другим классом */</span>
+.<span class="p">header--dark</span> { background: <span class="v">var(--bg-dark)</span>; }
+          </div>
+          <div style="margin-top:10px;">
+            <div class="specificity-chain">
+              <div class="spec-item">
+                <span class="spec-score" style="color:var(--good);">0-1-0</span>
+                <span class="spec-label">.header</span>
+              </div>
+              <span class="spec-arrow">→ легко расширять</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:0 20px 16px;">
+        <p class="explain"><strong>Порядок специфичности от низкой к высокой:</strong> теги (0-0-1) → классы/атрибуты (0-1-0) → ID (1-0-0) → inline styles → !important. Пишите стили с наименьшей необходимой специфичностью.</p>
+      </div>
+    </div>
+
+    <!-- Скоупинг -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Скоупинг</span>
+        <span class="principle-name">Все дочерние стили закреплены за корневым элементом компонента</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — глобальные стили</div>
+          <div class="code">
+<span class="c">/* Глобальный побочный эффект */</span>
+<span class="p">h2</span> { color: <span class="v">blue</span>; }
+<span class="p">p</span>  { margin: <span class="v">0</span>; }
+
+<span class="c">/* Стиль без корневого якоря */</span>
+.<span class="p">title</span>  { font-size: <span class="v">18px</span>; }
+.<span class="p">content</span> { padding: <span class="v">16px</span>; }
+          </div>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — через корень компонента</div>
+          <div class="code">
+<span class="c">/* Все стили через корневой класс */</span>
+.<span class="p">card</span> { ... }
+.<span class="p">card</span> .<span class="p">card__title</span>  { font-size: <span class="v">18px</span>; }
+.<span class="p">card</span> .<span class="p">card__content</span> { padding: <span class="v">16px</span>; }
+
+<span class="c">/* BEM-модификатор */</span>
+.<span class="p">card--featured</span> .<span class="p">card__title</span> {
+  color: <span class="v">var(--color-primary)</span>;
+}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+
+  <!-- ============================================================
+       X. ИНЖИНИРИНГ
+  ============================================================ -->
+  <section class="section" id="engineering">
+    <div class="section-header">
+      <span class="section-num">X</span>
+      <h2 class="section-title">Инжиниринг компонента</h2>
+    </div>
+    <p class="section-sub">Инжиниринг — это не только «чтобы работало», но и безопасность, производительность и чистота. Делегирование событий, XSS-защита и батчинг DOM обновлений — обязательные паттерны.</p>
+
+    <!-- Делегирование событий -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">События</span>
+        <span class="principle-name">Делегирование событий — один обработчик на корне вместо N на элементах</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — обработчик на каждом элементе</div>
+          <div class="code">
+<span class="c">// N кнопок = N слушателей в памяти</span>
+<span class="k">document</span>.<span class="p">querySelectorAll</span>(<span class="s">'.btn'</span>)
+  .<span class="p">forEach</span>(<span class="n">btn</span> =>
+    <span class="n">btn</span>.<span class="p">addEventListener</span>(<span class="s">'click'</span>, <span class="n">handler</span>)
+  );
+
+<span class="c">// Динамически добавленные кнопки —</span>
+<span class="c">// слушателей нет, нужно добавлять вручную</span>
+          </div>
+          <p class="explain">100 кнопок = 100 слушателей. <strong>Динамически добавленные элементы не обрабатываются</strong>. Утечка памяти при уничтожении компонента.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — один делегированный обработчик</div>
+          <div class="code">
+<span class="c">// Один слушатель на корне</span>
+<span class="n">root</span>.<span class="p">addEventListener</span>(<span class="s">'click'</span>, <span class="n">e</span> => {
+  <span class="k">const</span> <span class="n">btn</span> = <span class="n">e</span>.<span class="p">target</span>
+    .<span class="p">closest</span>(<span class="s">'[data-action]'</span>);
+  <span class="k">if</span> (!<span class="n">btn</span>) <span class="k">return</span>;
+  <span class="k">switch</span> (<span class="n">btn</span>.<span class="p">dataset</span>.<span class="n">action</span>) {
+    <span class="k">case</span> <span class="s">'submit'</span>: ...; <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">'delete'</span>: ...; <span class="k">break</span>;
+  }
+});
+          </div>
+          <p class="explain">Один слушатель на корне. Работает с <strong>динамически добавленными элементами</strong>. Удаляется одним <code>abort()</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- XSS -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Безопасность</span>
+        <span class="principle-name">XSS — весь пользовательский ввод должен быть экранирован</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — прямая вставка в innerHTML</div>
+          <div class="code">
+<span class="c">// Опасно! Пользователь вводит:</span>
+<span class="c">// &lt;img src=x onerror="alert('XSS')"&gt;</span>
+<span class="k">const</span> <span class="n">userInput</span> = <span class="n">input</span>.<span class="p">value</span>;
+<span class="n">el</span>.<span class="p">innerHTML</span> = <span class="s">`&lt;p&gt;${userInput}&lt;/p&gt;`</span>;
+
+<span class="c">// Скрипт выполнится в браузере!</span>
+          </div>
+          <p class="explain">Любой HTML из пользовательского ввода в <code>innerHTML</code> — это потенциальная XSS-уязвимость. <strong>Злоумышленник может выполнить произвольный JS</strong>.</p>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — экранирование или textContent</div>
+          <div class="code">
+<span class="c">// Вариант 1: textContent (только текст)</span>
+<span class="n">el</span>.<span class="p">textContent</span> = <span class="n">userInput</span>;
+
+<span class="c">// Вариант 2: экранирование</span>
+<span class="k">function</span> <span class="p">esc</span>(<span class="n">s</span>) {
+  <span class="k">return</span> <span class="n">String</span>(<span class="n">s</span>)
+    .<span class="p">replace</span>(<span class="s">/[&lt;&gt;"'&amp;]/g</span>, <span class="n">c</span> =>
+      ({<span class="s">'&amp;'</span>:<span class="s">'&amp;amp;'</span>,<span class="s">'&lt;'</span>:<span class="s">'&amp;lt;'</span>,
+        <span class="s">'&gt;'</span>:<span class="s">'&amp;gt;'</span>}[<span class="n">c</span>]));
+}
+<span class="n">el</span>.<span class="p">innerHTML</span> = <span class="s">`&lt;p&gt;${esc(userInput)}&lt;/p&gt;`</span>;
+          </div>
+          <p class="explain"><code>textContent</code> не интерпретирует HTML. Если нужен HTML — <strong>экранируйте все спецсимволы</strong> перед вставкой. Любые данные извне — URL, localStorage, API — считаются недоверенными.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layout thrashing -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">Перфоманс</span>
+        <span class="principle-name">Layout thrashing — разделяйте чтение и запись DOM</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — чередование read/write</div>
+          <div class="code">
+<span class="c">// Браузер делает reflow на каждой строке</span>
+<span class="n">el1</span>.<span class="p">style</span>.<span class="n">height</span> =
+  <span class="n">el1</span>.<span class="p">offsetHeight</span> + <span class="s">'px'</span>; <span class="c">// read→write</span>
+<span class="n">el2</span>.<span class="p">style</span>.<span class="n">height</span> =
+  <span class="n">el2</span>.<span class="p">offsetHeight</span> + <span class="s">'px'</span>; <span class="c">// read→write</span>
+<span class="c">// 2 принудительных reflow подряд</span>
+          </div>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — сначала все чтения, потом все записи</div>
+          <div class="code">
+<span class="c">// Один reflow: сначала читаем всё</span>
+<span class="k">const</span> <span class="n">h1</span> = <span class="n">el1</span>.<span class="p">offsetHeight</span>;
+<span class="k">const</span> <span class="n">h2</span> = <span class="n">el2</span>.<span class="p">offsetHeight</span>;
+
+<span class="c">// Потом пишем всё</span>
+<span class="n">el1</span>.<span class="p">style</span>.<span class="n">height</span> = <span class="n">h1</span> + <span class="s">'px'</span>;
+<span class="n">el2</span>.<span class="p">style</span>.<span class="n">height</span> = <span class="n">h2</span> + <span class="s">'px'</span>;
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DocumentFragment -->
+    <div class="principle">
+      <div class="principle-header">
+        <span class="principle-tag tag-rule">DOM</span>
+        <span class="principle-name">Пакетные обновления DOM через DocumentFragment</span>
+      </div>
+      <div class="compare">
+        <div class="compare-panel">
+          <div class="panel-label bad">Плохо — множественные вставки в живой DOM</div>
+          <div class="code">
+<span class="c">// N вставок = N перерисовок</span>
+<span class="n">items</span>.<span class="p">forEach</span>(<span class="n">item</span> =>
+  <span class="n">list</span>.<span class="p">appendChild</span>(<span class="p">createEl</span>(<span class="n">item</span>))
+);
+          </div>
+        </div>
+        <div class="compare-panel">
+          <div class="panel-label good">Хорошо — один DocumentFragment</div>
+          <div class="code">
+<span class="c">// 1 вставка = 1 перерисовка</span>
+<span class="k">const</span> <span class="n">frag</span> =
+  <span class="n">document</span>.<span class="p">createDocumentFragment</span>();
+
+<span class="n">items</span>.<span class="p">forEach</span>(<span class="n">item</span> =>
+  <span class="n">frag</span>.<span class="p">appendChild</span>(<span class="p">createEl</span>(<span class="n">item</span>))
+);
+
+<span class="n">list</span>.<span class="p">replaceChildren</span>(<span class="n">frag</span>);
+          </div>
+        </div>
+      </div>
+      <div style="padding:0 20px 16px;">
+        <p class="explain"><code>DocumentFragment</code> — виртуальный контейнер вне DOM. Все изменения накапливаются в нём, а потом вставляются одной операцией. <strong>Одна перерисовка вместо N</strong>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <div style="border-top:1px solid var(--border);padding-top:32px;margin-top:16px;text-align:center;">
+    <p style="font-size:13px;color:var(--text-3);line-height:1.7;">
+      Принципы не устаревают, когда меняются фреймворки.<br>
+      Bootstrap, Tailwind, React, Vue — инструменты для реализации принципов, а не сами принципы.
+    </p>
+    <p style="font-size:11px;color:var(--text-3);margin-top:16px;font-family:var(--mono);">
+      Front-End Design Guide — Examples · Русский
+    </p>
+  </div>
+
+</main>
+
+<script>
+  // Sidebar active link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const link = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // XSS live demo interaction (safe by default above)
+</script>
+</body>
+</html>
