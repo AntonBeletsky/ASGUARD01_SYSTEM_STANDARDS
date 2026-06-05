@@ -1,0 +1,128 @@
+{
+  "guide": {
+    "title": "Ultimate Software Engineering Knowledge Architecture",
+    "description": "Unified structure compiled from all previous volumes and extensions. Structure only, no implementation.",
+    "volumes": [
+      {
+        "id": 1,
+        "title": "Clean Code & Architecture"
+      },
+      {
+        "id": 2,
+        "title": "Design Patterns"
+      },
+      {
+        "id": 3,
+        "title": "Domain Driven Design (DDD)"
+      },
+      {
+        "id": 4,
+        "title": "Distributed Systems"
+      },
+      {
+        "id": 5,
+        "title": "Performance Engineering"
+      },
+      {
+        "id": 6,
+        "title": "Reliability Engineering"
+      },
+      {
+        "id": 7,
+        "title": "Testing"
+      },
+      {
+        "id": 8,
+        "title": "Application Security"
+      },
+      {
+        "id": 9,
+        "title": "Databases"
+      },
+      {
+        "id": 10,
+        "title": "DevOps & Deployment"
+      },
+      {
+        "id": 11,
+        "title": "Functional Programming"
+      },
+      {
+        "id": 12,
+        "title": "API Design"
+      },
+      {
+        "id": 13,
+        "title": "Event Driven Architecture"
+      },
+      {
+        "id": 14,
+        "title": "Cloud Architecture"
+      },
+      {
+        "id": 15,
+        "title": "High Load Systems"
+      },
+      {
+        "id": 16,
+        "title": "Frontend Architecture"
+      },
+      {
+        "id": 17,
+        "title": "AI Systems Architecture"
+      },
+      {
+        "id": 18,
+        "title": "Architecture Governance & Leadership"
+      },
+      {
+        "id": 19,
+        "title": "Computer Science Foundations"
+      },
+      {
+        "id": 20,
+        "title": "Operating Systems"
+      },
+      {
+        "id": 21,
+        "title": "Computer Networking"
+      },
+      {
+        "id": 22,
+        "title": "Distributed Databases"
+      },
+      {
+        "id": 23,
+        "title": "Site Reliability Engineering"
+      },
+      {
+        "id": 24,
+        "title": "Cybersecurity Engineering"
+      },
+      {
+        "id": 25,
+        "title": "Compiler Engineering"
+      },
+      {
+        "id": 26,
+        "title": "Information Retrieval & Search Systems"
+      },
+      {
+        "id": 27,
+        "title": "Data Engineering"
+      },
+      {
+        "id": 28,
+        "title": "Formal Methods"
+      },
+      {
+        "id": 29,
+        "title": "Software Economics"
+      },
+      {
+        "id": 30,
+        "title": "Systems Thinking"
+      }
+    ]
+  }
+}
