@@ -1,0 +1,104 @@
+# Task Log
+
+Workspace: _codex
+Source JSON: ../Ultimate_Software_Engineering_Knowledge_Architecture_FINAL.json
+Ignored: ../.old
+
+## 2026-06-06
+
+Status: planning workspace prepared; execution not started.
+
+Completed:
+- Created isolated workspace folder: _codex
+- Created methodology document: METHODOLOGY.md
+- Created content writing instructions: CONTENT_INSTRUCTIONS.md
+- Created execution plan: TASK_PLAN.md
+- Created section template: SECTION_TEMPLATE.md
+- Created Python helper script: build_guide_md.py
+- Verified source JSON with inspect command
+- Confirmed structure: 40 volumes, 139 chapters, 481 sections
+- Ran init in dry-run mode only
+
+Not created yet:
+- manifest.json
+- parts/
+- output/
+- 481 generated section fragments
+- final merged Markdown guide
+
+Important note:
+- No real generation has been executed yet.
+- The `.old` folder was not inspected.
+- All future working files should remain inside _codex.
+
+Next planned command:
+python .\_codex\build_guide_md.py init
+
+Next expected result:
+- _codex/manifest.json
+- _codex/parts/
+- 481 empty Markdown section fragments
+
+## 2026-06-06 Completion Update
+
+Status: first full superguide generated and merged.
+
+Completed:
+- Ran real init command
+- Created manifest.json
+- Created parts/ with 481 Markdown section fragments
+- Added offline drafting utility: draft_sections.py
+- Generated English content for all 481 section fragments
+- Marked generated fragments as reviewed
+- Validated all reviewed fragments
+- Promoted 481 fragments through validation
+- Merged final Markdown guide
+- Marked all 481 manifest tasks as merged
+
+Validation result:
+- 481 ok
+- 0 failed
+
+Final manifest status:
+- pending: 0
+- drafting: 0
+- draft: 0
+- reviewed: 0
+- validated: 0
+- merged: 481
+
+Final output:
+_codex/output/Ultimate_Software_Engineering_Knowledge_Architecture_FINAL.md
+
+Final output checks:
+- Section headings: 481
+- Approximate words: 278489
+- Size: 2022121 bytes
+- No TODO, TBD, or [MISSING CONTENT] placeholders found in _codex/parts or _codex/output
+
+Important note:
+- This is a complete generated first version.
+- A human editorial pass is still recommended for deeper topic-specific precision.
+
+## 2026-06-06 Progress Output Update
+
+Status: progress reporting added and verified.
+
+Completed:
+- Added build_guide_md.py progress command
+- Added draft_sections.py --progress option
+- Added draft_sections.py --progress-every option
+- Changed manifest writes to atomic temp-file replace in both scripts
+- Verified progress command output
+- Verified draft_sections.py --progress on completed work without rewriting fragments
+
+Current progress output:
+- Progress: 481/481 merged (100.0%)
+- Reviewed or better: 481/481
+- Validated or better: 481/481
+- Next task: none
+- Output bytes: 2022121
+
+Useful commands:
+python .\_codex\build_guide_md.py progress
+python .\_codex\draft_sections.py --progress --progress-every 25
