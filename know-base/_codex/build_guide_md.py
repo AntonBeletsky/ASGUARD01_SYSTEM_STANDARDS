@@ -576,6 +576,13 @@ def body_without_frontmatter(path: Path) -> str:
     return body.strip()
 
 
+def markdown_anchor(heading: str) -> str:
+    anchor = heading.lower()
+    anchor = re.sub(r"[^\w\s-]", "", anchor)
+    anchor = re.sub(r"\s+", "-", anchor.strip())
+    return anchor
+
+
 def command_merge(args: argparse.Namespace) -> int:
     manifest = load_manifest()
     tasks = manifest.get("tasks", [])
@@ -616,6 +623,29 @@ def command_merge(args: argparse.Namespace) -> int:
     lines.append("")
     lines.append(f"Generated from `{manifest.get('source_json')}`.")
     lines.append("")
+    lines.append("## How to Use This Guide")
+    lines.append("")
+    lines.append("Use this guide as a structured engineering reference, not as a book that must be read linearly. Start with the volume that matches the decision in front of you, scan the chapter headings for the relevant concept, then use the section checklists during design review, code review, incident follow-up, or technical planning.")
+    lines.append("")
+    lines.append("Each section is written to be self-contained: it explains the purpose of the topic, the core ideas, practical guidance, trade-offs, examples, common mistakes, and review questions. The JSON source controls the structure and ordering; the Markdown fragments provide the expanded technical content.")
+    lines.append("")
+    lines.append("## Guide Map")
+    lines.append("")
+
+    seen_volumes: set[tuple[int, str]] = set()
+    seen_chapters: set[tuple[int, str, str]] = set()
+    for task in tasks:
+        volume = (int(task["volume_id"]), task["volume_title"])
+        chapter = (int(task["volume_id"]), task["chapter_id"], task["chapter_title"])
+        if volume not in seen_volumes:
+            heading = f"Volume {volume[0]}: {volume[1]}"
+            lines.append(f"- [{heading}](#{markdown_anchor(heading)})")
+            seen_volumes.add(volume)
+        if chapter not in seen_chapters:
+            chapter_heading = f"{chapter[1]} {chapter[2]}"
+            lines.append(f"  - [{chapter_heading}](#{markdown_anchor(chapter_heading)})")
+            seen_chapters.add(chapter)
+    lines.append("")
 
     current_volume: tuple[int, str] | None = None
     current_chapter: tuple[str, str] | None = None
@@ -652,6 +682,11 @@ def command_merge(args: argparse.Namespace) -> int:
         for task in tasks:
             task["status"] = "merged"
             task["updated_at"] = utc_now()
+            full_path = workspace_path(task["path"])
+            if full_path.exists():
+                text = full_path.read_text(encoding="utf-8")
+                full_path.write_text(replace_frontmatter_status(text, "merged"), encoding="utf-8")
+                task["sha256"] = sha256_file(full_path)
         manifest["updated_at"] = utc_now()
         save_manifest(manifest)
 
