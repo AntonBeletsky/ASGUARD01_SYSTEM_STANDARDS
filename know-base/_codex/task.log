@@ -102,3 +102,24 @@ Current progress output:
 Useful commands:
 python .\_codex\build_guide_md.py progress
 python .\_codex\draft_sections.py --progress --progress-every 25
+
+## 2026-06-06 Truncation Check
+
+Status: suspected log/output truncation checked against real files.
+
+User note:
+- Visible log/output appeared to stop around section 3.2.3 Composite.
+
+Verification:
+- Section 3.2.3 Composite exists in the final Markdown.
+- Section 3.2.3 Composite is complete and ends with its Review Checklist.
+- Section 3.2.4 Decorator appears immediately after it.
+- Later sections, including Volume 4 and Volume 40, are present.
+- Final output ends at section 40.3.4 Staff Engineer Career Track.
+- Final output line count: 30540
+- Final output section headings: 481
+- Validation result after check: 481 ok, 0 failed
+
+Conclusion:
+- The generated files are not truncated.
+- The observed cutoff was a display/log-output issue, not a file-generation issue.
