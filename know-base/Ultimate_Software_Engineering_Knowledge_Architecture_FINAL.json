@@ -1,0 +1,3011 @@
+{
+  "guide": {
+    "title": "Ultimate Software Engineering Knowledge Architecture",
+    "structure": "Guide > Volume > Chapter > Section",
+    "volumes": [
+      {
+        "id": 1,
+        "title": "Clean Code",
+        "chapters": [
+          {
+            "id": "1.1",
+            "title": "Naming Conventions",
+            "sections": [
+              {
+                "id": "1.1.1",
+                "title": "Naming Variables and Constants"
+              },
+              {
+                "id": "1.1.2",
+                "title": "Naming Functions and Methods"
+              },
+              {
+                "id": "1.1.3",
+                "title": "Naming Classes and Interfaces"
+              },
+              {
+                "id": "1.1.4",
+                "title": "Naming Files and Modules"
+              }
+            ]
+          },
+          {
+            "id": "1.2",
+            "title": "Functions and Methods",
+            "sections": [
+              {
+                "id": "1.2.1",
+                "title": "Single Responsibility of a Function"
+              },
+              {
+                "id": "1.2.2",
+                "title": "Function Arguments and Parameters"
+              },
+              {
+                "id": "1.2.3",
+                "title": "Return Values and Side Effects"
+              },
+              {
+                "id": "1.2.4",
+                "title": "Command Query Separation"
+              }
+            ]
+          },
+          {
+            "id": "1.3",
+            "title": "Code Organization",
+            "sections": [
+              {
+                "id": "1.3.1",
+                "title": "File and Module Structure"
+              },
+              {
+                "id": "1.3.2",
+                "title": "Logical Grouping of Code"
+              },
+              {
+                "id": "1.3.3",
+                "title": "Comments — Intent Over Syntax"
+              }
+            ]
+          },
+          {
+            "id": "1.4",
+            "title": "Refactoring",
+            "sections": [
+              {
+                "id": "1.4.1",
+                "title": "Code Smells Catalog"
+              },
+              {
+                "id": "1.4.2",
+                "title": "Extract Method and Extract Class"
+              },
+              {
+                "id": "1.4.3",
+                "title": "Inline and Rename Refactors"
+              },
+              {
+                "id": "1.4.4",
+                "title": "Working with Legacy Code"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Object Oriented Design",
+        "chapters": [
+          {
+            "id": "2.1",
+            "title": "Core OOP Concepts",
+            "sections": [
+              {
+                "id": "2.1.1",
+                "title": "Encapsulation"
+              },
+              {
+                "id": "2.1.2",
+                "title": "Abstraction"
+              },
+              {
+                "id": "2.1.3",
+                "title": "Inheritance"
+              },
+              {
+                "id": "2.1.4",
+                "title": "Polymorphism"
+              }
+            ]
+          },
+          {
+            "id": "2.2",
+            "title": "SOLID Principles",
+            "sections": [
+              {
+                "id": "2.2.1",
+                "title": "Single Responsibility Principle"
+              },
+              {
+                "id": "2.2.2",
+                "title": "Open/Closed Principle"
+              },
+              {
+                "id": "2.2.3",
+                "title": "Liskov Substitution Principle"
+              },
+              {
+                "id": "2.2.4",
+                "title": "Interface Segregation Principle"
+              },
+              {
+                "id": "2.2.5",
+                "title": "Dependency Inversion Principle"
+              }
+            ]
+          },
+          {
+            "id": "2.3",
+            "title": "Coupling and Cohesion",
+            "sections": [
+              {
+                "id": "2.3.1",
+                "title": "Types of Coupling"
+              },
+              {
+                "id": "2.3.2",
+                "title": "Cohesion Levels"
+              },
+              {
+                "id": "2.3.3",
+                "title": "Reducing Dependencies"
+              }
+            ]
+          },
+          {
+            "id": "2.4",
+            "title": "Composition vs Inheritance",
+            "sections": [
+              {
+                "id": "2.4.1",
+                "title": "Prefer Composition Over Inheritance"
+              },
+              {
+                "id": "2.4.2",
+                "title": "Mixin and Trait Patterns"
+              },
+              {
+                "id": "2.4.3",
+                "title": "Interface-Based Design"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Design Patterns",
+        "chapters": [
+          {
+            "id": "3.1",
+            "title": "Creational Patterns",
+            "sections": [
+              {
+                "id": "3.1.1",
+                "title": "Singleton"
+              },
+              {
+                "id": "3.1.2",
+                "title": "Factory Method"
+              },
+              {
+                "id": "3.1.3",
+                "title": "Abstract Factory"
+              },
+              {
+                "id": "3.1.4",
+                "title": "Builder"
+              },
+              {
+                "id": "3.1.5",
+                "title": "Prototype"
+              }
+            ]
+          },
+          {
+            "id": "3.2",
+            "title": "Structural Patterns",
+            "sections": [
+              {
+                "id": "3.2.1",
+                "title": "Adapter"
+              },
+              {
+                "id": "3.2.2",
+                "title": "Bridge"
+              },
+              {
+                "id": "3.2.3",
+                "title": "Composite"
+              },
+              {
+                "id": "3.2.4",
+                "title": "Decorator"
+              },
+              {
+                "id": "3.2.5",
+                "title": "Facade"
+              },
+              {
+                "id": "3.2.6",
+                "title": "Flyweight"
+              },
+              {
+                "id": "3.2.7",
+                "title": "Proxy"
+              }
+            ]
+          },
+          {
+            "id": "3.3",
+            "title": "Behavioral Patterns",
+            "sections": [
+              {
+                "id": "3.3.1",
+                "title": "Chain of Responsibility"
+              },
+              {
+                "id": "3.3.2",
+                "title": "Command"
+              },
+              {
+                "id": "3.3.3",
+                "title": "Iterator"
+              },
+              {
+                "id": "3.3.4",
+                "title": "Mediator"
+              },
+              {
+                "id": "3.3.5",
+                "title": "Memento"
+              },
+              {
+                "id": "3.3.6",
+                "title": "Observer"
+              },
+              {
+                "id": "3.3.7",
+                "title": "State"
+              },
+              {
+                "id": "3.3.8",
+                "title": "Strategy"
+              },
+              {
+                "id": "3.3.9",
+                "title": "Template Method"
+              },
+              {
+                "id": "3.3.10",
+                "title": "Visitor"
+              },
+              {
+                "id": "3.3.11",
+                "title": "Interpreter"
+              }
+            ]
+          },
+          {
+            "id": "3.4",
+            "title": "Anti-Patterns",
+            "sections": [
+              {
+                "id": "3.4.1",
+                "title": "God Object"
+              },
+              {
+                "id": "3.4.2",
+                "title": "Spaghetti Code"
+              },
+              {
+                "id": "3.4.3",
+                "title": "Golden Hammer"
+              },
+              {
+                "id": "3.4.4",
+                "title": "Premature Optimization"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Clean Architecture",
+        "chapters": [
+          {
+            "id": "4.1",
+            "title": "Architecture Fundamentals",
+            "sections": [
+              {
+                "id": "4.1.1",
+                "title": "Dependency Rule"
+              },
+              {
+                "id": "4.1.2",
+                "title": "Layer Separation"
+              },
+              {
+                "id": "4.1.3",
+                "title": "Independence from Frameworks"
+              }
+            ]
+          },
+          {
+            "id": "4.2",
+            "title": "Layer Design",
+            "sections": [
+              {
+                "id": "4.2.1",
+                "title": "Domain Layer — Business Logic Core"
+              },
+              {
+                "id": "4.2.2",
+                "title": "Application Layer — Use Cases"
+              },
+              {
+                "id": "4.2.3",
+                "title": "Infrastructure Layer — Plugins"
+              },
+              {
+                "id": "4.2.4",
+                "title": "Presentation Layer — Periphery"
+              }
+            ]
+          },
+          {
+            "id": "4.3",
+            "title": "Boundaries and Contracts",
+            "sections": [
+              {
+                "id": "4.3.1",
+                "title": "Data Transfer Objects"
+              },
+              {
+                "id": "4.3.2",
+                "title": "Input and Output Ports"
+              },
+              {
+                "id": "4.3.3",
+                "title": "Crossing Boundary Rules"
+              }
+            ]
+          },
+          {
+            "id": "4.4",
+            "title": "Ports and Adapters",
+            "sections": [
+              {
+                "id": "4.4.1",
+                "title": "Hexagonal Architecture"
+              },
+              {
+                "id": "4.4.2",
+                "title": "Primary and Secondary Adapters"
+              },
+              {
+                "id": "4.4.3",
+                "title": "Testability Through Ports"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Domain Driven Design",
+        "chapters": [
+          {
+            "id": "5.1",
+            "title": "Strategic Design",
+            "sections": [
+              {
+                "id": "5.1.1",
+                "title": "Ubiquitous Language"
+              },
+              {
+                "id": "5.1.2",
+                "title": "Bounded Context"
+              },
+              {
+                "id": "5.1.3",
+                "title": "Context Map"
+              },
+              {
+                "id": "5.1.4",
+                "title": "Subdomain Classification"
+              }
+            ]
+          },
+          {
+            "id": "5.2",
+            "title": "Tactical Design",
+            "sections": [
+              {
+                "id": "5.2.1",
+                "title": "Entity"
+              },
+              {
+                "id": "5.2.2",
+                "title": "Value Object"
+              },
+              {
+                "id": "5.2.3",
+                "title": "Aggregate and Aggregate Root"
+              },
+              {
+                "id": "5.2.4",
+                "title": "Domain Service"
+              },
+              {
+                "id": "5.2.5",
+                "title": "Repository in DDD"
+              },
+              {
+                "id": "5.2.6",
+                "title": "Factory in DDD"
+              }
+            ]
+          },
+          {
+            "id": "5.3",
+            "title": "Domain Events",
+            "sections": [
+              {
+                "id": "5.3.1",
+                "title": "Domain Event Definition"
+              },
+              {
+                "id": "5.3.2",
+                "title": "Integration Events"
+              },
+              {
+                "id": "5.3.3",
+                "title": "Event Dispatching and Handling"
+              }
+            ]
+          },
+          {
+            "id": "5.4",
+            "title": "Context Integration",
+            "sections": [
+              {
+                "id": "5.4.1",
+                "title": "Anti-Corruption Layer"
+              },
+              {
+                "id": "5.4.2",
+                "title": "Shared Kernel"
+              },
+              {
+                "id": "5.4.3",
+                "title": "Open Host Service"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Algorithms",
+        "chapters": [
+          {
+            "id": "6.1",
+            "title": "Complexity Analysis",
+            "sections": [
+              {
+                "id": "6.1.1",
+                "title": "Big O Notation"
+              },
+              {
+                "id": "6.1.2",
+                "title": "Time vs Space Complexity"
+              },
+              {
+                "id": "6.1.3",
+                "title": "Amortized Analysis"
+              }
+            ]
+          },
+          {
+            "id": "6.2",
+            "title": "Sorting Algorithms",
+            "sections": [
+              {
+                "id": "6.2.1",
+                "title": "Comparison-Based Sorting"
+              },
+              {
+                "id": "6.2.2",
+                "title": "Linear-Time Sorting"
+              },
+              {
+                "id": "6.2.3",
+                "title": "Practical Sorting Strategies"
+              },
+              {
+                "id": "6.2.4",
+                "title": "Stability and In-Place Properties"
+              }
+            ]
+          },
+          {
+            "id": "6.3",
+            "title": "Searching Algorithms",
+            "sections": [
+              {
+                "id": "6.3.1",
+                "title": "Linear and Binary Search"
+              },
+              {
+                "id": "6.3.2",
+                "title": "Search in Trees"
+              },
+              {
+                "id": "6.3.3",
+                "title": "Heuristic Search"
+              }
+            ]
+          },
+          {
+            "id": "6.4",
+            "title": "Advanced Algorithms",
+            "sections": [
+              {
+                "id": "6.4.1",
+                "title": "Dynamic Programming"
+              },
+              {
+                "id": "6.4.2",
+                "title": "Greedy Algorithms"
+              },
+              {
+                "id": "6.4.3",
+                "title": "Graph Algorithms"
+              },
+              {
+                "id": "6.4.4",
+                "title": "Divide and Conquer"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Data Structures",
+        "chapters": [
+          {
+            "id": "7.1",
+            "title": "Linear Structures",
+            "sections": [
+              {
+                "id": "7.1.1",
+                "title": "Arrays and Dynamic Arrays"
+              },
+              {
+                "id": "7.1.2",
+                "title": "Linked Lists"
+              },
+              {
+                "id": "7.1.3",
+                "title": "Stacks and Queues"
+              },
+              {
+                "id": "7.1.4",
+                "title": "Deque and Priority Queue"
+              }
+            ]
+          },
+          {
+            "id": "7.2",
+            "title": "Tree Structures",
+            "sections": [
+              {
+                "id": "7.2.1",
+                "title": "Binary Trees and BST"
+              },
+              {
+                "id": "7.2.2",
+                "title": "Balanced Trees — AVL and Red-Black"
+              },
+              {
+                "id": "7.2.3",
+                "title": "Heaps"
+              },
+              {
+                "id": "7.2.4",
+                "title": "Tries and Prefix Trees"
+              }
+            ]
+          },
+          {
+            "id": "7.3",
+            "title": "Hash Structures",
+            "sections": [
+              {
+                "id": "7.3.1",
+                "title": "Hash Tables and Hash Maps"
+              },
+              {
+                "id": "7.3.2",
+                "title": "Collision Resolution Strategies"
+              },
+              {
+                "id": "7.3.3",
+                "title": "Bloom Filters"
+              }
+            ]
+          },
+          {
+            "id": "7.4",
+            "title": "Graph Structures",
+            "sections": [
+              {
+                "id": "7.4.1",
+                "title": "Graph Representation"
+              },
+              {
+                "id": "7.4.2",
+                "title": "Graph Traversal — BFS and DFS"
+              },
+              {
+                "id": "7.4.3",
+                "title": "Weighted Graphs and Shortest Path"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Databases",
+        "chapters": [
+          {
+            "id": "8.1",
+            "title": "Relational Databases",
+            "sections": [
+              {
+                "id": "8.1.1",
+                "title": "Relational Model and Normalization"
+              },
+              {
+                "id": "8.1.2",
+                "title": "SQL Fundamentals"
+              },
+              {
+                "id": "8.1.3",
+                "title": "Joins and Aggregations"
+              },
+              {
+                "id": "8.1.4",
+                "title": "Schema Design"
+              }
+            ]
+          },
+          {
+            "id": "8.2",
+            "title": "Transactions and ACID",
+            "sections": [
+              {
+                "id": "8.2.1",
+                "title": "ACID Properties"
+              },
+              {
+                "id": "8.2.2",
+                "title": "Isolation Levels"
+              },
+              {
+                "id": "8.2.3",
+                "title": "Locking and Concurrency Control"
+              }
+            ]
+          },
+          {
+            "id": "8.3",
+            "title": "Indexing and Optimization",
+            "sections": [
+              {
+                "id": "8.3.1",
+                "title": "Index Types and Structures"
+              },
+              {
+                "id": "8.3.2",
+                "title": "Query Execution Plans"
+              },
+              {
+                "id": "8.3.3",
+                "title": "N+1 Problem"
+              },
+              {
+                "id": "8.3.4",
+                "title": "Connection Pooling"
+              }
+            ]
+          },
+          {
+            "id": "8.4",
+            "title": "NoSQL Databases",
+            "sections": [
+              {
+                "id": "8.4.1",
+                "title": "Document Stores"
+              },
+              {
+                "id": "8.4.2",
+                "title": "Key-Value Stores"
+              },
+              {
+                "id": "8.4.3",
+                "title": "Column-Family Stores"
+              },
+              {
+                "id": "8.4.4",
+                "title": "Graph Databases"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Distributed Databases",
+        "chapters": [
+          {
+            "id": "9.1",
+            "title": "Replication",
+            "sections": [
+              {
+                "id": "9.1.1",
+                "title": "Leader-Follower Replication"
+              },
+              {
+                "id": "9.1.2",
+                "title": "Multi-Leader Replication"
+              },
+              {
+                "id": "9.1.3",
+                "title": "Replication Lag and Consistency"
+              }
+            ]
+          },
+          {
+            "id": "9.2",
+            "title": "Partitioning and Sharding",
+            "sections": [
+              {
+                "id": "9.2.1",
+                "title": "Horizontal Partitioning Strategies"
+              },
+              {
+                "id": "9.2.2",
+                "title": "Hash and Range Sharding"
+              },
+              {
+                "id": "9.2.3",
+                "title": "Rebalancing Partitions"
+              }
+            ]
+          },
+          {
+            "id": "9.3",
+            "title": "Consistency Models",
+            "sections": [
+              {
+                "id": "9.3.1",
+                "title": "CAP Theorem"
+              },
+              {
+                "id": "9.3.2",
+                "title": "Eventual Consistency"
+              },
+              {
+                "id": "9.3.3",
+                "title": "Strong vs Weak Consistency"
+              },
+              {
+                "id": "9.3.4",
+                "title": "CRDT Fundamentals"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Operating Systems",
+        "chapters": [
+          {
+            "id": "10.1",
+            "title": "Processes and Threads",
+            "sections": [
+              {
+                "id": "10.1.1",
+                "title": "Process Lifecycle"
+              },
+              {
+                "id": "10.1.2",
+                "title": "Thread Models"
+              },
+              {
+                "id": "10.1.3",
+                "title": "Context Switching"
+              },
+              {
+                "id": "10.1.4",
+                "title": "Inter-Process Communication"
+              }
+            ]
+          },
+          {
+            "id": "10.2",
+            "title": "Memory Management",
+            "sections": [
+              {
+                "id": "10.2.1",
+                "title": "Virtual Memory"
+              },
+              {
+                "id": "10.2.2",
+                "title": "Paging and Segmentation"
+              },
+              {
+                "id": "10.2.3",
+                "title": "Memory Allocation Strategies"
+              }
+            ]
+          },
+          {
+            "id": "10.3",
+            "title": "File Systems",
+            "sections": [
+              {
+                "id": "10.3.1",
+                "title": "File System Architecture"
+              },
+              {
+                "id": "10.3.2",
+                "title": "Inodes and Directory Structures"
+              },
+              {
+                "id": "10.3.3",
+                "title": "Journaling and Durability"
+              }
+            ]
+          },
+          {
+            "id": "10.4",
+            "title": "Concurrency and Synchronization",
+            "sections": [
+              {
+                "id": "10.4.1",
+                "title": "Mutexes and Semaphores"
+              },
+              {
+                "id": "10.4.2",
+                "title": "Deadlocks and Prevention"
+              },
+              {
+                "id": "10.4.3",
+                "title": "Lock-Free Algorithms"
+              },
+              {
+                "id": "10.4.4",
+                "title": "Scheduling Algorithms"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Networking",
+        "chapters": [
+          {
+            "id": "11.1",
+            "title": "Network Fundamentals",
+            "sections": [
+              {
+                "id": "11.1.1",
+                "title": "OSI and TCP/IP Models"
+              },
+              {
+                "id": "11.1.2",
+                "title": "IP Addressing and Routing"
+              },
+              {
+                "id": "11.1.3",
+                "title": "Subnetting and CIDR"
+              },
+              {
+                "id": "11.1.4",
+                "title": "DNS Resolution"
+              }
+            ]
+          },
+          {
+            "id": "11.2",
+            "title": "Transport Layer",
+            "sections": [
+              {
+                "id": "11.2.1",
+                "title": "TCP — Reliability and Flow Control"
+              },
+              {
+                "id": "11.2.2",
+                "title": "UDP — Connectionless Transmission"
+              },
+              {
+                "id": "11.2.3",
+                "title": "TLS/SSL — Transport Security"
+              }
+            ]
+          },
+          {
+            "id": "11.3",
+            "title": "Application Protocols",
+            "sections": [
+              {
+                "id": "11.3.1",
+                "title": "HTTP/1.1, HTTP/2, HTTP/3"
+              },
+              {
+                "id": "11.3.2",
+                "title": "WebSocket"
+              },
+              {
+                "id": "11.3.3",
+                "title": "gRPC over HTTP/2"
+              },
+              {
+                "id": "11.3.4",
+                "title": "MQTT and AMQP"
+              }
+            ]
+          },
+          {
+            "id": "11.4",
+            "title": "Network Security",
+            "sections": [
+              {
+                "id": "11.4.1",
+                "title": "Firewalls and DMZ"
+              },
+              {
+                "id": "11.4.2",
+                "title": "DDoS Mitigation"
+              },
+              {
+                "id": "11.4.3",
+                "title": "VPN and Zero Trust Network"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "API Design",
+        "chapters": [
+          {
+            "id": "12.1",
+            "title": "REST Design",
+            "sections": [
+              {
+                "id": "12.1.1",
+                "title": "REST Constraints and Principles"
+              },
+              {
+                "id": "12.1.2",
+                "title": "Resource Modeling"
+              },
+              {
+                "id": "12.1.3",
+                "title": "HTTP Methods and Status Codes"
+              },
+              {
+                "id": "12.1.4",
+                "title": "Pagination, Filtering, Sorting"
+              }
+            ]
+          },
+          {
+            "id": "12.2",
+            "title": "GraphQL",
+            "sections": [
+              {
+                "id": "12.2.1",
+                "title": "Schema and Type System"
+              },
+              {
+                "id": "12.2.2",
+                "title": "Queries, Mutations, Subscriptions"
+              },
+              {
+                "id": "12.2.3",
+                "title": "N+1 Problem in GraphQL"
+              }
+            ]
+          },
+          {
+            "id": "12.3",
+            "title": "gRPC and Protobuf",
+            "sections": [
+              {
+                "id": "12.3.1",
+                "title": "Protocol Buffers Schema"
+              },
+              {
+                "id": "12.3.2",
+                "title": "Unary and Streaming RPCs"
+              },
+              {
+                "id": "12.3.3",
+                "title": "gRPC vs REST Trade-offs"
+              }
+            ]
+          },
+          {
+            "id": "12.4",
+            "title": "API Evolution",
+            "sections": [
+              {
+                "id": "12.4.1",
+                "title": "Versioning Strategies"
+              },
+              {
+                "id": "12.4.2",
+                "title": "Backward and Forward Compatibility"
+              },
+              {
+                "id": "12.4.3",
+                "title": "Deprecation Policies"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Security",
+        "chapters": [
+          {
+            "id": "13.1",
+            "title": "Web Security",
+            "sections": [
+              {
+                "id": "13.1.1",
+                "title": "OWASP Top 10"
+              },
+              {
+                "id": "13.1.2",
+                "title": "SQL Injection and Prevention"
+              },
+              {
+                "id": "13.1.3",
+                "title": "XSS and CSRF"
+              },
+              {
+                "id": "13.1.4",
+                "title": "SSRF and RCE"
+              },
+              {
+                "id": "13.1.5",
+                "title": "Security Headers"
+              }
+            ]
+          },
+          {
+            "id": "13.2",
+            "title": "Authentication and Authorization",
+            "sections": [
+              {
+                "id": "13.2.1",
+                "title": "Session-Based Authentication"
+              },
+              {
+                "id": "13.2.2",
+                "title": "JWT — Design and Pitfalls"
+              },
+              {
+                "id": "13.2.3",
+                "title": "OAuth2 and OpenID Connect"
+              },
+              {
+                "id": "13.2.4",
+                "title": "RBAC and ABAC"
+              }
+            ]
+          },
+          {
+            "id": "13.3",
+            "title": "Cryptography Fundamentals",
+            "sections": [
+              {
+                "id": "13.3.1",
+                "title": "Symmetric and Asymmetric Encryption"
+              },
+              {
+                "id": "13.3.2",
+                "title": "Hashing and Password Storage"
+              },
+              {
+                "id": "13.3.3",
+                "title": "PKI and Certificates"
+              }
+            ]
+          },
+          {
+            "id": "13.4",
+            "title": "Threat Modeling",
+            "sections": [
+              {
+                "id": "13.4.1",
+                "title": "STRIDE Framework"
+              },
+              {
+                "id": "13.4.2",
+                "title": "Attack Surface Analysis"
+              },
+              {
+                "id": "13.4.3",
+                "title": "Security Risk Assessment"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Testing",
+        "chapters": [
+          {
+            "id": "14.1",
+            "title": "Testing Fundamentals",
+            "sections": [
+              {
+                "id": "14.1.1",
+                "title": "Unit Testing"
+              },
+              {
+                "id": "14.1.2",
+                "title": "Integration Testing"
+              },
+              {
+                "id": "14.1.3",
+                "title": "End-to-End Testing"
+              },
+              {
+                "id": "14.1.4",
+                "title": "Contract Testing"
+              }
+            ]
+          },
+          {
+            "id": "14.2",
+            "title": "Test Design",
+            "sections": [
+              {
+                "id": "14.2.1",
+                "title": "Mocks, Stubs, Fakes, Spies"
+              },
+              {
+                "id": "14.2.2",
+                "title": "Test Doubles Selection"
+              },
+              {
+                "id": "14.2.3",
+                "title": "Boundary and Equivalence Testing"
+              },
+              {
+                "id": "14.2.4",
+                "title": "Property-Based Testing"
+              }
+            ]
+          },
+          {
+            "id": "14.3",
+            "title": "Test Strategy",
+            "sections": [
+              {
+                "id": "14.3.1",
+                "title": "Test Pyramid"
+              },
+              {
+                "id": "14.3.2",
+                "title": "Test Coverage and Metrics"
+              },
+              {
+                "id": "14.3.3",
+                "title": "Testing in CI/CD"
+              }
+            ]
+          },
+          {
+            "id": "14.4",
+            "title": "Quality Assurance",
+            "sections": [
+              {
+                "id": "14.4.1",
+                "title": "Static Analysis and Linting"
+              },
+              {
+                "id": "14.4.2",
+                "title": "Code Review Practices"
+              },
+              {
+                "id": "14.4.3",
+                "title": "Mutation Testing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Performance Engineering",
+        "chapters": [
+          {
+            "id": "15.1",
+            "title": "Caching Strategies",
+            "sections": [
+              {
+                "id": "15.1.1",
+                "title": "Cache Aside Pattern"
+              },
+              {
+                "id": "15.1.2",
+                "title": "Write-Through and Write-Behind"
+              },
+              {
+                "id": "15.1.3",
+                "title": "Cache Invalidation Strategies"
+              },
+              {
+                "id": "15.1.4",
+                "title": "Redis Patterns"
+              }
+            ]
+          },
+          {
+            "id": "15.2",
+            "title": "Database Performance",
+            "sections": [
+              {
+                "id": "15.2.1",
+                "title": "Index Optimization"
+              },
+              {
+                "id": "15.2.2",
+                "title": "Query Analysis and Tuning"
+              },
+              {
+                "id": "15.2.3",
+                "title": "Denormalization Trade-offs"
+              },
+              {
+                "id": "15.2.4",
+                "title": "Read Replicas"
+              }
+            ]
+          },
+          {
+            "id": "15.3",
+            "title": "Application Profiling",
+            "sections": [
+              {
+                "id": "15.3.1",
+                "title": "CPU and Memory Profiling"
+              },
+              {
+                "id": "15.3.2",
+                "title": "I/O Bottleneck Analysis"
+              },
+              {
+                "id": "15.3.3",
+                "title": "Flamegraphs and Benchmarks"
+              }
+            ]
+          },
+          {
+            "id": "15.4",
+            "title": "Scalability Patterns",
+            "sections": [
+              {
+                "id": "15.4.1",
+                "title": "Horizontal vs Vertical Scaling"
+              },
+              {
+                "id": "15.4.2",
+                "title": "Stateless Service Design"
+              },
+              {
+                "id": "15.4.3",
+                "title": "Async Processing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Distributed Systems",
+        "chapters": [
+          {
+            "id": "16.1",
+            "title": "Microservices",
+            "sections": [
+              {
+                "id": "16.1.1",
+                "title": "Service Boundaries and Decomposition"
+              },
+              {
+                "id": "16.1.2",
+                "title": "Database per Service"
+              },
+              {
+                "id": "16.1.3",
+                "title": "API Gateway"
+              },
+              {
+                "id": "16.1.4",
+                "title": "Service Discovery"
+              }
+            ]
+          },
+          {
+            "id": "16.2",
+            "title": "Messaging and Events",
+            "sections": [
+              {
+                "id": "16.2.1",
+                "title": "Message Queues"
+              },
+              {
+                "id": "16.2.2",
+                "title": "Publish-Subscribe Pattern"
+              },
+              {
+                "id": "16.2.3",
+                "title": "Event-Driven Architecture"
+              },
+              {
+                "id": "16.2.4",
+                "title": "Outbox Pattern"
+              }
+            ]
+          },
+          {
+            "id": "16.3",
+            "title": "Consistency Patterns",
+            "sections": [
+              {
+                "id": "16.3.1",
+                "title": "Saga Pattern"
+              },
+              {
+                "id": "16.3.2",
+                "title": "Two-Phase Commit"
+              },
+              {
+                "id": "16.3.3",
+                "title": "Eventual Consistency Models"
+              },
+              {
+                "id": "16.3.4",
+                "title": "Distributed Transactions"
+              }
+            ]
+          },
+          {
+            "id": "16.4",
+            "title": "Service Coordination",
+            "sections": [
+              {
+                "id": "16.4.1",
+                "title": "Sidecar and Service Mesh"
+              },
+              {
+                "id": "16.4.2",
+                "title": "Health Checks and Load Balancing"
+              },
+              {
+                "id": "16.4.3",
+                "title": "Circuit Breaker in Microservices"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "Reliability Engineering",
+        "chapters": [
+          {
+            "id": "17.1",
+            "title": "Resilience Patterns",
+            "sections": [
+              {
+                "id": "17.1.1",
+                "title": "Retry Pattern"
+              },
+              {
+                "id": "17.1.2",
+                "title": "Circuit Breaker"
+              },
+              {
+                "id": "17.1.3",
+                "title": "Bulkhead"
+              },
+              {
+                "id": "17.1.4",
+                "title": "Timeout Pattern"
+              },
+              {
+                "id": "17.1.5",
+                "title": "Fallback Pattern"
+              }
+            ]
+          },
+          {
+            "id": "17.2",
+            "title": "Fault Tolerance",
+            "sections": [
+              {
+                "id": "17.2.1",
+                "title": "Graceful Degradation"
+              },
+              {
+                "id": "17.2.2",
+                "title": "Idempotency"
+              },
+              {
+                "id": "17.2.3",
+                "title": "Atomic Operations and Checkpoints"
+              }
+            ]
+          },
+          {
+            "id": "17.3",
+            "title": "Disaster Recovery",
+            "sections": [
+              {
+                "id": "17.3.1",
+                "title": "RTO and RPO"
+              },
+              {
+                "id": "17.3.2",
+                "title": "Backup Strategies"
+              },
+              {
+                "id": "17.3.3",
+                "title": "Chaos Engineering"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Observability",
+        "chapters": [
+          {
+            "id": "18.1",
+            "title": "Logging",
+            "sections": [
+              {
+                "id": "18.1.1",
+                "title": "Structured Logging"
+              },
+              {
+                "id": "18.1.2",
+                "title": "Log Levels and Filtering"
+              },
+              {
+                "id": "18.1.3",
+                "title": "Centralized Log Aggregation"
+              }
+            ]
+          },
+          {
+            "id": "18.2",
+            "title": "Metrics",
+            "sections": [
+              {
+                "id": "18.2.1",
+                "title": "Counter, Gauge, Histogram"
+              },
+              {
+                "id": "18.2.2",
+                "title": "RED and USE Methods"
+              },
+              {
+                "id": "18.2.3",
+                "title": "Custom Business Metrics"
+              }
+            ]
+          },
+          {
+            "id": "18.3",
+            "title": "Distributed Tracing",
+            "sections": [
+              {
+                "id": "18.3.1",
+                "title": "Trace Context Propagation"
+              },
+              {
+                "id": "18.3.2",
+                "title": "Span and Trace Structure"
+              },
+              {
+                "id": "18.3.3",
+                "title": "OpenTelemetry"
+              }
+            ]
+          },
+          {
+            "id": "18.4",
+            "title": "Monitoring and Alerting",
+            "sections": [
+              {
+                "id": "18.4.1",
+                "title": "Dashboards and Visualization"
+              },
+              {
+                "id": "18.4.2",
+                "title": "Alerting Rules and Thresholds"
+              },
+              {
+                "id": "18.4.3",
+                "title": "On-Call Practices"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "title": "DevOps",
+        "chapters": [
+          {
+            "id": "19.1",
+            "title": "CI/CD Pipelines",
+            "sections": [
+              {
+                "id": "19.1.1",
+                "title": "Continuous Integration Practices"
+              },
+              {
+                "id": "19.1.2",
+                "title": "Continuous Delivery vs Deployment"
+              },
+              {
+                "id": "19.1.3",
+                "title": "Pipeline Stages and Artifacts"
+              },
+              {
+                "id": "19.1.4",
+                "title": "Feature Flags"
+              }
+            ]
+          },
+          {
+            "id": "19.2",
+            "title": "Containerization",
+            "sections": [
+              {
+                "id": "19.2.1",
+                "title": "Docker Images and Containers"
+              },
+              {
+                "id": "19.2.2",
+                "title": "Dockerfile Best Practices"
+              },
+              {
+                "id": "19.2.3",
+                "title": "Container Registries"
+              }
+            ]
+          },
+          {
+            "id": "19.3",
+            "title": "Orchestration",
+            "sections": [
+              {
+                "id": "19.3.1",
+                "title": "Kubernetes Architecture"
+              },
+              {
+                "id": "19.3.2",
+                "title": "Deployments and Services"
+              },
+              {
+                "id": "19.3.3",
+                "title": "Helm and Configuration Management"
+              }
+            ]
+          },
+          {
+            "id": "19.4",
+            "title": "Infrastructure as Code",
+            "sections": [
+              {
+                "id": "19.4.1",
+                "title": "Terraform Fundamentals"
+              },
+              {
+                "id": "19.4.2",
+                "title": "Ansible and Configuration Management"
+              },
+              {
+                "id": "19.4.3",
+                "title": "GitOps Approach"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "title": "Cloud Architecture",
+        "chapters": [
+          {
+            "id": "20.1",
+            "title": "Cloud Fundamentals",
+            "sections": [
+              {
+                "id": "20.1.1",
+                "title": "IaaS, PaaS, SaaS"
+              },
+              {
+                "id": "20.1.2",
+                "title": "Shared Responsibility Model"
+              },
+              {
+                "id": "20.1.3",
+                "title": "Multi-Cloud Strategy"
+              }
+            ]
+          },
+          {
+            "id": "20.2",
+            "title": "Compute and Storage",
+            "sections": [
+              {
+                "id": "20.2.1",
+                "title": "Virtual Machines and Auto-Scaling"
+              },
+              {
+                "id": "20.2.2",
+                "title": "Object and Block Storage"
+              },
+              {
+                "id": "20.2.3",
+                "title": "Managed Databases"
+              },
+              {
+                "id": "20.2.4",
+                "title": "CDN and Edge"
+              }
+            ]
+          },
+          {
+            "id": "20.3",
+            "title": "Cloud Design Patterns",
+            "sections": [
+              {
+                "id": "20.3.1",
+                "title": "Strangler Fig Pattern"
+              },
+              {
+                "id": "20.3.2",
+                "title": "Bulkhead and Throttling in Cloud"
+              },
+              {
+                "id": "20.3.3",
+                "title": "Ambassador Pattern"
+              },
+              {
+                "id": "20.3.4",
+                "title": "Sidecar Pattern"
+              }
+            ]
+          },
+          {
+            "id": "20.4",
+            "title": "Serverless Architecture",
+            "sections": [
+              {
+                "id": "20.4.1",
+                "title": "Functions as a Service"
+              },
+              {
+                "id": "20.4.2",
+                "title": "Event-Driven Serverless"
+              },
+              {
+                "id": "20.4.3",
+                "title": "Cold Start and Performance"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 21,
+        "title": "High Load Systems",
+        "chapters": [
+          {
+            "id": "21.1",
+            "title": "Scaling Strategies",
+            "sections": [
+              {
+                "id": "21.1.1",
+                "title": "Horizontal Scaling"
+              },
+              {
+                "id": "21.1.2",
+                "title": "Vertical Scaling"
+              },
+              {
+                "id": "21.1.3",
+                "title": "Database Scaling Patterns"
+              }
+            ]
+          },
+          {
+            "id": "21.2",
+            "title": "Traffic Management",
+            "sections": [
+              {
+                "id": "21.2.1",
+                "title": "Load Balancing Algorithms"
+              },
+              {
+                "id": "21.2.2",
+                "title": "Rate Limiting and Throttling"
+              },
+              {
+                "id": "21.2.3",
+                "title": "Traffic Shaping"
+              },
+              {
+                "id": "21.2.4",
+                "title": "Backpressure"
+              }
+            ]
+          },
+          {
+            "id": "21.3",
+            "title": "Data Partitioning",
+            "sections": [
+              {
+                "id": "21.3.1",
+                "title": "Consistent Hashing"
+              },
+              {
+                "id": "21.3.2",
+                "title": "Range-Based Partitioning"
+              },
+              {
+                "id": "21.3.3",
+                "title": "Hot Spot Mitigation"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 22,
+        "title": "Frontend Architecture",
+        "chapters": [
+          {
+            "id": "22.1",
+            "title": "UI Architecture Patterns",
+            "sections": [
+              {
+                "id": "22.1.1",
+                "title": "MVC, MVP, MVVM"
+              },
+              {
+                "id": "22.1.2",
+                "title": "Flux and Unidirectional Data Flow"
+              },
+              {
+                "id": "22.1.3",
+                "title": "Micro-Frontends"
+              },
+              {
+                "id": "22.1.4",
+                "title": "Component-Driven Design"
+              }
+            ]
+          },
+          {
+            "id": "22.2",
+            "title": "State Management",
+            "sections": [
+              {
+                "id": "22.2.1",
+                "title": "Local vs Global State"
+              },
+              {
+                "id": "22.2.2",
+                "title": "Reactive State Patterns"
+              },
+              {
+                "id": "22.2.3",
+                "title": "Server State vs Client State"
+              }
+            ]
+          },
+          {
+            "id": "22.3",
+            "title": "Performance Optimization",
+            "sections": [
+              {
+                "id": "22.3.1",
+                "title": "Code Splitting and Lazy Loading"
+              },
+              {
+                "id": "22.3.2",
+                "title": "Rendering Strategies — SSR, CSR, SSG"
+              },
+              {
+                "id": "22.3.3",
+                "title": "Core Web Vitals"
+              },
+              {
+                "id": "22.3.4",
+                "title": "Asset Optimization"
+              }
+            ]
+          },
+          {
+            "id": "22.4",
+            "title": "Delivery and Build",
+            "sections": [
+              {
+                "id": "22.4.1",
+                "title": "Module Bundlers"
+              },
+              {
+                "id": "22.4.2",
+                "title": "Tree Shaking"
+              },
+              {
+                "id": "22.4.3",
+                "title": "Progressive Web Apps"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "title": "Functional Programming",
+        "chapters": [
+          {
+            "id": "23.1",
+            "title": "Core Concepts",
+            "sections": [
+              {
+                "id": "23.1.1",
+                "title": "Pure Functions"
+              },
+              {
+                "id": "23.1.2",
+                "title": "Immutability"
+              },
+              {
+                "id": "23.1.3",
+                "title": "First-Class and Higher-Order Functions"
+              },
+              {
+                "id": "23.1.4",
+                "title": "Referential Transparency"
+              }
+            ]
+          },
+          {
+            "id": "23.2",
+            "title": "Composition and Pipelines",
+            "sections": [
+              {
+                "id": "23.2.1",
+                "title": "Function Composition"
+              },
+              {
+                "id": "23.2.2",
+                "title": "Currying and Partial Application"
+              },
+              {
+                "id": "23.2.3",
+                "title": "Functor and Monad Basics"
+              }
+            ]
+          },
+          {
+            "id": "23.3",
+            "title": "Effects and Side Effects",
+            "sections": [
+              {
+                "id": "23.3.1",
+                "title": "Managing Side Effects"
+              },
+              {
+                "id": "23.3.2",
+                "title": "IO and Effect Isolation"
+              },
+              {
+                "id": "23.3.3",
+                "title": "Functional Error Handling"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "title": "Compiler Fundamentals",
+        "chapters": [
+          {
+            "id": "24.1",
+            "title": "Lexing and Parsing",
+            "sections": [
+              {
+                "id": "24.1.1",
+                "title": "Lexical Analysis and Tokenization"
+              },
+              {
+                "id": "24.1.2",
+                "title": "Context-Free Grammars"
+              },
+              {
+                "id": "24.1.3",
+                "title": "Parser Strategies — Recursive Descent, LL, LR"
+              }
+            ]
+          },
+          {
+            "id": "24.2",
+            "title": "Semantic Analysis",
+            "sections": [
+              {
+                "id": "24.2.1",
+                "title": "Abstract Syntax Tree"
+              },
+              {
+                "id": "24.2.2",
+                "title": "Symbol Tables and Scoping"
+              },
+              {
+                "id": "24.2.3",
+                "title": "Type Checking"
+              }
+            ]
+          },
+          {
+            "id": "24.3",
+            "title": "Code Generation and Optimization",
+            "sections": [
+              {
+                "id": "24.3.1",
+                "title": "Intermediate Representation"
+              },
+              {
+                "id": "24.3.2",
+                "title": "Code Optimization Passes"
+              },
+              {
+                "id": "24.3.3",
+                "title": "Target Code Generation"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "title": "Search Systems",
+        "chapters": [
+          {
+            "id": "25.1",
+            "title": "Indexing",
+            "sections": [
+              {
+                "id": "25.1.1",
+                "title": "Inverted Index"
+              },
+              {
+                "id": "25.1.2",
+                "title": "Index Construction and Updates"
+              },
+              {
+                "id": "25.1.3",
+                "title": "Tokenization and Analyzers"
+              }
+            ]
+          },
+          {
+            "id": "25.2",
+            "title": "Retrieval and Ranking",
+            "sections": [
+              {
+                "id": "25.2.1",
+                "title": "BM25 and TF-IDF"
+              },
+              {
+                "id": "25.2.2",
+                "title": "Relevance Scoring"
+              },
+              {
+                "id": "25.2.3",
+                "title": "Query Expansion"
+              }
+            ]
+          },
+          {
+            "id": "25.3",
+            "title": "Modern Search",
+            "sections": [
+              {
+                "id": "25.3.1",
+                "title": "Vector Search and Embeddings"
+              },
+              {
+                "id": "25.3.2",
+                "title": "Semantic Search"
+              },
+              {
+                "id": "25.3.3",
+                "title": "Hybrid Search"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "title": "Data Engineering",
+        "chapters": [
+          {
+            "id": "26.1",
+            "title": "Data Pipelines",
+            "sections": [
+              {
+                "id": "26.1.1",
+                "title": "ETL vs ELT"
+              },
+              {
+                "id": "26.1.2",
+                "title": "Batch Processing"
+              },
+              {
+                "id": "26.1.3",
+                "title": "Stream Processing"
+              },
+              {
+                "id": "26.1.4",
+                "title": "Pipeline Orchestration"
+              }
+            ]
+          },
+          {
+            "id": "26.2",
+            "title": "Storage and Processing",
+            "sections": [
+              {
+                "id": "26.2.1",
+                "title": "Data Warehouse"
+              },
+              {
+                "id": "26.2.2",
+                "title": "Data Lake and Lakehouse"
+              },
+              {
+                "id": "26.2.3",
+                "title": "Columnar Storage Formats"
+              },
+              {
+                "id": "26.2.4",
+                "title": "Partitioning and Clustering"
+              }
+            ]
+          },
+          {
+            "id": "26.3",
+            "title": "Data Governance",
+            "sections": [
+              {
+                "id": "26.3.1",
+                "title": "Data Catalog and Lineage"
+              },
+              {
+                "id": "26.3.2",
+                "title": "Data Quality"
+              },
+              {
+                "id": "26.3.3",
+                "title": "Data Contracts"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 27,
+        "title": "AI Systems",
+        "chapters": [
+          {
+            "id": "27.1",
+            "title": "ML Infrastructure",
+            "sections": [
+              {
+                "id": "27.1.1",
+                "title": "Model Training Infrastructure"
+              },
+              {
+                "id": "27.1.2",
+                "title": "Feature Stores"
+              },
+              {
+                "id": "27.1.3",
+                "title": "Model Registry"
+              }
+            ]
+          },
+          {
+            "id": "27.2",
+            "title": "LLM and RAG",
+            "sections": [
+              {
+                "id": "27.2.1",
+                "title": "LLM Fundamentals and API Usage"
+              },
+              {
+                "id": "27.2.2",
+                "title": "Retrieval-Augmented Generation"
+              },
+              {
+                "id": "27.2.3",
+                "title": "Prompt Engineering"
+              },
+              {
+                "id": "27.2.4",
+                "title": "Agent Architectures"
+              }
+            ]
+          },
+          {
+            "id": "27.3",
+            "title": "AI Operations",
+            "sections": [
+              {
+                "id": "27.3.1",
+                "title": "Model Serving and Inference"
+              },
+              {
+                "id": "27.3.2",
+                "title": "A/B Testing for ML Models"
+              },
+              {
+                "id": "27.3.3",
+                "title": "Model Drift and Monitoring"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 28,
+        "title": "Site Reliability Engineering",
+        "chapters": [
+          {
+            "id": "28.1",
+            "title": "Service Level Objectives",
+            "sections": [
+              {
+                "id": "28.1.1",
+                "title": "SLI, SLO, SLA Definitions"
+              },
+              {
+                "id": "28.1.2",
+                "title": "Error Budget"
+              },
+              {
+                "id": "28.1.3",
+                "title": "SLO-Based Alerting"
+              }
+            ]
+          },
+          {
+            "id": "28.2",
+            "title": "Incident Management",
+            "sections": [
+              {
+                "id": "28.2.1",
+                "title": "Incident Response Lifecycle"
+              },
+              {
+                "id": "28.2.2",
+                "title": "Postmortem and Blameless Culture"
+              },
+              {
+                "id": "28.2.3",
+                "title": "On-Call Rotation"
+              }
+            ]
+          },
+          {
+            "id": "28.3",
+            "title": "Reliability Programs",
+            "sections": [
+              {
+                "id": "28.3.1",
+                "title": "Toil Reduction"
+              },
+              {
+                "id": "28.3.2",
+                "title": "Capacity Planning"
+              },
+              {
+                "id": "28.3.3",
+                "title": "Production Readiness Review"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 29,
+        "title": "Architecture Governance",
+        "chapters": [
+          {
+            "id": "29.1",
+            "title": "Architecture Decision Records",
+            "sections": [
+              {
+                "id": "29.1.1",
+                "title": "ADR Format and Lifecycle"
+              },
+              {
+                "id": "29.1.2",
+                "title": "Decision Drivers and Trade-offs"
+              },
+              {
+                "id": "29.1.3",
+                "title": "ADR Tooling and Storage"
+              }
+            ]
+          },
+          {
+            "id": "29.2",
+            "title": "Technical Debt Management",
+            "sections": [
+              {
+                "id": "29.2.1",
+                "title": "Types of Technical Debt"
+              },
+              {
+                "id": "29.2.2",
+                "title": "Debt Tracking and Prioritization"
+              },
+              {
+                "id": "29.2.3",
+                "title": "Refactoring Strategies"
+              }
+            ]
+          },
+          {
+            "id": "29.3",
+            "title": "Standards and Reviews",
+            "sections": [
+              {
+                "id": "29.3.1",
+                "title": "Architecture Review Board"
+              },
+              {
+                "id": "29.3.2",
+                "title": "Coding Standards Enforcement"
+              },
+              {
+                "id": "29.3.3",
+                "title": "Fitness Functions"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "title": "Technical Leadership",
+        "chapters": [
+          {
+            "id": "30.1",
+            "title": "Team Topologies",
+            "sections": [
+              {
+                "id": "30.1.1",
+                "title": "Stream-Aligned Teams"
+              },
+              {
+                "id": "30.1.2",
+                "title": "Platform Teams"
+              },
+              {
+                "id": "30.1.3",
+                "title": "Conway's Law"
+              }
+            ]
+          },
+          {
+            "id": "30.2",
+            "title": "Engineering Strategy",
+            "sections": [
+              {
+                "id": "30.2.1",
+                "title": "Technical Roadmap"
+              },
+              {
+                "id": "30.2.2",
+                "title": "Build vs Buy vs Open Source"
+              },
+              {
+                "id": "30.2.3",
+                "title": "Managing Technical Direction"
+              }
+            ]
+          },
+          {
+            "id": "30.3",
+            "title": "Communication and Influence",
+            "sections": [
+              {
+                "id": "30.3.1",
+                "title": "RFC and Design Doc Culture"
+              },
+              {
+                "id": "30.3.2",
+                "title": "Stakeholder Communication"
+              },
+              {
+                "id": "30.3.3",
+                "title": "Mentoring and Technical Growth"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 31,
+        "title": "Product Engineering",
+        "chapters": [
+          {
+            "id": "31.1",
+            "title": "Product Discovery",
+            "sections": [
+              {
+                "id": "31.1.1",
+                "title": "Problem Framing"
+              },
+              {
+                "id": "31.1.2",
+                "title": "User Research and Feedback Loops"
+              },
+              {
+                "id": "31.1.3",
+                "title": "Hypothesis-Driven Development"
+              }
+            ]
+          },
+          {
+            "id": "31.2",
+            "title": "Delivery and Iteration",
+            "sections": [
+              {
+                "id": "31.2.1",
+                "title": "Agile and Lean Delivery"
+              },
+              {
+                "id": "31.2.2",
+                "title": "Feature Toggles and Dark Launches"
+              },
+              {
+                "id": "31.2.3",
+                "title": "Incremental Delivery"
+              }
+            ]
+          },
+          {
+            "id": "31.3",
+            "title": "Product Metrics",
+            "sections": [
+              {
+                "id": "31.3.1",
+                "title": "DORA Metrics"
+              },
+              {
+                "id": "31.3.2",
+                "title": "Activation and Retention"
+              },
+              {
+                "id": "31.3.3",
+                "title": "Instrumenting Features"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 32,
+        "title": "Software Economics",
+        "chapters": [
+          {
+            "id": "32.1",
+            "title": "Cost Modeling",
+            "sections": [
+              {
+                "id": "32.1.1",
+                "title": "Total Cost of Ownership"
+              },
+              {
+                "id": "32.1.2",
+                "title": "Cloud Cost Optimization"
+              },
+              {
+                "id": "32.1.3",
+                "title": "Engineering ROI"
+              }
+            ]
+          },
+          {
+            "id": "32.2",
+            "title": "Build vs Buy",
+            "sections": [
+              {
+                "id": "32.2.1",
+                "title": "Evaluation Framework"
+              },
+              {
+                "id": "32.2.2",
+                "title": "OSS Adoption Trade-offs"
+              },
+              {
+                "id": "32.2.3",
+                "title": "Vendor Lock-In"
+              }
+            ]
+          },
+          {
+            "id": "32.3",
+            "title": "Technical Debt Economics",
+            "sections": [
+              {
+                "id": "32.3.1",
+                "title": "Cost of Delay"
+              },
+              {
+                "id": "32.3.2",
+                "title": "Debt Interest and Compounding"
+              },
+              {
+                "id": "32.3.3",
+                "title": "Investment in Platform"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 33,
+        "title": "Enterprise Architecture",
+        "chapters": [
+          {
+            "id": "33.1",
+            "title": "Enterprise Patterns",
+            "sections": [
+              {
+                "id": "33.1.1",
+                "title": "Service-Oriented Architecture"
+              },
+              {
+                "id": "33.1.2",
+                "title": "Event-Driven Enterprise Integration"
+              },
+              {
+                "id": "33.1.3",
+                "title": "Strangler Fig in Enterprise"
+              }
+            ]
+          },
+          {
+            "id": "33.2",
+            "title": "Integration Architecture",
+            "sections": [
+              {
+                "id": "33.2.1",
+                "title": "Enterprise Integration Patterns"
+              },
+              {
+                "id": "33.2.2",
+                "title": "Message Broker vs ESB"
+              },
+              {
+                "id": "33.2.3",
+                "title": "API-Led Connectivity"
+              },
+              {
+                "id": "33.2.4",
+                "title": "Data Mesh"
+              }
+            ]
+          },
+          {
+            "id": "33.3",
+            "title": "Application Landscape",
+            "sections": [
+              {
+                "id": "33.3.1",
+                "title": "Application Portfolio Management"
+              },
+              {
+                "id": "33.3.2",
+                "title": "Modernization Strategies"
+              },
+              {
+                "id": "33.3.3",
+                "title": "Legacy System Integration"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 34,
+        "title": "Compliance and Risk",
+        "chapters": [
+          {
+            "id": "34.1",
+            "title": "Regulatory Compliance",
+            "sections": [
+              {
+                "id": "34.1.1",
+                "title": "GDPR Principles"
+              },
+              {
+                "id": "34.1.2",
+                "title": "SOC2 Requirements"
+              },
+              {
+                "id": "34.1.3",
+                "title": "ISO 27001 Overview"
+              }
+            ]
+          },
+          {
+            "id": "34.2",
+            "title": "Risk Management",
+            "sections": [
+              {
+                "id": "34.2.1",
+                "title": "Risk Identification and Assessment"
+              },
+              {
+                "id": "34.2.2",
+                "title": "Risk Mitigation Strategies"
+              },
+              {
+                "id": "34.2.3",
+                "title": "Residual Risk Acceptance"
+              }
+            ]
+          },
+          {
+            "id": "34.3",
+            "title": "Audit and Controls",
+            "sections": [
+              {
+                "id": "34.3.1",
+                "title": "Audit Logging"
+              },
+              {
+                "id": "34.3.2",
+                "title": "Access Control Reviews"
+              },
+              {
+                "id": "34.3.3",
+                "title": "Evidence Collection for Audits"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 35,
+        "title": "Advanced Distributed Computing",
+        "chapters": [
+          {
+            "id": "35.1",
+            "title": "Consensus Algorithms",
+            "sections": [
+              {
+                "id": "35.1.1",
+                "title": "Paxos"
+              },
+              {
+                "id": "35.1.2",
+                "title": "Raft"
+              },
+              {
+                "id": "35.1.3",
+                "title": "Byzantine Fault Tolerance"
+              }
+            ]
+          },
+          {
+            "id": "35.2",
+            "title": "Distributed Coordination",
+            "sections": [
+              {
+                "id": "35.2.1",
+                "title": "Leader Election"
+              },
+              {
+                "id": "35.2.2",
+                "title": "Distributed Locking"
+              },
+              {
+                "id": "35.2.3",
+                "title": "Coordination Services — ZooKeeper and etcd"
+              }
+            ]
+          },
+          {
+            "id": "35.3",
+            "title": "Large Scale Design",
+            "sections": [
+              {
+                "id": "35.3.1",
+                "title": "Geo-Distributed Systems"
+              },
+              {
+                "id": "35.3.2",
+                "title": "Multi-Region Replication"
+              },
+              {
+                "id": "35.3.3",
+                "title": "Vector Clocks and Lamport Timestamps"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 36,
+        "title": "Hardware and Systems",
+        "chapters": [
+          {
+            "id": "36.1",
+            "title": "CPU Architecture",
+            "sections": [
+              {
+                "id": "36.1.1",
+                "title": "Instruction Pipeline"
+              },
+              {
+                "id": "36.1.2",
+                "title": "Cache Hierarchy — L1, L2, L3"
+              },
+              {
+                "id": "36.1.3",
+                "title": "Branch Prediction"
+              }
+            ]
+          },
+          {
+            "id": "36.2",
+            "title": "Memory Hierarchy",
+            "sections": [
+              {
+                "id": "36.2.1",
+                "title": "NUMA Architecture"
+              },
+              {
+                "id": "36.2.2",
+                "title": "Cache Coherence"
+              },
+              {
+                "id": "36.2.3",
+                "title": "Memory Bandwidth and Latency"
+              }
+            ]
+          },
+          {
+            "id": "36.3",
+            "title": "Storage Systems",
+            "sections": [
+              {
+                "id": "36.3.1",
+                "title": "HDD vs SSD Internals"
+              },
+              {
+                "id": "36.3.2",
+                "title": "NVMe and I/O Stack"
+              },
+              {
+                "id": "36.3.3",
+                "title": "RAID and Redundancy"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 37,
+        "title": "Linux Engineering",
+        "chapters": [
+          {
+            "id": "37.1",
+            "title": "System Administration",
+            "sections": [
+              {
+                "id": "37.1.1",
+                "title": "File System Management"
+              },
+              {
+                "id": "37.1.2",
+                "title": "User and Permission Model"
+              },
+              {
+                "id": "37.1.3",
+                "title": "Package Management and Tooling"
+              }
+            ]
+          },
+          {
+            "id": "37.2",
+            "title": "Process and Resource Management",
+            "sections": [
+              {
+                "id": "37.2.1",
+                "title": "Process Control and Signals"
+              },
+              {
+                "id": "37.2.2",
+                "title": "cgroups and Namespaces"
+              },
+              {
+                "id": "37.2.3",
+                "title": "System Performance Tools"
+              }
+            ]
+          },
+          {
+            "id": "37.3",
+            "title": "Linux Networking and Automation",
+            "sections": [
+              {
+                "id": "37.3.1",
+                "title": "Network Stack in Linux"
+              },
+              {
+                "id": "37.3.2",
+                "title": "iptables and nftables"
+              },
+              {
+                "id": "37.3.3",
+                "title": "Shell Scripting and Automation"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "title": "Advanced Security",
+        "chapters": [
+          {
+            "id": "38.1",
+            "title": "Cryptography Engineering",
+            "sections": [
+              {
+                "id": "38.1.1",
+                "title": "Symmetric Cryptography in Depth"
+              },
+              {
+                "id": "38.1.2",
+                "title": "Asymmetric Cryptography and Key Exchange"
+              },
+              {
+                "id": "38.1.3",
+                "title": "Side-Channel Attacks"
+              }
+            ]
+          },
+          {
+            "id": "38.2",
+            "title": "Application Defense",
+            "sections": [
+              {
+                "id": "38.2.1",
+                "title": "Secure SDLC"
+              },
+              {
+                "id": "38.2.2",
+                "title": "Dependency and Supply Chain Security"
+              },
+              {
+                "id": "38.2.3",
+                "title": "Penetration Testing Basics"
+              }
+            ]
+          },
+          {
+            "id": "38.3",
+            "title": "Security Operations",
+            "sections": [
+              {
+                "id": "38.3.1",
+                "title": "Zero Trust Architecture"
+              },
+              {
+                "id": "38.3.2",
+                "title": "SIEM and Threat Detection"
+              },
+              {
+                "id": "38.3.3",
+                "title": "Incident Response in Security"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "title": "Research and Innovation",
+        "chapters": [
+          {
+            "id": "39.1",
+            "title": "Research Methods",
+            "sections": [
+              {
+                "id": "39.1.1",
+                "title": "Reading and Evaluating Papers"
+              },
+              {
+                "id": "39.1.2",
+                "title": "Literature Review"
+              },
+              {
+                "id": "39.1.3",
+                "title": "Reproducing Results"
+              }
+            ]
+          },
+          {
+            "id": "39.2",
+            "title": "Experimentation",
+            "sections": [
+              {
+                "id": "39.2.1",
+                "title": "A/B Testing Design"
+              },
+              {
+                "id": "39.2.2",
+                "title": "Statistical Significance"
+              },
+              {
+                "id": "39.2.3",
+                "title": "Benchmarking Methodology"
+              }
+            ]
+          },
+          {
+            "id": "39.3",
+            "title": "Technology Adoption",
+            "sections": [
+              {
+                "id": "39.3.1",
+                "title": "Technology Radar"
+              },
+              {
+                "id": "39.3.2",
+                "title": "Proof of Concept Design"
+              },
+              {
+                "id": "39.3.3",
+                "title": "Innovation Programs"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 40,
+        "title": "Principal Engineer Body of Knowledge",
+        "chapters": [
+          {
+            "id": "40.1",
+            "title": "System Design at Scale",
+            "sections": [
+              {
+                "id": "40.1.1",
+                "title": "Design Framework and Trade-off Analysis"
+              },
+              {
+                "id": "40.1.2",
+                "title": "Capacity Estimation"
+              },
+              {
+                "id": "40.1.3",
+                "title": "Reference Architectures"
+              },
+              {
+                "id": "40.1.4",
+                "title": "Evolutionary Architecture"
+              }
+            ]
+          },
+          {
+            "id": "40.2",
+            "title": "Organizational Impact",
+            "sections": [
+              {
+                "id": "40.2.1",
+                "title": "Driving Architectural Change"
+              },
+              {
+                "id": "40.2.2",
+                "title": "Cross-Team Influence"
+              },
+              {
+                "id": "40.2.3",
+                "title": "Platform Engineering Leadership"
+              }
+            ]
+          },
+          {
+            "id": "40.3",
+            "title": "Engineering Excellence",
+            "sections": [
+              {
+                "id": "40.3.1",
+                "title": "Engineering Culture and Developer Experience"
+              },
+              {
+                "id": "40.3.2",
+                "title": "Long-Term Architecture Planning"
+              },
+              {
+                "id": "40.3.3",
+                "title": "Knowledge Management"
+              },
+              {
+                "id": "40.3.4",
+                "title": "Staff Engineer Career Track"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "stats": {
+      "volumes": 40,
+      "chapters": 139,
+      "sections": 481
+    }
+  }
+}

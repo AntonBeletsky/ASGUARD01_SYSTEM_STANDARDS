@@ -1,0 +1,213 @@
+{
+  "guide": {
+    "title": "Ultimate Software Engineering Knowledge Architecture",
+    "structure": "Guide > Volume > Chapter > Section",
+    "target": {
+      "volumes": 40,
+      "chapters": "130-150",
+      "sections": "400-500"
+    },
+    "volumes": [
+      {
+        "id": 1,
+        "title": "Clean Code",
+        "chapters": []
+      },
+      {
+        "id": 2,
+        "title": "Object Oriented Design",
+        "chapters": []
+      },
+      {
+        "id": 3,
+        "title": "Design Patterns",
+        "chapters": []
+      },
+      {
+        "id": 4,
+        "title": "Clean Architecture",
+        "chapters": []
+      },
+      {
+        "id": 5,
+        "title": "Domain Driven Design",
+        "chapters": []
+      },
+      {
+        "id": 6,
+        "title": "Algorithms",
+        "chapters": []
+      },
+      {
+        "id": 7,
+        "title": "Data Structures",
+        "chapters": []
+      },
+      {
+        "id": 8,
+        "title": "Databases",
+        "chapters": []
+      },
+      {
+        "id": 9,
+        "title": "Distributed Databases",
+        "chapters": []
+      },
+      {
+        "id": 10,
+        "title": "Operating Systems",
+        "chapters": []
+      },
+      {
+        "id": 11,
+        "title": "Networking",
+        "chapters": []
+      },
+      {
+        "id": 12,
+        "title": "API Design",
+        "chapters": []
+      },
+      {
+        "id": 13,
+        "title": "Security",
+        "chapters": []
+      },
+      {
+        "id": 14,
+        "title": "Testing",
+        "chapters": []
+      },
+      {
+        "id": 15,
+        "title": "Performance Engineering",
+        "chapters": []
+      },
+      {
+        "id": 16,
+        "title": "Distributed Systems",
+        "chapters": []
+      },
+      {
+        "id": 17,
+        "title": "Reliability Engineering",
+        "chapters": []
+      },
+      {
+        "id": 18,
+        "title": "Observability",
+        "chapters": []
+      },
+      {
+        "id": 19,
+        "title": "DevOps",
+        "chapters": []
+      },
+      {
+        "id": 20,
+        "title": "Cloud Architecture",
+        "chapters": []
+      },
+      {
+        "id": 21,
+        "title": "High Load Systems",
+        "chapters": []
+      },
+      {
+        "id": 22,
+        "title": "Frontend Architecture",
+        "chapters": []
+      },
+      {
+        "id": 23,
+        "title": "Functional Programming",
+        "chapters": []
+      },
+      {
+        "id": 24,
+        "title": "Compiler Fundamentals",
+        "chapters": []
+      },
+      {
+        "id": 25,
+        "title": "Search Systems",
+        "chapters": []
+      },
+      {
+        "id": 26,
+        "title": "Data Engineering",
+        "chapters": []
+      },
+      {
+        "id": 27,
+        "title": "AI Systems",
+        "chapters": []
+      },
+      {
+        "id": 28,
+        "title": "SRE",
+        "chapters": []
+      },
+      {
+        "id": 29,
+        "title": "Architecture Governance",
+        "chapters": []
+      },
+      {
+        "id": 30,
+        "title": "Technical Leadership",
+        "chapters": []
+      },
+      {
+        "id": 31,
+        "title": "Product Engineering",
+        "chapters": []
+      },
+      {
+        "id": 32,
+        "title": "Software Economics",
+        "chapters": []
+      },
+      {
+        "id": 33,
+        "title": "Enterprise Architecture",
+        "chapters": []
+      },
+      {
+        "id": 34,
+        "title": "Compliance & Risk",
+        "chapters": []
+      },
+      {
+        "id": 35,
+        "title": "Advanced Distributed Computing",
+        "chapters": []
+      },
+      {
+        "id": 36,
+        "title": "Hardware & Systems",
+        "chapters": []
+      },
+      {
+        "id": 37,
+        "title": "Linux Engineering",
+        "chapters": []
+      },
+      {
+        "id": 38,
+        "title": "Advanced Security",
+        "chapters": []
+      },
+      {
+        "id": 39,
+        "title": "Research & Innovation",
+        "chapters": []
+      },
+      {
+        "id": 40,
+        "title": "Principal Engineer Body of Knowledge",
+        "chapters": []
+      }
+    ]
+  }
+}
