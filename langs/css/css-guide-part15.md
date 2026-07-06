@@ -1416,9 +1416,883 @@ kbd {
 
 ---
 
+## 211. POPOVER API + CSS
+
+```css
+/* ─── Base popover reset ───
+   [popover] and <dialog> render in the browser's top layer — z-index
+   tokens like --z-modal / --z-popover do not apply to them and are not needed here. */
+[popover] {
+  margin: auto;
+  padding: 0;
+  border: none;
+  inset: 0;
+  max-width: min(90vw, 360px);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-2xl);
+  opacity: 0;
+  scale: 0.95;
+  transition:
+    opacity  var(--duration-normal) var(--ease-out),
+    scale    var(--duration-normal) var(--ease-out),
+    display  var(--duration-normal) allow-discrete,
+    overlay  var(--duration-normal) allow-discrete;
+}
+
+[popover]:popover-open {
+  opacity: 1;
+  scale: 1;
+}
+
+@starting-style {
+  [popover]:popover-open {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+/* Backdrop dims the page behind an open [popover="auto"] */
+[popover]::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition: background var(--duration-normal) allow-discrete;
+}
+[popover]:popover-open::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+
+/* ─── Popover menu, anchored to its trigger button ─── */
+.popover-menu-trigger {
+  anchor-name: --menu-trigger;
+}
+
+.popover-menu {
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+  max-width: 260px;
+  position-anchor: --menu-trigger;
+  position-area: bottom span-right;
+  position-try-fallbacks: flip-block, flip-inline;
+  margin-block-start: var(--space-2);
+}
+
+.popover-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: start;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+.popover-menu-item:hover,
+.popover-menu-item:focus-visible { background: var(--color-bg-subtle); }
+.popover-menu-item--danger { color: var(--color-danger-500); }
+
+.popover-menu-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin-block: var(--space-1);
+}
+
+/* ─── Lightweight anchored tooltip (auto popover) ─── */
+.popover-tooltip-trigger { anchor-name: --tooltip-trigger; }
+
+[popover="auto"].popover-tooltip {
+  max-width: 220px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-neutral-900);
+  color: white;
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  position-anchor: --tooltip-trigger;
+  position-area: top;
+  margin-block-end: var(--space-2);
+}
+
+/* ─── Popover used as a combobox listbox, matching trigger width ─── */
+.popover-listbox {
+  position-anchor: --combo-trigger;
+  position-area: bottom span-right;
+  width: anchor-size(width);
+  max-height: 260px;
+  overflow-y: auto;
+  padding: var(--space-1);
+}
+
+.popover-listbox [role="option"] {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+.popover-listbox [role="option"]:hover,
+.popover-listbox [role="option"][aria-selected="true"] {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+/* ─── Fallback for browsers without Popover API support ─── */
+@supports not selector(:popover-open) {
+  [popover] { display: none; }
+  [popover].is-open-fallback {
+    display: block;
+    position: fixed;
+    inset: 0;
+    margin: auto;
+  }
+}
+```
+
+---
+
+## 212. NATIVE `<DIALOG>` — DEEP DIVE
+
+```css
+/* ─── Dialog reset ─── */
+dialog {
+  margin: auto;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-2xl);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2xl);
+  max-width: min(90vw, 480px);
+  width: 100%;
+  opacity: 0;
+  translate: 0 24px;
+  transition:
+    opacity   var(--duration-normal) var(--ease-out),
+    translate var(--duration-normal) var(--ease-out),
+    overlay   var(--duration-normal) allow-discrete,
+    display   var(--duration-normal) allow-discrete;
+}
+
+dialog[open] {
+  opacity: 1;
+  translate: 0 0;
+}
+
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    translate: 0 24px;
+  }
+}
+
+/* ::backdrop is only rendered for dialogs opened via showModal() */
+dialog::backdrop {
+  background: rgb(15 15 20 / 0);
+  backdrop-filter: blur(0px);
+  transition:
+    background      var(--duration-normal) allow-discrete,
+    backdrop-filter var(--duration-normal) allow-discrete;
+}
+dialog[open]::backdrop {
+  background: rgb(15 15 20 / 0.5);
+  backdrop-filter: blur(2px);
+}
+@starting-style {
+  dialog[open]::backdrop {
+    background: rgb(15 15 20 / 0);
+    backdrop-filter: blur(0px);
+  }
+}
+
+/* ─── Anatomy ─── */
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dialog-title { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); }
+.dialog-description { font-size: var(--font-size-sm); color: var(--color-text-muted); margin-block-start: var(--space-1); }
+
+.dialog-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--duration-fast);
+}
+.dialog-close:hover { background: var(--color-bg-subtle); }
+
+.dialog-body { padding: var(--space-6); overflow-y: auto; }
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6) var(--space-6);
+}
+
+/* ─── Non-modal dialog (.show(), no ::backdrop rendered by the browser) ─── */
+dialog.dialog--nonmodal[open] {
+  position: fixed;
+  inset-block-start: var(--space-6);
+  inset-inline-end: var(--space-6);
+  margin: 0;
+  box-shadow: var(--shadow-xl);
+}
+
+/* ─── Full-screen sheet variant (mobile) ─── */
+dialog.dialog--sheet {
+  max-width: none;
+  width: 100%;
+  margin-block-end: 0;
+  margin-inline: 0;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  translate: 0 100%;
+}
+dialog.dialog--sheet[open] { translate: 0 0; }
+@starting-style {
+  dialog.dialog--sheet[open] { translate: 0 100%; }
+}
+
+/* ─── Alert / destructive-confirm variant ─── */
+.dialog--alert .dialog-header { border-bottom: none; padding-block-end: 0; }
+.dialog--alert .dialog-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--color-danger-100);
+  color: var(--color-danger-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-block-end: var(--space-4);
+  font-size: 1.25rem;
+}
+```
+
+---
+
+## 213. TOAST / SNACKBAR — NOTIFICATION QUEUE
+
+```css
+/* ─── Toast viewport: fixed stack container ─── */
+.toast-viewport {
+  position: fixed;
+  inset-block-end: var(--space-6);
+  inset-inline-end: var(--space-6);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-3);
+  width: min(360px, calc(100vw - var(--space-8)));
+  pointer-events: none;
+}
+
+/* ─── Toast card ─── */
+.toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+  animation: toast-in var(--duration-slow) var(--ease-bounce);
+}
+
+.toast.is-leaving {
+  animation: toast-out var(--duration-normal) var(--ease-in) forwards;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; translate: 0 12px; scale: 0.95; }
+}
+@keyframes toast-out {
+  to { opacity: 0; translate: 110% 0; }
+}
+
+/* Icon by variant */
+.toast-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+  font-size: 0.8rem;
+}
+.toast--success .toast-icon { background: var(--color-success-500); }
+.toast--danger  .toast-icon { background: var(--color-danger-500); }
+.toast--warning .toast-icon { background: var(--color-warning-500); }
+.toast--info    .toast-icon { background: var(--color-brand-500); }
+
+.toast-content { min-width: 0; }
+.toast-title { font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm); }
+.toast-message { font-size: var(--font-size-sm); color: var(--color-text-muted); margin-block-start: 0.125rem; }
+
+.toast-action {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-block-start: var(--space-2);
+}
+
+.toast-close {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: none;
+  background: none;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Auto-dismiss progress bar along the bottom edge */
+.toast-timer {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  height: 3px;
+  background: var(--color-accent);
+  width: 100%;
+  transform-origin: left;
+  animation: toast-countdown var(--toast-duration, 5s) linear forwards;
+}
+@keyframes toast-countdown {
+  to { scale: 0 1; }
+}
+.toast:hover .toast-timer,
+.toast:focus-within .toast-timer { animation-play-state: paused; }
+
+/* Depth preview when 3+ toasts queue up behind the front card */
+.toast-viewport[data-stacked="true"] .toast:not(:first-child) {
+  scale: calc(1 - var(--stack-index, 1) * 0.05);
+  translate: 0 calc(var(--stack-index, 1) * -8px);
+  opacity: calc(1 - var(--stack-index, 1) * 0.3);
+}
+```
+
+---
+
+## 214. PASSWORD & OTP INPUT UI
+
+```css
+/* ─── Password field with show/hide toggle ─── */
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  padding: 0.625rem var(--space-10) 0.625rem var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font: inherit;
+  background: var(--color-surface);
+  transition: border-color var(--duration-fast);
+}
+.password-field input:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.password-toggle {
+  position: absolute;
+  inset-inline-end: var(--space-2);
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+.password-toggle:hover { color: var(--color-text); background: var(--color-bg-subtle); }
+
+/* ─── Strength meter ─── */
+.password-strength {
+  display: flex;
+  gap: var(--space-1);
+  margin-block-start: var(--space-2);
+}
+
+.password-strength__segment {
+  height: 4px;
+  flex: 1;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-muted);
+  transition: background var(--duration-normal);
+}
+
+.password-strength[data-level="1"] .password-strength__segment:nth-child(-n+1) { background: var(--color-danger-500); }
+.password-strength[data-level="2"] .password-strength__segment:nth-child(-n+2) { background: var(--color-warning-500); }
+.password-strength[data-level="3"] .password-strength__segment:nth-child(-n+3) { background: var(--color-brand-500); }
+.password-strength[data-level="4"] .password-strength__segment:nth-child(-n+4) { background: var(--color-success-500); }
+
+.password-strength__label { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-block-start: var(--space-1); }
+
+/* ─── Requirement checklist ─── */
+.password-requirements {
+  list-style: none;
+  padding: 0;
+  margin-block-start: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.password-requirements li.met { color: var(--color-success-600); }
+.password-requirements li.met::before { content: '✓'; font-weight: var(--font-weight-bold); }
+.password-requirements li:not(.met)::before { content: '○'; }
+
+/* ─── OTP / verification-code input ─── */
+.otp-input {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.otp-input__cell {
+  width: 3rem;
+  height: 3.5rem;
+  text-align: center;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+.otp-input__cell:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+.otp-input__cell:not(:placeholder-shown) { border-color: var(--color-border-strong); }
+
+.otp-input__cell.error { border-color: var(--color-danger-500); animation: otp-shake 0.3s; }
+@keyframes otp-shake {
+  25% { translate: -4px 0; }
+  75% { translate: 4px 0; }
+}
+.otp-input__cell.success { border-color: var(--color-success-500); }
+
+/* Visual separator between digit groups, e.g. a 3-3 layout */
+.otp-input__sep { align-self: center; color: var(--color-text-subtle); font-weight: var(--font-weight-bold); }
+
+.otp-resend { font-size: var(--font-size-sm); color: var(--color-text-muted); margin-block-start: var(--space-3); }
+.otp-resend button {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  padding: 0;
+}
+.otp-resend button:disabled { color: var(--color-text-subtle); cursor: not-allowed; }
+```
+
+---
+
+## 215. STICKY / FROZEN TABLE HEADERS & COLUMNS
+
+```css
+/* ─── Scroll container ─── */
+.data-table-scroll {
+  overflow: auto;
+  max-height: 480px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: var(--font-size-sm);
+}
+
+/* ─── Sticky header row ─── */
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-raised);
+  background: var(--color-bg-subtle);
+  text-align: start;
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+/* Shadow appears once body content has scrolled beneath the sticky header */
+.data-table-scroll[data-scrolled="true"] thead th {
+  box-shadow: 0 1px 0 var(--color-border-strong), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+}
+
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ─── Frozen first column ───
+   background must be set explicitly (not left transparent), otherwise
+   scrolling body content shows through underneath the frozen cell. */
+.data-table .col-frozen {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: var(--z-base);
+  background: inherit;
+}
+.data-table thead .col-frozen { z-index: calc(var(--z-raised) + 1); background: var(--color-bg-subtle); }
+
+.data-table-scroll[data-scrolled-x="true"] .col-frozen {
+  box-shadow: 4px 0 6px -4px rgb(0 0 0 / 0.15);
+}
+
+/* ─── Frozen last column (e.g. row actions) ─── */
+.data-table .col-frozen-end {
+  position: sticky;
+  inset-inline-end: 0;
+  background: inherit;
+  text-align: end;
+}
+.data-table-scroll[data-scrolled-x-end="true"] .col-frozen-end {
+  box-shadow: -4px 0 6px -4px rgb(0 0 0 / 0.15);
+}
+
+/* ─── Sticky footer (totals row) ─── */
+.data-table tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-bg-subtle);
+  font-weight: var(--font-weight-semibold);
+  border-top: 2px solid var(--color-border-strong);
+  border-bottom: none;
+}
+
+/* Hover state must repaint frozen cells too, or they'll look "stuck" mid-highlight */
+.data-table tbody tr:hover td,
+.data-table tbody tr:hover .col-frozen,
+.data-table tbody tr:hover .col-frozen-end { background: var(--color-bg-subtle); }
+
+/* Zebra striping stays compatible with frozen columns via `background: inherit` above */
+.data-table--striped tbody tr:nth-child(even) td { background: var(--color-bg-subtle); }
+```
+
+---
+
+## 216. ACTIVITY / PROGRESS RING
+
+```css
+/* ─── Single ring via conic-gradient (CSS-only, no SVG) ─── */
+.progress-ring {
+  --ring-size: 120px;
+  --ring-thickness: 10px;
+  --ring-value: 65; /* 0–100 */
+  --ring-color: var(--color-accent);
+  width: var(--ring-size);
+  height: var(--ring-size);
+  border-radius: 50%;
+  background: conic-gradient(var(--ring-color) calc(var(--ring-value) * 1%), var(--color-bg-muted) 0);
+  display: grid;
+  place-items: center;
+  transition: background 0.6s var(--ease-out);
+}
+
+/* Punch a hole in the middle to turn the filled disc into a ring */
+.progress-ring::before {
+  content: '';
+  grid-area: 1 / 1;
+  width: calc(100% - var(--ring-thickness) * 2);
+  height: calc(100% - var(--ring-thickness) * 2);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.progress-ring__label {
+  grid-area: 1 / 1;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-black);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-ring--sm { --ring-size: 32px; --ring-thickness: 4px; }
+.progress-ring--sm .progress-ring__label { font-size: var(--font-size-xs); }
+
+.progress-ring[data-complete="true"] { --ring-color: var(--color-success-500); }
+
+/* ─── SVG variant — smoother animation via stroke-dashoffset ─── */
+.progress-ring-svg { width: 120px; height: 120px; rotate: -90deg; }
+.progress-ring-svg circle { fill: none; stroke-width: 10; }
+.progress-ring-svg .track { stroke: var(--color-bg-muted); }
+.progress-ring-svg .fill {
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  stroke-dasharray: var(--ring-circumference, 314);
+  stroke-dashoffset: calc(var(--ring-circumference, 314) * (1 - var(--ring-value, 0.65)));
+  transition: stroke-dashoffset 0.8s var(--ease-out);
+}
+
+/* ─── Multi-ring activity dashboard (concentric rings, Apple-Watch style) ─── */
+.activity-rings { position: relative; width: 160px; height: 160px; }
+.activity-rings svg { width: 100%; height: 100%; rotate: -90deg; }
+.activity-rings circle { fill: none; stroke-linecap: round; transition: stroke-dashoffset 0.8s var(--ease-out); }
+.activity-rings .ring-track { stroke: color-mix(in srgb, currentColor 15%, transparent); }
+.activity-rings .ring-move     { stroke: var(--color-danger-500); }
+.activity-rings .ring-exercise { stroke: var(--color-success-500); }
+.activity-rings .ring-stand    { stroke: var(--color-brand-500); }
+
+.activity-legend { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-sm); }
+.activity-legend-item { display: flex; align-items: center; gap: var(--space-2); }
+.activity-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+```
+
+---
+
+## 217. BOARDING PASS / TICKET UI
+
+```css
+/* ─── Ticket shell with a true perforated-hole edge (mask-based, works on any background) ─── */
+.ticket {
+  --notch-size: 12px;
+  --notch-position: 72%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  max-width: 480px;
+  position: relative;
+  mask-image:
+    radial-gradient(circle var(--notch-size) at var(--notch-position) 0%,   transparent 99%, black 100%),
+    radial-gradient(circle var(--notch-size) at var(--notch-position) 100%, transparent 99%, black 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in; /* approximate legacy WebKit fallback */
+}
+
+/* Dashed tear line lines up with the mask notches via the same custom property */
+.ticket-divider {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--notch-position);
+  border-inline-start: 2px dashed var(--color-border-strong);
+  pointer-events: none;
+}
+
+/* ─── Main stub ─── */
+.ticket-main {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ticket-route { display: flex; align-items: center; gap: var(--space-3); }
+.ticket-airport { font-size: var(--font-size-2xl); font-weight: var(--font-weight-black); }
+.ticket-city { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.ticket-plane-icon { color: var(--color-text-subtle); flex-shrink: 0; }
+
+/* Dotted flight-path line between the two airport codes */
+.ticket-path {
+  flex: 1;
+  height: 1px;
+  background-image: linear-gradient(to right, var(--color-border-strong) 50%, transparent 0);
+  background-size: 8px 1px;
+  background-repeat: repeat-x;
+}
+
+.ticket-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  padding-block-start: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+.ticket-meta-label { font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-wider); color: var(--color-text-muted); }
+.ticket-meta-value { font-size: var(--font-size-base); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; }
+
+/* ─── Tear-off stub: boarding info + barcode, rotated to fit a narrow column ─── */
+.ticket-stub {
+  padding: var(--space-6) var(--space-4);
+  background: var(--color-bg-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.ticket-stub-gate { font-weight: var(--font-weight-bold); font-size: var(--font-size-sm); }
+.ticket-stub-seat { font-family: var(--font-mono); font-weight: var(--font-weight-bold); }
+
+/* Barcode placeholder (repeating bars), reset to horizontal inside the vertical stub */
+.ticket-barcode {
+  writing-mode: horizontal-tb;
+  width: 100%;
+  height: 48px;
+  background-image: repeating-linear-gradient(90deg, var(--color-neutral-900) 0 2px, transparent 2px 5px);
+}
+
+/* ─── Fare class badge ─── */
+.ticket-class {
+  align-self: flex-start;
+  padding: 0.2em 0.6em;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+.ticket-class--economy  { background: var(--color-bg-muted);  color: var(--color-text-muted); }
+.ticket-class--business { background: oklch(0.85 0.1 80);     color: oklch(0.4 0.15 80); }
+.ticket-class--first    { background: var(--color-neutral-900); color: white; }
+```
+
+---
+
+## 218. NATIVE FORM CONTROL THEMING
+
+```css
+/* ─── Global native-control theming via accent-color ─── */
+:root {
+  accent-color: var(--color-accent);
+  color-scheme: light dark;
+}
+
+.form-danger-zone  { accent-color: var(--color-danger-500); }
+.form-success-zone { accent-color: var(--color-success-500); }
+
+/* ─── Checkbox / radio: sizing + label pairing, no visual replacement needed ─── */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  cursor: pointer;
+}
+.control--lg input[type="checkbox"],
+.control--lg input[type="radio"] { width: 1.5rem; height: 1.5rem; }
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+/* ─── Range slider ─── */
+input[type="range"] {
+  accent-color: var(--color-accent);
+  block-size: 1.25rem;
+  inline-size: 100%;
+}
+/* Firefox exposes the track/thumb via standard pseudo-elements */
+input[type="range"]::-moz-range-track { height: 4px; border-radius: var(--radius-full); background: var(--color-bg-muted); }
+input[type="range"]::-moz-range-thumb { border: none; }
+/* Chromium/WebKit require vendor-prefixed pseudo-elements for the same parts */
+input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: var(--radius-full); background: var(--color-bg-muted); }
+input[type="range"]::-webkit-slider-thumb { margin-block-start: -8px; /* centers the thumb on a 4px track */ }
+
+/* ─── Progress element ─── */
+progress {
+  accent-color: var(--color-accent);
+  inline-size: 100%;
+  block-size: 8px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: none;
+  background: var(--color-bg-muted); /* used by Firefox directly */
+}
+progress::-webkit-progress-bar   { background: var(--color-bg-muted); border-radius: inherit; }
+progress::-webkit-progress-value { background: var(--color-accent);   border-radius: inherit; transition: width var(--duration-normal); }
+progress::-moz-progress-bar      { background: var(--color-accent);   border-radius: inherit; }
+/* Indeterminate progress (no [value]) keeps the browser's native animation — leave width/value alone */
+
+/* ─── Dark theme: color-scheme flips native chrome automatically ─── */
+[data-theme="dark"] {
+  color-scheme: dark;
+  accent-color: var(--color-accent);
+}
+/* color-scheme: dark also re-themes scrollbars and default focus rings —
+   no extra rules are needed for that part. */
+
+/* ─── Select: light-touch native styling, not a full custom replacement ─── */
+select {
+  accent-color: var(--color-accent);
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  font: inherit;
+  color: var(--color-text);
+}
+select:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+/* ─── File input button ─── */
+input[type="file"]::file-selector-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-subtle);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  margin-inline-end: var(--space-3);
+  transition: background var(--duration-fast);
+}
+input[type="file"]::file-selector-button:hover { background: var(--color-bg-muted); }
+```
+
+---
+
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                     PART 15 — COMPLETE                               ║
-║  Chapters 203–210 | 8 new chapters | Output: css-guide-part15.md    ║
+║  Chapters 203–218 | 16 new chapters | Output: css-guide-part15.md    ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ```

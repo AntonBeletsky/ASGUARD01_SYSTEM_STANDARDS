@@ -1,0 +1,157 @@
+{
+  "report": "CSS Guide Completeness Audit",
+  "date": "2026-07-05",
+  "summary": {
+    "total_chapters_written": 210,
+    "chapter_range_written": "1–210",
+    "gaps_in_numbering": "none (1–210 continuous, verified)",
+    "planned_but_missing_chapters": "211–218 (8 chapters not yet written)",
+    "structural_integrity": "OK — all code fences (```) matched/closed in every file",
+    "key_finding": "COMPLETE-CSS-GUIDE-FINAL.md is OUTDATED / STALE. It only merges chapters 1–168 (css-guide.md + part2..part11) and does NOT include part12–part15 (chapters 169–210). It needs to be regenerated once all parts are finished."
+  },
+  "files": [
+    {
+      "file": "css-guide.md",
+      "role": "base/root guide",
+      "chapters": "1–36",
+      "chapter_count": 36,
+      "lines": 5861,
+      "language": "Russian",
+      "notes": "Foundational chapters: philosophy, architecture, cascade, custom properties, box model, flexbox, grid, positioning, typography, color, animations, responsive design, accessibility, naming conventions, snippets library, property reference."
+    },
+    {
+      "file": "css-guide-part2.md",
+      "chapters": "37–60",
+      "chapter_count": 24,
+      "lines": 3971,
+      "language": "Russian",
+      "notes": "Anchor Positioning, View Transitions, Scroll-driven animations, @scope, Houdini, Shadow DOM."
+    },
+    {
+      "file": "css-guide-part3.md",
+      "chapters": "61–73",
+      "chapter_count": 13,
+      "lines": 2751,
+      "language": "English (switches from RU to EN)",
+      "notes": "Enterprise architecture (ITCSS/SMACSS), Email CSS, interactive patterns, bento grids, pricing cards."
+    },
+    {
+      "file": "css-guide-part4.md",
+      "chapters": "74–90",
+      "chapter_count": 17,
+      "lines": 3432,
+      "language": "English",
+      "notes": "PWA/mobile patterns, micro-interactions, drawers, comboboxes, date pickers, image galleries."
+    },
+    {
+      "file": "css-guide-part5.md",
+      "chapters": "91–100",
+      "chapter_count": 10,
+      "lines": 2495,
+      "language": "English",
+      "notes": "Background pattern library, 3D effects, ecommerce UI, chat/social UI, particle effects, documentation site patterns."
+    },
+    {
+      "file": "css-guide-part6.md",
+      "chapters": "101–116",
+      "chapter_count": 16,
+      "lines": 2829,
+      "language": "English",
+      "notes": "Hover libraries, kanban, terminal UI, media players, notifications, invoices/CV, magazine grids, ADR, debugging kit."
+    },
+    {
+      "file": "css-guide-part7.md",
+      "chapters": "117–129",
+      "chapter_count": 13,
+      "lines": 2298,
+      "language": "English",
+      "notes": "Tree view, AI/chatbot UI, settings pages, org chart, gamification, shorthand reference, polyfills, utility system."
+    },
+    {
+      "file": "css-guide-part8.md",
+      "chapters": "130–141",
+      "chapter_count": 12,
+      "lines": 2218,
+      "language": "English",
+      "notes": "Calendar, spreadsheet UI, rich text editor, color picker, dashboard widgets, dark mode tokens, diff viewer, search results."
+    },
+    {
+      "file": "css-guide-part9.md",
+      "chapters": "142–151",
+      "chapter_count": 10,
+      "lines": 2232,
+      "language": "English",
+      "notes": "Split panes, Gantt charts, onboarding tours, music player, blog layouts, portfolio, restaurant menu, marketing sections, tooltips."
+    },
+    {
+      "file": "css-guide-part10.md",
+      "chapters": "152–162",
+      "chapter_count": 11,
+      "lines": 2016,
+      "language": "English",
+      "notes": "IDE layouts, whiteboard UI, presentation slides, video editor timeline, print CSS, font loading, performance checklist, OKLCH, variables mega-reference."
+    },
+    {
+      "file": "css-guide-part11.md",
+      "chapters": "163–168",
+      "chapter_count": 6,
+      "lines": 629,
+      "language": "English",
+      "notes": "Range sliders, clipboard feedback, network status, infinite canvas, colour-blindness simulation, master quick-reference card. Ends with 'FINAL SUMMARY' — appears to have been intended as a closing part, but numbering later continued in part12–15."
+    },
+    {
+      "file": "css-guide-part12.md",
+      "chapters": "169–181",
+      "chapter_count": 13,
+      "lines": 2087,
+      "language": "English",
+      "notes": "NOT included in COMPLETE-CSS-GUIDE-FINAL.md. Charts, mind map, countdown, emoji picker, file upload, video call UI, collaboration cursors, changelog, roadmap, quiz UI, dyslexia typography, custom cursors."
+    },
+    {
+      "file": "css-guide-part13.md",
+      "chapters": "182–192",
+      "chapter_count": 11,
+      "lines": 1808,
+      "language": "English",
+      "notes": "NOT included in FINAL. Billing UI, promo UI, kiosk UI, scrollytelling, dropdown menus, checkout, responsive tables, micro-typography, floating UI, spotlight search, app launcher."
+    },
+    {
+      "file": "css-guide-part14.md",
+      "chapters": "193–202",
+      "chapter_count": 10,
+      "lines": 1697,
+      "language": "English",
+      "notes": "NOT included in FINAL. Context-aware theming, animated counters, map/geo UI, timeline feed, audit log, image annotation, dynamic island, skeletons, CSS-only modals, recipe card."
+    },
+    {
+      "file": "css-guide-part15.md",
+      "chapters_declared_in_title": "203–218",
+      "chapters_actually_present": "203–210",
+      "chapter_count": 8,
+      "lines": 1424,
+      "language": "English",
+      "notes": "INCOMPLETE relative to its own title. Header says 'Chapters 203–218' but the file's own closing banner confirms only 203–210 (8 chapters) were actually produced. Chapters 211–218 do not exist in any uploaded file. NOT included in FINAL."
+    },
+    {
+      "file": "COMPLETE-CSS-GUIDE-FINAL.md",
+      "role": "merged/consolidated file",
+      "chapters_included": "1–168",
+      "chapters_missing": "169–210 (and unwritten 211–218)",
+      "lines": 30732,
+      "notes": "Byte-for-byte equals css-guide.md + part2..part11 concatenated. Confirmed stale: does not include part12, part13, part14, part15. Must not be treated as the current 'final' version."
+    }
+  ],
+  "issues_found": [
+    "COMPLETE-CSS-GUIDE-FINAL.md is misleadingly named — it is missing chapters 169–210 (parts 12–15) and is therefore ~19% incomplete relative to what has already been written elsewhere.",
+    "css-guide-part15.md title claims chapters 203–218 but only delivers 203–210; chapters 211–218 are missing entirely from the upload set.",
+    "css-guide-part11.md contains a 'FINAL SUMMARY' / closing banner at chapter 168, suggesting the guide was originally planned to end there, then was extended further (169+) in later parts — the overall scope/plan has grown organically without a single updated master TOC.",
+    "Language inconsistency: base guide + part2 are in Russian, part3 onward switch to English, with no bilingual reconciliation.",
+    "No master table of contents exists anywhere covering all 210 (or planned 218) chapters — the TOC in css-guide.md only covers chapters 1–36."
+  ],
+  "recommendations": [
+    "Do not use COMPLETE-CSS-GUIDE-FINAL.md as the source of truth — regenerate it only after all parts (including the pending 211–218) are finished.",
+    "Produce/complete part16 (or a continuation of part15) to cover chapters 211–218 before finalizing.",
+    "Build one master TOC/index file mapping chapter number → title → source file, to track completeness going forward.",
+    "Decide on and enforce a single language (RU or EN) across all parts for consistency."
+  ]
+}
