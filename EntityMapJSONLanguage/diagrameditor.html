@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagram Editor — University Courses</title>
+
+  <script>
+    document.documentElement.setAttribute(
+      'data-bs-theme',
+      matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    );
+  </script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* ============================================================
+       0. Tokens — same names/values as university_erd.html, now
+       consumed directly by our own render code instead of being
+       passed into mermaid.initialize() (there is no Mermaid here).
+       ============================================================ */
+    .diagram-editor-container {
+      --de-primary: #EEEDFE;        --de-primary-border: #7F77DD;   --de-primary-text: #26215C;
+      --de-secondary: #E1F5EE;      --de-secondary-border: #0F6E56; --de-secondary-text: #04342C;
+      --de-line: #73726c;           --de-text: #3d3d3a;
+      --de-canvas: #fbfbfa;         --de-selected: #d9480f;
+      --de-zoom: 1;
+    }
+    [data-bs-theme="dark"] .diagram-editor-container {
+      --de-primary: #3C3489;        --de-primary-border: #AFA9EC;   --de-primary-text: #EEEDFE;
+      --de-secondary: #085041;      --de-secondary-border: #5DCAA5; --de-secondary-text: #E1F5EE;
+      --de-line: #9c9a92;           --de-text: #c2c0b6;
+      --de-canvas: #201f22;         --de-selected: #ff8787;
+    }
+
+    /* ============================================================
+       1. Container layout
+       ============================================================ */
+    .diagram-editor-body {
+      display: flex;
+      min-height: 70vh;
+    }
+
+    /* ============================================================
+       2. Child elements
+       ============================================================ */
+    .diagram-editor-canvas-wrap {
+      position: relative;
+      overflow: hidden;
+      background: var(--de-canvas);
+      flex: 1 1 auto;
+      cursor: grab;
+    }
+    .diagram-editor-canvas-wrap.is-panning { cursor: grabbing; }
+    .diagram-editor-canvas-wrap svg { display: block; width: 100%; height: 100%; }
+
+    .de-entity-header rect { fill: var(--de-primary); stroke: var(--de-primary-border); stroke-width: 1; }
+    .de-entity-header text { fill: var(--de-primary-text); font: 600 12px var(--bs-body-font-family), sans-serif; }
+    .de-entity-body rect { fill: var(--bs-body-bg); stroke: var(--de-primary-border); stroke-width: 1; }
+    .de-field-row text { fill: var(--de-text); font: 11px var(--bs-body-font-family), sans-serif; }
+    .de-field-row .de-field-key { fill: var(--de-secondary-text); font-weight: 600; }
+    .de-entity.is-selected .de-entity-header rect,
+    .de-entity.is-selected .de-entity-body rect { stroke: var(--de-selected); stroke-width: 2; }
+    .de-field-row.is-selected rect { fill: var(--de-secondary); }
+    .de-entity.is-pending-source .de-entity-header rect { stroke: var(--de-selected); stroke-width: 2; stroke-dasharray: 4 2; }
+
+    .de-relation path { stroke: var(--de-line); stroke-width: 1.2; fill: none; }
+    .de-relation.is-selected path { stroke: var(--de-selected); stroke-width: 2; }
+    .de-relation text { fill: var(--de-text); font: 10px var(--bs-body-font-family), sans-serif; }
+    .de-relation .de-card-label { font-size: 9px; fill: var(--de-line); }
+
+    .diagram-editor-inspector {
+      width: 300px;
+      flex: 0 0 300px;
+      border-left: 1px solid var(--bs-border-color);
+      overflow-y: auto;
+      padding: .75rem;
+    }
+    .de-entity-list-item { cursor: pointer; }
+
+    /* ============================================================
+       3. Modal — none.
+       ============================================================ */
+
+    /* ============================================================
+       4. States
+       ============================================================ */
+    .diagram-editor-container[data-mode="draw-relation"] .diagram-editor-canvas-wrap { cursor: crosshair; }
+
+    /* ============================================================
+       5. Animations
+       ============================================================ */
+    .de-entity, .de-relation path { transition: none; } /* explicit: no transition during drag, avoids lag */
+
+    /* ============================================================
+       6. Responsive
+       ============================================================ */
+    @media (max-width: 767.98px) {
+      .diagram-editor-body { flex-direction: column; }
+      .diagram-editor-inspector { width: auto; flex: 0 0 auto; border-left: none; border-top: 1px solid var(--bs-border-color); max-height: 40vh; }
+    }
+  </style>
+</head>
+<body>
+<div class="container-fluid py-3">
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h1 class="h4 mb-1">Diagram Editor — University Courses</h1>
+      <p class="text-secondary small mb-0">Drag entities, draw relations, edit fields — export when done. No live save; use Export/Import.</p>
+    </div>
+    <button id="theme-toggle" type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" aria-pressed="false">
+      <span class="theme-toggle-icon d-inline-flex" aria-hidden="true"></span>
+      <span class="theme-toggle-text">Dark theme</span>
+    </button>
+  </div>
+
+  <section class="diagram-editor-container card shadow-sm" data-state="ready" data-mode="select">
+    <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="add-entity">+ Entity</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-action="toggle-draw-relation" data-ref="draw-relation-btn" aria-pressed="false">Draw Relation</button>
+      <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-selected" data-ref="delete-btn" disabled>Delete</button>
+
+      <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
+        <button type="button" class="btn btn-outline-secondary" data-action="zoom-out" aria-label="Zoom out">−</button>
+        <button type="button" class="btn btn-outline-secondary" data-action="zoom-reset" aria-label="Reset zoom, current level 100%"><span data-ref="zoom-level">100%</span></button>
+        <button type="button" class="btn btn-outline-secondary" data-action="zoom-in" aria-label="Zoom in">+</button>
+      </div>
+
+      <div class="btn-group btn-group-sm" role="group" aria-label="History">
+        <button type="button" class="btn btn-outline-secondary" data-action="undo" data-ref="undo-btn" disabled>Undo</button>
+        <button type="button" class="btn btn-outline-secondary" data-action="redo" data-ref="redo-btn" disabled>Redo</button>
+      </div>
+
+      <div class="btn-group btn-group-sm ms-auto" role="group" aria-label="File">
+        <button type="button" class="btn btn-outline-secondary" data-action="export">Export JSON</button>
+        <button type="button" class="btn btn-outline-secondary" data-action="import-trigger">Import JSON</button>
+      </div>
+      <input type="file" data-ref="import-input" accept="application/json" class="d-none">
+    </div>
+
+    <div class="alert alert-danger d-none m-2" data-ref="error-banner" role="alert"></div>
+
+    <div class="diagram-editor-body">
+      <div class="diagram-editor-canvas-wrap" data-ref="canvas-wrap" tabindex="0" aria-label="Diagram canvas">
+        <svg data-ref="svg" viewBox="0 0 1200 1200" preserveAspectRatio="xMinYMin meet">
+          <g data-ref="viewport">
+            <g data-ref="relations-layer"></g>
+            <g data-ref="entities-layer"></g>
+          </g>
+        </svg>
+      </div>
+      <div class="diagram-editor-inspector" data-ref="inspector"></div>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+  // =================================================================
+  // Vocabularies (spec §4.2 / §5.1) — feed every dropdown in the inspector.
+  // =================================================================
+  const FIELD_TYPES = ['id','uuid','ref','string','text','char','bytes','bool','int8','int16','int32','int64','uint',
+    'float','double','decimal','date','time','datetime','timestamp','duration','enum','json','map','any'];
+  const FIELD_KEYS = ['', 'PK', 'FK', 'UK'];
+  const RELATION_KINDS = ['association','directed_association','aggregation','composition','inheritance',
+    'realization','dependency','foreign_key','many_to_many','self','mixin'];
+  const MULTIPLICITY = {
+    one_to_one:       ['1', '1'],
+    one_to_zero_one:  ['1', '0..1'],
+    one_to_many:      ['1', '*'],
+    one_to_zero_many: ['1', '0..*'],
+    many_to_one:      ['*', '1'],
+    many_to_many:     ['*', '*'],
+    zero_one_to_many: ['0..1', '*'],
+  };
+
+  // =================================================================
+  // Seed data — same 13 entities / 21 relations as university_erd.html,
+  // now as mutable objects with stable ids and a starting grid layout
+  // (no auto-layout here — that was Mermaid's job, not this file's).
+  // =================================================================
+  function field(id, name, type, key, nullable) { return { id, name, type, key: key || '', nullable: !!nullable }; }
+
+  const GRID_X = [40, 320, 600, 880], GRID_Y = [40, 340, 640, 940];
+
+  const SEED_ENTITIES = [
+    { id: 'department', name: 'DEPARTMENT', kind: 'class', x: GRID_X[0], y: GRID_Y[0], fields: [
+      field('department__id','id','id','PK'), field('department__code','code','string','UK'),
+      field('department__name','name','string'), field('department__head_teacher_id','head_teacher_id','id','FK',true) ]},
+    { id: 'semester', name: 'SEMESTER', kind: 'class', x: GRID_X[1], y: GRID_Y[0], fields: [
+      field('semester__id','id','id','PK'), field('semester__label','label','string','UK'),
+      field('semester__start_date','start_date','date'), field('semester__end_date','end_date','date'), field('semester__is_active','is_active','bool') ]},
+    { id: 'room', name: 'ROOM', kind: 'class', x: GRID_X[2], y: GRID_Y[0], fields: [
+      field('room__id','id','id','PK'), field('room__number','number','string','UK'),
+      field('room__capacity','capacity','int32'), field('room__has_computers','has_computers','bool') ]},
+    { id: 'teacher', name: 'TEACHER', kind: 'class', x: GRID_X[3], y: GRID_Y[0], fields: [
+      field('teacher__id','id','uuid','PK'), field('teacher__department_id','department_id','id','FK'),
+      field('teacher__last_name','last_name','string'), field('teacher__email','email','string','UK'),
+      field('teacher__academic_title','academic_title','string'), field('teacher__is_active','is_active','bool') ]},
+    { id: 'student', name: 'STUDENT', kind: 'class', x: GRID_X[0], y: GRID_Y[1], fields: [
+      field('student__id','id','uuid','PK'), field('student__student_number','student_number','string','UK'),
+      field('student__last_name','last_name','string'), field('student__email','email','string','UK'),
+      field('student__year_of_study','year_of_study','int8'), field('student__gpa','gpa','decimal'), field('student__is_active','is_active','bool') ]},
+    { id: 'course', name: 'COURSE', kind: 'class', x: GRID_X[1], y: GRID_Y[1], fields: [
+      field('course__id','id','id','PK'), field('course__department_id','department_id','id','FK'),
+      field('course__code','code','string','UK'), field('course__title','title','string'),
+      field('course__credits','credits','int8'), field('course__max_students','max_students','int32'), field('course__is_elective','is_elective','bool') ]},
+    { id: 'course_teacher', name: 'COURSE_TEACHER', kind: 'class', x: GRID_X[2], y: GRID_Y[1], fields: [
+      field('course_teacher__id','id','id','PK'), field('course_teacher__course_id','course_id','id','FK'),
+      field('course_teacher__teacher_id','teacher_id','uuid','FK'), field('course_teacher__semester_id','semester_id','id','FK'),
+      field('course_teacher__role','role','string') ]},
+    { id: 'lesson', name: 'LESSON', kind: 'class', x: GRID_X[3], y: GRID_Y[1], fields: [
+      field('lesson__id','id','id','PK'), field('lesson__course_id','course_id','id','FK'),
+      field('lesson__semester_id','semester_id','id','FK'), field('lesson__teacher_id','teacher_id','uuid','FK'),
+      field('lesson__room_id','room_id','id','FK',true), field('lesson__lesson_type','lesson_type','enum'),
+      field('lesson__scheduled_date','scheduled_date','date'), field('lesson__start_time','start_time','time'), field('lesson__is_cancelled','is_cancelled','bool') ]},
+    { id: 'enrollment', name: 'ENROLLMENT', kind: 'class', x: GRID_X[0], y: GRID_Y[2], fields: [
+      field('enrollment__id','id','id','PK'), field('enrollment__student_id','student_id','uuid','FK'),
+      field('enrollment__course_id','course_id','id','FK'), field('enrollment__semester_id','semester_id','id','FK'),
+      field('enrollment__enrolled_at','enrolled_at','timestamp'), field('enrollment__is_active','is_active','bool') ]},
+    { id: 'attendance', name: 'ATTENDANCE', kind: 'class', x: GRID_X[1], y: GRID_Y[2], fields: [
+      field('attendance__id','id','id','PK'), field('attendance__student_id','student_id','uuid','FK'),
+      field('attendance__lesson_id','lesson_id','id','FK'), field('attendance__status','status','enum'), field('attendance__recorded_at','recorded_at','timestamp') ]},
+    { id: 'assignment', name: 'ASSIGNMENT', kind: 'class', x: GRID_X[2], y: GRID_Y[2], fields: [
+      field('assignment__id','id','id','PK'), field('assignment__course_id','course_id','id','FK'),
+      field('assignment__title','title','string'), field('assignment__max_score','max_score','int32'),
+      field('assignment__weight','weight','decimal'), field('assignment__due_date','due_date','datetime') ]},
+    { id: 'submission', name: 'SUBMISSION', kind: 'class', x: GRID_X[3], y: GRID_Y[2], fields: [
+      field('submission__id','id','id','PK'), field('submission__assignment_id','assignment_id','id','FK'),
+      field('submission__student_id','student_id','uuid','FK'), field('submission__status','status','enum'),
+      field('submission__score','score','decimal'), field('submission__graded_by','graded_by','uuid','FK',true) ]},
+    { id: 'course_grade', name: 'COURSE_GRADE', kind: 'class', x: GRID_X[0], y: GRID_Y[3], fields: [
+      field('course_grade__id','id','id','PK'), field('course_grade__enrollment_id','enrollment_id','id','FK'),
+      field('course_grade__numeric_score','numeric_score','decimal'), field('course_grade__letter_grade','letter_grade','enum'),
+      field('course_grade__passed','passed','bool'), field('course_grade__issued_by','issued_by','uuid','FK',true) ]},
+  ];
+
+  const SEED_RELATIONS = [
+    { id:'dept_has_teachers', from:'department', to:'teacher', kind:'aggregation', multiplicity:'many_to_one', label:'employs' },
+    { id:'dept_has_courses', from:'course', to:'department', kind:'aggregation', multiplicity:'many_to_one', label:'offers' },
+    { id:'dept_head_is_teacher', from:'department', to:'teacher', kind:'association', multiplicity:'one_to_zero_one', label:'headed by' },
+    { id:'course_teacher_fk_teacher', from:'course_teacher', to:'teacher', kind:'foreign_key', multiplicity:'many_to_one', label:'assigned to' },
+    { id:'course_teacher_fk_course', from:'course_teacher', to:'course', kind:'composition', multiplicity:'many_to_one', label:'taught by' },
+    { id:'course_teacher_fk_semester', from:'course_teacher', to:'semester', kind:'foreign_key', multiplicity:'many_to_one', label:'in' },
+    { id:'lesson_belongs_to_course', from:'lesson', to:'course', kind:'composition', multiplicity:'many_to_one', label:'has sessions' },
+    { id:'lesson_in_semester', from:'lesson', to:'semester', kind:'foreign_key', multiplicity:'many_to_one', label:'during' },
+    { id:'lesson_taught_by_teacher', from:'lesson', to:'teacher', kind:'association', multiplicity:'many_to_one', label:'conducts' },
+    { id:'lesson_held_in_room', from:'lesson', to:'room', kind:'aggregation', multiplicity:'many_to_one', label:'hosts' },
+    { id:'enrollment_fk_student', from:'enrollment', to:'student', kind:'foreign_key', multiplicity:'many_to_one', label:'registers in' },
+    { id:'enrollment_fk_course', from:'enrollment', to:'course', kind:'foreign_key', multiplicity:'many_to_one', label:'receives' },
+    { id:'enrollment_fk_semester', from:'enrollment', to:'semester', kind:'foreign_key', multiplicity:'many_to_one', label:'for' },
+    { id:'attendance_fk_student', from:'attendance', to:'student', kind:'foreign_key', multiplicity:'many_to_one', label:'recorded at' },
+    { id:'attendance_fk_lesson', from:'attendance', to:'lesson', kind:'composition', multiplicity:'many_to_one', label:'tracks' },
+    { id:'assignment_belongs_to_course', from:'assignment', to:'course', kind:'composition', multiplicity:'many_to_one', label:'assigns' },
+    { id:'submission_fk_assignment', from:'submission', to:'assignment', kind:'composition', multiplicity:'many_to_one', label:'answered by' },
+    { id:'submission_fk_student', from:'submission', to:'student', kind:'foreign_key', multiplicity:'many_to_one', label:'submits' },
+    { id:'submission_graded_by_teacher', from:'submission', to:'teacher', kind:'association', multiplicity:'many_to_one', label:'grades' },
+    { id:'course_grade_fk_enrollment', from:'course_grade', to:'enrollment', kind:'composition', multiplicity:'one_to_one', label:'results in' },
+    { id:'course_grade_issued_by_teacher', from:'course_grade', to:'teacher', kind:'association', multiplicity:'many_to_one', label:'issues' },
+  ];
+
+  const ENTITY_W = 220, HEADER_H = 26, ROW_H = 20;
+
+  // =================================================================
+  // Controller
+  // =================================================================
+  class DiagramEditorController {
+    static DEFAULTS = { minZoom: 0.4, maxZoom: 2.5, zoomStep: 0.2 };
+
+    constructor(root) {
+      this._root = root;
+      this._ac = new AbortController();
+      this._opts = { ...DiagramEditorController.DEFAULTS, ...this._readDataAttrs() };
+      this._idSeq = 0;
+
+      this._state = {
+        entities: JSON.parse(JSON.stringify(SEED_ENTITIES)),
+        relations: JSON.parse(JSON.stringify(SEED_RELATIONS)),
+        selection: null,     // { type: 'entity'|'field'|'relation', id, entityId? }
+        mode: 'select',       // 'select' | 'draw-relation'
+        pendingSource: null,  // entity id, while mode === 'draw-relation'
+        zoom: 1, panX: 0, panY: 0,
+      };
+      this._undoStack = [];
+      this._redoStack = [];
+
+      this._drag = null; // { kind:'entity'|'pan', id?, startX, startY, origX, origY, moved }
+
+      this._refs = {
+        svg: this.$('[data-ref="svg"]'),
+        viewport: this.$('[data-ref="viewport"]'),
+        entitiesLayer: this.$('[data-ref="entities-layer"]'),
+        relationsLayer: this.$('[data-ref="relations-layer"]'),
+        canvasWrap: this.$('[data-ref="canvas-wrap"]'),
+        inspector: this.$('[data-ref="inspector"]'),
+        zoomLevel: this.$('[data-ref="zoom-level"]'),
+        undoBtn: this.$('[data-ref="undo-btn"]'),
+        redoBtn: this.$('[data-ref="redo-btn"]'),
+        deleteBtn: this.$('[data-ref="delete-btn"]'),
+        drawRelationBtn: this.$('[data-ref="draw-relation-btn"]'),
+        importInput: this.$('[data-ref="import-input"]'),
+        errorBanner: this.$('[data-ref="error-banner"]'),
+      };
+
+      this._bind();
+      this._renderAll();
+      this._renderInspector();
+    }
+
+    $(sel) { return this._root.querySelector(sel); }
+    $$(sel) { return [...this._root.querySelectorAll(sel)]; }
+
+    _readDataAttrs() {
+      const d = this._root.dataset;
+      const out = {};
+      if (d.diagramEditorMinZoom !== undefined) out.minZoom = parseFloat(d.diagramEditorMinZoom);
+      if (d.diagramEditorMaxZoom !== undefined) out.maxZoom = parseFloat(d.diagramEditorMaxZoom);
+      if (d.diagramEditorZoomStep !== undefined) out.zoomStep = parseFloat(d.diagramEditorZoomStep);
+      return out;
+    }
+
+    _esc(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+    _nextId(prefix) { return `${prefix}-${++this._idSeq}-${Date.now().toString(36)}`; }
+
+    // ---------------- geometry ----------------
+    _entityHeight(entity) { return HEADER_H + entity.fields.length * ROW_H; }
+    _entityBox(entity) { return { x: entity.x, y: entity.y, width: ENTITY_W, height: this._entityHeight(entity) }; }
+    _findEntity(id) { return this._state.entities.find((e) => e.id === id) || null; }
+    _findRelation(id) { return this._state.relations.find((r) => r.id === id) || null; }
+    _findFieldOwner(fieldId) {
+      for (const e of this._state.entities) {
+        const f = e.fields.find((x) => x.id === fieldId);
+        if (f) return { entity: e, field: f };
+      }
+      return null;
+    }
+
+    _edgePoint(box, dx, dy) {
+      const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+      const halfW = box.width / 2, halfH = box.height / 2;
+      if (dx === 0 && dy === 0) return { x: cx, y: cy };
+      const scaleX = dx !== 0 ? halfW / Math.abs(dx) : Infinity;
+      const scaleY = dy !== 0 ? halfH / Math.abs(dy) : Infinity;
+      const scale = Math.min(scaleX, scaleY);
+      return { x: cx + dx * scale, y: cy + dy * scale };
+    }
+
+    _relationPoints(fromEntity, toEntity) {
+      const boxA = this._entityBox(fromEntity), boxB = this._entityBox(toEntity);
+      const cxA = boxA.x + boxA.width / 2, cyA = boxA.y + boxA.height / 2;
+      const cxB = boxB.x + boxB.width / 2, cyB = boxB.y + boxB.height / 2;
+      const dx = cxB - cxA, dy = cyB - cyA;
+      if (dx === 0 && dy === 0) return null;
+      return { pA: this._edgePoint(boxA, dx, dy), pB: this._edgePoint(boxB, -dx, -dy) };
+    }
+
+    // ---------------- undo/redo ----------------
+    _snapshot() {
+      return JSON.stringify({ entities: this._state.entities, relations: this._state.relations });
+    }
+    _pushUndo() {
+      this._undoStack.push(this._snapshot());
+      if (this._undoStack.length > 100) this._undoStack.shift();
+      this._redoStack = [];
+      this._syncHistoryButtons();
+    }
+    _restore(json) {
+      const data = JSON.parse(json);
+      this._state.entities = data.entities;
+      this._state.relations = data.relations;
+      this._state.selection = null;
+      this._renderAll();
+      this._renderInspector();
+    }
+    _undo() {
+      if (!this._undoStack.length) return;
+      this._redoStack.push(this._snapshot());
+      this._restore(this._undoStack.pop());
+      this._syncHistoryButtons();
+    }
+    _redo() {
+      if (!this._redoStack.length) return;
+      this._undoStack.push(this._snapshot());
+      this._restore(this._redoStack.pop());
+      this._syncHistoryButtons();
+    }
+    _syncHistoryButtons() {
+      this._refs.undoBtn.disabled = this._undoStack.length === 0;
+      this._refs.redoBtn.disabled = this._redoStack.length === 0;
+    }
+
+    // ---------------- selection ----------------
+    _select(type, id, extra) {
+      this._state.selection = { type, id, ...extra };
+      this._refs.deleteBtn.disabled = false;
+      this._applySelectionClasses();
+      this._renderInspector();
+    }
+    _deselect() {
+      this._state.selection = null;
+      this._refs.deleteBtn.disabled = true;
+      this._applySelectionClasses();
+      this._renderInspector();
+    }
+    _applySelectionClasses() {
+      const sel = this._state.selection;
+      this.$$('.de-entity').forEach((g) => g.classList.toggle('is-selected', !!sel && sel.type === 'entity' && g.dataset.entityId === sel.id));
+      this.$$('.de-field-row').forEach((g) => g.classList.toggle('is-selected', !!sel && sel.type === 'field' && g.dataset.fieldId === sel.id));
+      this.$$('.de-relation').forEach((g) => g.classList.toggle('is-selected', !!sel && sel.type === 'relation' && g.dataset.relationId === sel.id));
+      this.$$('.de-entity').forEach((g) => g.classList.toggle('is-pending-source', this._state.pendingSource === g.dataset.entityId));
+    }
+
+    // ---------------- rendering: full ----------------
+    _renderAll() {
+      this._refs.entitiesLayer.innerHTML = this._state.entities.map((e) => this._entityMarkup(e)).join('');
+      this._refs.relationsLayer.innerHTML = this._state.relations.map((r) => this._relationMarkup(r)).join('');
+      this._applySelectionClasses();
+      this._applyViewportTransform();
+    }
+
+    _entityMarkup(entity) {
+      const h = this._entityHeight(entity);
+      const rows = entity.fields.map((f, i) => `
+        <g class="de-field-row" data-field-id="${this._esc(f.id)}" data-entity-id="${this._esc(entity.id)}" transform="translate(0,${HEADER_H + i * ROW_H})">
+          <rect x="0" y="0" width="${ENTITY_W}" height="${ROW_H}" fill="transparent"></rect>
+          <text x="8" y="${ROW_H / 2}" dominant-baseline="central">${this._esc(f.name)}</text>
+          <text x="${ENTITY_W - 34}" y="${ROW_H / 2}" dominant-baseline="central" class="de-field-key">${this._esc(f.key || '')}</text>
+        </g>`).join('');
+      return `
+        <g class="de-entity" data-entity-id="${this._esc(entity.id)}" transform="translate(${entity.x},${entity.y})">
+          <g class="de-entity-header" data-drag-handle="1">
+            <rect x="0" y="0" width="${ENTITY_W}" height="${HEADER_H}" rx="4"></rect>
+            <text x="8" y="${HEADER_H / 2}" dominant-baseline="central">${this._esc(entity.name)}</text>
+          </g>
+          <g class="de-entity-body">
+            <rect x="0" y="${HEADER_H}" width="${ENTITY_W}" height="${h - HEADER_H}"></rect>
+            ${rows}
+          </g>
+        </g>`;
+    }
+
+    _relationMarkup(rel) {
+      const from = this._findEntity(rel.from), to = this._findEntity(rel.to);
+      if (!from || !to) return '';
+      const pts = this._relationPoints(from, to);
+      if (!pts) return '';
+      const { pA, pB } = pts;
+      const [cardFrom, cardTo] = MULTIPLICITY[rel.multiplicity] || ['', ''];
+      const midX = (pA.x + pB.x) / 2, midY = (pA.y + pB.y) / 2;
+      return `
+        <g class="de-relation" data-relation-id="${this._esc(rel.id)}">
+          <path d="M ${pA.x} ${pA.y} L ${pB.x} ${pB.y}"></path>
+          <text x="${pA.x + (pB.x - pA.x) * 0.15}" y="${pA.y + (pB.y - pA.y) * 0.15 - 4}" class="de-card-label">${this._esc(cardFrom)}</text>
+          <text x="${pA.x + (pB.x - pA.x) * 0.85}" y="${pA.y + (pB.y - pA.y) * 0.85 - 4}" class="de-card-label">${this._esc(cardTo)}</text>
+          <text x="${midX}" y="${midY - 4}" text-anchor="middle">${this._esc(rel.label || '')}</text>
+        </g>`;
+    }
+
+    _renderEntity(entity) {
+      const g = this.$(`.de-entity[data-entity-id="${CSS.escape(entity.id)}"]`);
+      if (g) g.outerHTML = this._entityMarkup(entity);
+      this._applySelectionClasses();
+    }
+
+    _renderRelationsTouching(entityId) {
+      this._state.relations.filter((r) => r.from === entityId || r.to === entityId).forEach((r) => {
+        const g = this.$(`.de-relation[data-relation-id="${CSS.escape(r.id)}"]`);
+        if (g) g.outerHTML = this._relationMarkup(r);
+      });
+      this._applySelectionClasses();
+    }
+
+    _applyViewportTransform() {
+      this._refs.viewport.setAttribute('transform', `translate(${this._state.panX},${this._state.panY}) scale(${this._state.zoom})`);
+      this._refs.zoomLevel.textContent = Math.round(this._state.zoom * 100) + '%';
+    }
+
+    // ---------------- inspector ----------------
+    _optionList(values, current, labelFn) {
+      return values.map((v) => `<option value="${this._esc(v)}"${v === current ? ' selected' : ''}>${this._esc(labelFn ? labelFn(v) : v || '(none)')}</option>`).join('');
+    }
+
+    _renderInspector() {
+      const sel = this._state.selection;
+      const box = this._refs.inspector;
+      if (!sel) { box.innerHTML = this._entityListMarkup(); return; }
+      if (sel.type === 'entity') { box.innerHTML = this._entityInspectorMarkup(this._findEntity(sel.id)); return; }
+      if (sel.type === 'field') { box.innerHTML = this._fieldInspectorMarkup(this._findFieldOwner(sel.id)); return; }
+      if (sel.type === 'relation') { box.innerHTML = this._relationInspectorMarkup(this._findRelation(sel.id)); return; }
+    }
+
+    _entityListMarkup() {
+      const items = this._state.entities.map((e) =>
+        `<button type="button" class="list-group-item list-group-item-action de-entity-list-item" data-action="select-entity" data-id="${this._esc(e.id)}">${this._esc(e.name)} <span class="text-secondary small">(${e.fields.length})</span></button>`
+      ).join('');
+      return `<h2 class="h6">Entities</h2><p class="text-secondary small">Nothing selected. Click an entity on the canvas or in this list.</p><div class="list-group">${items}</div>`;
+    }
+
+    _entityInspectorMarkup(entity) {
+      if (!entity) return '';
+      const fieldRows = entity.fields.map((f) =>
+        `<li class="list-group-item d-flex justify-content-between align-items-center py-1">
+           <button type="button" class="btn btn-link btn-sm p-0 text-start" data-action="select-field" data-id="${this._esc(f.id)}">${this._esc(f.name)} <span class="text-secondary small">${this._esc(f.type)}${f.key ? ' · ' + this._esc(f.key) : ''}</span></button>
+         </li>`).join('');
+      return `
+        <h2 class="h6">Entity</h2>
+        <div class="mb-2">
+          <label class="form-label small mb-1">Name</label>
+          <input type="text" class="form-control form-control-sm" value="${this._esc(entity.name)}" data-action="update-entity-name" data-id="${this._esc(entity.id)}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small mb-1">Kind</label>
+          <select class="form-select form-select-sm" data-action="update-entity-kind" data-id="${this._esc(entity.id)}">
+            ${this._optionList(['class','enum'], entity.kind)}
+          </select>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="form-label small mb-0">Fields</label>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-action="add-field" data-id="${this._esc(entity.id)}">+ Field</button>
+        </div>
+        <ul class="list-group mb-3">${fieldRows}</ul>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-entity" data-id="${this._esc(entity.id)}">Delete entity</button>`;
+    }
+
+    _fieldInspectorMarkup(owner) {
+      if (!owner) return '';
+      const { entity, field: f } = owner;
+      return `
+        <h2 class="h6">Field <span class="text-secondary small">— ${this._esc(entity.name)}</span></h2>
+        <div class="mb-2">
+          <label class="form-label small mb-1">Name</label>
+          <input type="text" class="form-control form-control-sm" value="${this._esc(f.name)}" data-action="update-field-name" data-id="${this._esc(f.id)}">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small mb-1">Type</label>
+          <select class="form-select form-select-sm" data-action="update-field-type" data-id="${this._esc(f.id)}">${this._optionList(FIELD_TYPES, f.type)}</select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small mb-1">Key</label>
+          <select class="form-select form-select-sm" data-action="update-field-key" data-id="${this._esc(f.id)}">${this._optionList(FIELD_KEYS, f.key)}</select>
+        </div>
+        <div class="form-check mb-3">
+          <input type="checkbox" class="form-check-input" id="field-nullable" data-action="update-field-nullable" data-id="${this._esc(f.id)}" ${f.nullable ? 'checked' : ''}>
+          <label class="form-check-label small" for="field-nullable">Nullable</label>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mb-2" data-action="select-entity" data-id="${this._esc(entity.id)}">&larr; Back to entity</button>
+        <button type="button" class="btn btn-sm btn-outline-danger d-block" data-action="delete-field" data-id="${this._esc(f.id)}">Delete field</button>`;
+    }
+
+    _relationInspectorMarkup(rel) {
+      if (!rel) return '';
+      const from = this._findEntity(rel.from), to = this._findEntity(rel.to);
+      return `
+        <h2 class="h6">Relation</h2>
+        <p class="text-secondary small">${this._esc(from ? from.name : rel.from)} &rarr; ${this._esc(to ? to.name : rel.to)}</p>
+        <div class="mb-2">
+          <label class="form-label small mb-1">Label</label>
+          <input type="text" class="form-control form-control-sm" value="${this._esc(rel.label || '')}" data-action="update-relation-label" data-id="${this._esc(rel.id)}">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small mb-1">Kind</label>
+          <select class="form-select form-select-sm" data-action="update-relation-kind" data-id="${this._esc(rel.id)}">${this._optionList(RELATION_KINDS, rel.kind)}</select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small mb-1">Multiplicity</label>
+          <select class="form-select form-select-sm" data-action="update-relation-multiplicity" data-id="${this._esc(rel.id)}">${this._optionList(Object.keys(MULTIPLICITY), rel.multiplicity)}</select>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-relation" data-id="${this._esc(rel.id)}">Delete relation</button>`;
+    }
+
+    // ---------------- mutations ----------------
+    _addEntity() {
+      this._pushUndo();
+      const id = this._nextId('entity');
+      this._state.entities.push({ id, name: 'NEW_ENTITY', kind: 'class', x: 40 - this._state.panX, y: 40 - this._state.panY, fields: [ field(this._nextId('field'), 'id', 'id', 'PK') ] });
+      this._renderAll();
+      this._select('entity', id);
+    }
+    _deleteEntity(id) {
+      this._pushUndo();
+      this._state.entities = this._state.entities.filter((e) => e.id !== id);
+      this._state.relations = this._state.relations.filter((r) => r.from !== id && r.to !== id);
+      this._deselect();
+      this._renderAll();
+    }
+    _updateEntity(id, patch) {
+      const e = this._findEntity(id); if (!e) return;
+      Object.assign(e, patch);
+      this._renderEntity(e);
+    }
+    _addField(entityId) {
+      this._pushUndo();
+      const e = this._findEntity(entityId); if (!e) return;
+      const fid = this._nextId('field');
+      e.fields.push(field(fid, 'new_field', 'string'));
+      this._renderEntity(e);
+      this._renderRelationsTouching(entityId);
+      this._select('field', fid, { entityId });
+    }
+    _deleteField(fieldId) {
+      const owner = this._findFieldOwner(fieldId); if (!owner) return;
+      this._pushUndo();
+      owner.entity.fields = owner.entity.fields.filter((f) => f.id !== fieldId);
+      this._renderEntity(owner.entity);
+      this._renderRelationsTouching(owner.entity.id);
+      this._select('entity', owner.entity.id);
+    }
+    _updateField(fieldId, patch) {
+      const owner = this._findFieldOwner(fieldId); if (!owner) return;
+      Object.assign(owner.field, patch);
+      this._renderEntity(owner.entity);
+    }
+    _addRelation(fromId, toId) {
+      this._pushUndo();
+      const id = this._nextId('relation');
+      this._state.relations.push({ id, from: fromId, to: toId, kind: 'association', multiplicity: 'many_to_one', label: '' });
+      this._renderAll();
+      this._select('relation', id);
+    }
+    _deleteRelation(id) {
+      this._pushUndo();
+      this._state.relations = this._state.relations.filter((r) => r.id !== id);
+      this._deselect();
+      this._renderAll();
+    }
+    _updateRelation(id, patch) {
+      const r = this._findRelation(id); if (!r) return;
+      Object.assign(r, patch);
+      const g = this.$(`.de-relation[data-relation-id="${CSS.escape(id)}"]`);
+      if (g) g.outerHTML = this._relationMarkup(r);
+      this._applySelectionClasses();
+    }
+
+    _deleteSelected() {
+      const sel = this._state.selection; if (!sel) return;
+      if (sel.type === 'entity') this._deleteEntity(sel.id);
+      else if (sel.type === 'field') this._deleteField(sel.id);
+      else if (sel.type === 'relation') this._deleteRelation(sel.id);
+    }
+
+    // ---------------- zoom / mode ----------------
+    _setZoom(v) {
+      this._state.zoom = Math.min(this._opts.maxZoom, Math.max(this._opts.minZoom, v));
+      this._applyViewportTransform();
+    }
+    _setMode(mode) {
+      this._state.mode = mode;
+      this._state.pendingSource = null;
+      this._root.dataset.mode = mode;
+      this._refs.drawRelationBtn.setAttribute('aria-pressed', String(mode === 'draw-relation'));
+      this._refs.drawRelationBtn.classList.toggle('active', mode === 'draw-relation');
+      this._applySelectionClasses();
+    }
+
+    // ---------------- export / import ----------------
+    _exportJSON() {
+      const entities = this._state.entities.map((e) => ({
+        id: e.id, name: e.name, kind: e.kind,
+        fields: e.fields.map((f) => { const o = { name: f.name, type: f.type }; if (f.key) o.constraints = [f.key.toLowerCase()]; if (f.nullable) o.nullable = true; return o; }),
+      }));
+      const relations = this._state.relations.map((r) => ({ id: r.id, from: r.from, to: r.to, kind: r.kind, multiplicity: r.multiplicity, comment: r.label }));
+      const layout = Object.fromEntries(this._state.entities.map((e) => [e.id, { x: e.x, y: e.y }]));
+      const payload = { $entitymap: '1.0.0', entities, relations, layout };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'diagram-export.json'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    _showError(msg) {
+      this._refs.errorBanner.textContent = msg;
+      this._refs.errorBanner.classList.remove('d-none');
+    }
+    _hideError() { this._refs.errorBanner.classList.add('d-none'); }
+
+    _importJSON(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data.entities) || !Array.isArray(data.relations)) throw new Error('Missing entities[] or relations[] array');
+          this._pushUndo();
+          const layout = data.layout || {};
+          this._state.entities = data.entities.map((e, i) => ({
+            id: e.id || this._nextId('entity'), name: e.name || e.id, kind: e.kind || 'class',
+            x: (layout[e.id] && layout[e.id].x) ?? (40 + (i % 4) * 280),
+            y: (layout[e.id] && layout[e.id].y) ?? (40 + Math.floor(i / 4) * 300),
+            fields: (e.fields || []).map((f) => field(this._nextId('field'), f.name, f.type || 'string',
+              (f.constraints && f.constraints.find((c) => ['pk','fk','uk'].includes(c)) || '').toUpperCase(), !!f.nullable)),
+          }));
+          this._state.relations = data.relations.map((r) => ({
+            id: r.id || this._nextId('relation'), from: r.from, to: r.to,
+            kind: r.kind || 'association', multiplicity: r.multiplicity || 'many_to_one', label: r.comment || r.label || '',
+          }));
+          this._deselect();
+          this._renderAll();
+          this._hideError();
+        } catch (err) {
+          this._showError('Import failed: ' + err.message);
+        }
+      };
+      reader.onerror = () => this._showError('Import failed: could not read file');
+      reader.readAsText(file);
+    }
+
+    // ---------------- events ----------------
+    _bind() {
+      this._root.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el || !this._root.contains(el)) return;
+        const id = el.dataset.id;
+        switch (el.dataset.action) {
+          case 'add-entity': this._addEntity(); break;
+          case 'delete-selected': this._deleteSelected(); break;
+          case 'toggle-draw-relation': this._setMode(this._state.mode === 'draw-relation' ? 'select' : 'draw-relation'); break;
+          case 'zoom-in': this._setZoom(this._state.zoom + this._opts.zoomStep); break;
+          case 'zoom-out': this._setZoom(this._state.zoom - this._opts.zoomStep); break;
+          case 'zoom-reset': this._setZoom(1); break;
+          case 'undo': this._undo(); break;
+          case 'redo': this._redo(); break;
+          case 'export': this._exportJSON(); break;
+          case 'import-trigger': this._refs.importInput.click(); break;
+          case 'select-entity': this._select('entity', id); break;
+          case 'select-field': this._select('field', id); break;
+          case 'add-field': this._addField(id); break;
+          case 'delete-entity': this._deleteEntity(id); break;
+          case 'delete-field': this._deleteField(id); break;
+          case 'delete-relation': this._deleteRelation(id); break;
+        }
+      }, { signal: this._ac.signal });
+
+      this._root.addEventListener('input', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const id = el.dataset.id;
+        switch (el.dataset.action) {
+          case 'update-entity-name': this._updateEntity(id, { name: el.value }); break;
+          case 'update-field-name': this._updateField(id, { name: el.value }); break;
+          case 'update-relation-label': this._updateRelation(id, { label: el.value }); break;
+        }
+      }, { signal: this._ac.signal });
+
+      this._root.addEventListener('change', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const id = el.dataset.id;
+        switch (el.dataset.action) {
+          case 'update-entity-kind': this._updateEntity(id, { kind: el.value }); break;
+          case 'update-field-type': this._updateField(id, { type: el.value }); break;
+          case 'update-field-key': this._updateField(id, { key: el.value }); break;
+          case 'update-field-nullable': this._updateField(id, { nullable: el.checked }); break;
+          case 'update-relation-kind': this._updateRelation(id, { kind: el.value }); break;
+          case 'update-relation-multiplicity': this._updateRelation(id, { multiplicity: el.value }); break;
+        }
+      }, { signal: this._ac.signal });
+
+      this._refs.importInput.addEventListener('change', () => {
+        const file = this._refs.importInput.files[0];
+        if (file) this._importJSON(file);
+        this._refs.importInput.value = '';
+      }, { signal: this._ac.signal });
+
+      // Pointer interaction: drag entity, pan background, draw-relation clicks.
+      this._refs.svg.addEventListener('pointerdown', (e) => this._onPointerDown(e), { signal: this._ac.signal });
+      document.addEventListener('pointermove', (e) => this._onPointerMove(e), { signal: this._ac.signal });
+      document.addEventListener('pointerup', () => this._onPointerUp(), { signal: this._ac.signal });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this._state.mode === 'draw-relation') { this._setMode('select'); return; }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); this._undo(); return; }
+        if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); this._redo(); return; }
+        const sel = this._state.selection;
+        if (sel && sel.type === 'entity' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+          const step = e.shiftKey ? 20 : 4;
+          const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+          const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+          const entity = this._findEntity(sel.id);
+          if (entity) { entity.x += dx; entity.y += dy; this._renderEntity(entity); this._renderRelationsTouching(entity.id); }
+        }
+      }, { signal: this._ac.signal });
+
+      document.addEventListener('theme:changed', () => {}, { signal: this._ac.signal }); // colors are CSS vars, nothing to re-render
+    }
+
+    _svgPoint(clientX, clientY) {
+      const rect = this._refs.svg.getBoundingClientRect();
+      const vb = this._refs.svg.viewBox.baseVal;
+      const sx = (clientX - rect.left) / rect.width * vb.width + vb.x;
+      const sy = (clientY - rect.top) / rect.height * vb.height + vb.y;
+      return { x: (sx - this._state.panX) / this._state.zoom, y: (sy - this._state.panY) / this._state.zoom };
+    }
+
+    _onPointerDown(e) {
+      const entityEl = e.target.closest('.de-entity');
+      const fieldEl = e.target.closest('.de-field-row');
+      const relEl = e.target.closest('.de-relation');
+      const handle = e.target.closest('[data-drag-handle]');
+
+      if (this._state.mode === 'draw-relation') {
+        if (entityEl) {
+          const id = entityEl.dataset.entityId;
+          if (!this._state.pendingSource) { this._state.pendingSource = id; this._applySelectionClasses(); }
+          else if (this._state.pendingSource !== id) { const src = this._state.pendingSource; this._setMode('select'); this._addRelation(src, id); }
+        }
+        return;
+      }
+
+      if (entityEl && handle) {
+        this._select('entity', entityEl.dataset.entityId);
+        const entity = this._findEntity(entityEl.dataset.entityId);
+        this._drag = { kind: 'entity', id: entity.id, startX: e.clientX, startY: e.clientY, origX: entity.x, origY: entity.y };
+        this._pushUndo();
+        return;
+      }
+      if (fieldEl) { this._select('field', fieldEl.dataset.fieldId, { entityId: fieldEl.dataset.entityId }); return; }
+      if (relEl) { this._select('relation', relEl.dataset.relationId); return; }
+
+      // empty background -> deselect + start pan
+      this._deselect();
+      this._refs.canvasWrap.classList.add('is-panning');
+      this._drag = { kind: 'pan', startX: e.clientX, startY: e.clientY, origX: this._state.panX, origY: this._state.panY };
+    }
+
+    _onPointerMove(e) {
+      if (!this._drag) return;
+      const dxScreen = e.clientX - this._drag.startX, dyScreen = e.clientY - this._drag.startY;
+      if (this._drag.kind === 'pan') {
+        this._state.panX = this._drag.origX + dxScreen;
+        this._state.panY = this._drag.origY + dyScreen;
+        this._applyViewportTransform();
+      } else if (this._drag.kind === 'entity') {
+        const entity = this._findEntity(this._drag.id); if (!entity) return;
+        entity.x = this._drag.origX + dxScreen / this._state.zoom;
+        entity.y = this._drag.origY + dyScreen / this._state.zoom;
+        this._renderEntity(entity);
+        this._renderRelationsTouching(entity.id);
+      }
+    }
+
+    _onPointerUp() {
+      this._drag = null;
+      this._refs.canvasWrap.classList.remove('is-panning');
+    }
+
+    destroy() { this._ac.abort(); }
+  }
+
+  document.querySelectorAll('.diagram-editor-container').forEach((el) => new DiagramEditorController(el));
+
+  // ---------------- page-level theme chrome (same pattern as the rest of the project) ----------------
+  const MOON_ICON = '<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/><path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.73 1.73 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097z"/></svg>';
+  const SUN_ICON = '<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/></svg>';
+  function syncThemeButton(isDark) {
+    const btn = document.getElementById('theme-toggle'); if (!btn) return;
+    btn.querySelector('.theme-toggle-icon').innerHTML = isDark ? SUN_ICON : MOON_ICON;
+    btn.querySelector('.theme-toggle-text').textContent = isDark ? 'Light theme' : 'Dark theme';
+    btn.setAttribute('aria-pressed', String(isDark));
+  }
+  syncThemeButton(document.documentElement.getAttribute('data-bs-theme') === 'dark');
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
+    syncThemeButton(e.matches);
+  });
+  document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-bs-theme') !== 'dark';
+    document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+    syncThemeButton(isDark);
+  });
+</script>
+</body>
+</html>

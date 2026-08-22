@@ -1,0 +1,101 @@
+/* ============================================================
+   TABLE OF CONTENTS
+   ============================================================
+   - assets/css/vendor/tiny-lib.min.css  [vendor] | used on: about.html, index.html, shop.html
+   - assets/css/base.css  [shared] | used on: about.html, index.html, shop.html
+   - assets/css/print.css  [shared] | used on: about.html, index.html, shop.html
+   - assets/css/shared.css  [shared] | used on: about.html, index.html, shop.html
+   - assets/css/pages/shop.css  [page-specific] | used on: shop.html
+   - assets/css/unused.css  [orphan]
+   ============================================================ */
+/* ============================================================
+   FILE: assets/css/vendor/tiny-lib.min.css
+   SCOPE: vendor
+   USED ON: about.html, index.html, shop.html
+   SIZE: 37 bytes | 2 lines
+   ⚠ UNUSED (по данным анализа): .tl-col (unused), .tl-row (unused)
+   ============================================================ */
+.tl-row{display:flex}.tl-col{flex:1}
+
+/* ============================================================
+   FILE: assets/css/base.css
+   SCOPE: shared
+   USED ON: about.html, index.html, shop.html
+   SIZE: 92 bytes | 8 lines
+   CONFLICTS: .container (severity: low)
+   ============================================================ */
+:root {
+  --color-primary: #3355ff;
+}
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   FILE: assets/css/print.css
+   SCOPE: shared
+   USED ON: about.html, index.html, shop.html
+   SIZE: 30 bytes | 2 lines
+   CONFLICTS: .container (severity: low)
+   ============================================================ */
+@media print {
+.container { display: none; }
+}
+
+/* ============================================================
+   FILE: assets/css/shared.css
+   SCOPE: shared
+   USED ON: about.html, index.html, shop.html
+   SIZE: 240 bytes | 19 lines
+   DEPENDS ON: assets/css/base.css, assets/css/print.css
+   CONFLICTS: .btn (severity: medium); .card (severity: high); .container (severity: low)
+   ⚠ UNUSED (по данным анализа): .unused-badge (unused)
+   ============================================================ */
+@import url("base.css");
+@import url("print.css") print;
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.card {
+  padding: 10px;
+  border-radius: 4px;
+}
+.btn {
+  background: blue;
+}
+.unused-badge {
+  color: gold;
+  display: none;
+}
+
+/* ============================================================
+   FILE: assets/css/pages/shop.css
+   SCOPE: page-specific
+   USED ON: shop.html
+   SIZE: 133 bytes | 11 lines
+   CONFLICTS: .btn (severity: medium); .card (severity: high)
+   ============================================================ */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.card {
+  padding: 20px;
+}
+.btn {
+  font-weight: bold;
+}
+
+/* ============================================================
+   FILE: assets/css/unused.css
+   SCOPE: orphan
+   ⚠ ORPHAN — not linked from any scanned HTML page
+   SIZE: 32 bytes | 4 lines
+   ⚠ UNUSED (по данным анализа): .never-linked (unused)
+   ============================================================ */
+.never-linked {
+  color: red;
+}

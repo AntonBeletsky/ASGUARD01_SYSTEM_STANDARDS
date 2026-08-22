@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ER-диаграмма: университетские курсы</title>
+
+  <!-- Тема выставляется синхронно до первой отрисовки, чтобы не мигнуть светлой темой
+       на тёмных системах (сам переключатель и живой listener — в university_erd.js). -->
+  <script>
+    document.documentElement.setAttribute(
+      'data-bs-theme',
+      matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    );
+  </script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="university_erd.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h1 class="h4 mb-1">ER-диаграмма: университетские курсы</h1>
+      <p class="text-secondary small mb-0">13 таблиц · 21 связь · Department, Teacher, Student, Course и другие</p>
+    </div>
+    <button id="theme-toggle" type="button" class="btn btn-outline-secondary btn-sm" aria-pressed="false">
+      Тёмная тема
+    </button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="fw-medium">Схема</span>
+      <button class="btn btn-sm btn-outline-secondary" type="button"
+              data-bs-toggle="collapse" data-bs-target="#erd-table-view"
+              aria-expanded="false" aria-controls="erd-table-view">
+        Показать как список
+      </button>
+    </div>
+
+    <div class="card-body">
+      <!-- Состояние: загрузка -->
+      <div id="erd-status" class="py-5 text-center">
+        <div class="spinner-border text-secondary" role="status">
+          <span class="visually-hidden">Загрузка диаграммы…</span>
+        </div>
+        <p class="text-secondary small mt-2 mb-0">Загружаю диаграмму…</p>
+      </div>
+
+      <!-- Состояние: ошибка (erd-003/erd-004) -->
+      <div id="erd-error" class="alert alert-danger d-none" role="alert">
+        <p class="mb-1">Не удалось загрузить или отрисовать диаграмму.</p>
+        <p id="erd-error-message" class="small text-body-secondary mb-2"></p>
+        <button id="erd-retry" type="button" class="btn btn-sm btn-outline-danger">Повторить</button>
+      </div>
+
+      <!-- Состояние: готово -->
+      <div id="erd" class="erd-scroll d-none"></div>
+    </div>
+
+    <div class="card-footer small text-secondary">
+      <div class="row gy-1">
+        <div class="col-sm-6 col-lg-3"><strong>PK</strong> — первичный ключ</div>
+        <div class="col-sm-6 col-lg-3"><strong>FK</strong> — внешний ключ</div>
+        <div class="col-sm-6 col-lg-3"><strong>UK</strong> — уникальное значение</div>
+        <div class="col-sm-6 col-lg-3">Двойная черта — «ровно один»; кружок+вилка — «ноль или много»</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Доступная текстовая альтернатива (erd-006): те же данные, что и в диаграмме,
+       не зависит от CDN и работает даже если сам рендер диаграммы не удался. -->
+  <div id="erd-table-view" class="collapse mt-3">
+    <div class="card card-body">
+      <h2 class="h6">Таблицы и поля</h2>
+      <div class="table-responsive mb-4">
+        <table class="table table-sm table-striped">
+          <thead><tr><th>Таблица</th><th>Поле</th><th>Тип</th><th>Ключ</th></tr></thead>
+          <tbody id="erd-entities-body"></tbody>
+        </table>
+      </div>
+      <h2 class="h6">Связи</h2>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped">
+          <thead><tr><th>От</th><th>К</th><th>Метка</th><th>Описание</th></tr></thead>
+          <tbody id="erd-relations-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="university_erd.js"></script>
+</body>
+</html>

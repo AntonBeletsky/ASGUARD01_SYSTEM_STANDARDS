@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>University Courses — ER Diagram</title>
+
+  <!-- Theme is set synchronously before first paint, so a dark-mode system doesn't
+       flash light theme for a frame (the toggle + live listener live in the script below). -->
+  <script>
+    document.documentElement.setAttribute(
+      'data-bs-theme',
+      matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    );
+  </script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Only what Bootstrap doesn't cover: Mermaid-specific rendering behavior. */
+
+    /* The diagram no longer shrinks to fit the container (mobile text used to become
+       unreadable) - it keeps its natural size and scrolls inside a bordered frame instead. */
+    .erd-scroll {
+      overflow: auto;
+      max-height: 70vh;
+      border: 1px solid var(--bs-border-color);
+      border-radius: var(--bs-border-radius);
+      background: var(--bs-body-bg);
+    }
+    .erd-scroll svg {
+      display: block;
+      max-width: none !important; /* cancels Mermaid's own shrink-to-fit */
+    }
+    .erd-scroll svg .label {
+      font-family: var(--bs-body-font-family), sans-serif;
+    }
+    #erd-status .spinner-border {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h1 class="h4 mb-1">University Courses — ER Diagram</h1>
+      <p class="text-secondary small mb-0">13 tables · 21 relations · Department, Teacher, Student, Course, and more</p>
+    </div>
+    <button id="theme-toggle" type="button" class="btn btn-outline-secondary btn-sm" aria-pressed="false">
+      Dark theme
+    </button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="fw-medium">Schema</span>
+      <button class="btn btn-sm btn-outline-secondary" type="button"
+              data-bs-toggle="collapse" data-bs-target="#erd-table-view"
+              aria-expanded="false" aria-controls="erd-table-view">
+        View as list
+      </button>
+    </div>
+
+    <div class="card-body">
+      <!-- Loading state -->
+      <div id="erd-status" class="py-5 text-center">
+        <div class="spinner-border text-secondary" role="status">
+          <span class="visually-hidden">Loading diagram…</span>
+        </div>
+        <p class="text-secondary small mt-2 mb-0">Loading diagram…</p>
+      </div>
+
+      <!-- Error state -->
+      <div id="erd-error" class="alert alert-danger d-none" role="alert">
+        <p class="mb-1">Failed to load or render the diagram.</p>
+        <p id="erd-error-message" class="small text-body-secondary mb-2"></p>
+        <button id="erd-retry" type="button" class="btn btn-sm btn-outline-danger">Retry</button>
+      </div>
+
+      <!-- Ready state -->
+      <div id="erd" class="erd-scroll d-none"></div>
+    </div>
+
+    <div class="card-footer small text-secondary">
+      <div class="row gy-1">
+        <div class="col-sm-6 col-lg-3"><strong>PK</strong> — primary key</div>
+        <div class="col-sm-6 col-lg-3"><strong>FK</strong> — foreign key</div>
+        <div class="col-sm-6 col-lg-3"><strong>UK</strong> — unique value</div>
+        <div class="col-sm-6 col-lg-3">Double bar — "exactly one"; circle+fork — "zero or many"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accessible text alternative: same data as the diagram, doesn't depend on the CDN,
+       and still works even if the diagram itself fails to render. -->
+  <div id="erd-table-view" class="collapse mt-3">
+    <div class="card card-body">
+      <h2 class="h6">Tables and fields</h2>
+      <div class="table-responsive mb-4">
+        <table class="table table-sm table-striped">
+          <thead><tr><th>Table</th><th>Field</th><th>Type</th><th>Key</th></tr></thead>
+          <tbody id="erd-entities-body"></tbody>
+        </table>
+      </div>
+      <h2 class="h6">Relations</h2>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped">
+          <thead><tr><th>From</th><th>To</th><th>Label</th><th>Description</th></tr></thead>
+          <tbody id="erd-relations-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+  // University Courses ER diagram.
+  //
+  // ENTITIES/RELATIONS below are the single source of truth: both the Mermaid diagram
+  // text and the accessible HTML table are generated from them, so the picture and the
+  // text alternative can never drift apart.
+  //
+  // Table contents and relations are intentionally unchanged from the original file,
+  // including the cardinality of DEPARTMENT-TEACHER ("headed by"): the earlier analysis
+  // of university_course_map.json found this diagram treats it as mandatory while the
+  // data model marks it nullable/optional. That's a data-modeling correctness question,
+  // not a UI/UX one, so it's left untouched here.
+
+  const ENTITIES = [
+    { name: 'DEPARTMENT', fields: [
+      ['id', 'id', 'PK'], ['code', 'string', 'UK'], ['name', 'string', ''], ['head_teacher_id', 'id', 'FK'],
+    ]},
+    { name: 'SEMESTER', fields: [
+      ['id', 'id', 'PK'], ['label', 'string', 'UK'], ['start_date', 'date', ''], ['end_date', 'date', ''], ['is_active', 'bool', ''],
+    ]},
+    { name: 'ROOM', fields: [
+      ['id', 'id', 'PK'], ['number', 'string', 'UK'], ['capacity', 'int32', ''], ['has_computers', 'bool', ''],
+    ]},
+    { name: 'TEACHER', fields: [
+      ['id', 'uuid', 'PK'], ['department_id', 'id', 'FK'], ['last_name', 'string', ''], ['email', 'string', 'UK'], ['academic_title', 'string', ''], ['is_active', 'bool', ''],
+    ]},
+    { name: 'STUDENT', fields: [
+      ['id', 'uuid', 'PK'], ['student_number', 'string', 'UK'], ['last_name', 'string', ''], ['email', 'string', 'UK'], ['year_of_study', 'int8', ''], ['gpa', 'decimal', ''], ['is_active', 'bool', ''],
+    ]},
+    { name: 'COURSE', fields: [
+      ['id', 'id', 'PK'], ['department_id', 'id', 'FK'], ['code', 'string', 'UK'], ['title', 'string', ''], ['credits', 'int8', ''], ['max_students', 'int32', ''], ['is_elective', 'bool', ''],
+    ]},
+    { name: 'COURSE_TEACHER', fields: [
+      ['id', 'id', 'PK'], ['course_id', 'id', 'FK'], ['teacher_id', 'uuid', 'FK'], ['semester_id', 'id', 'FK'], ['role', 'string', ''],
+    ]},
+    { name: 'LESSON', fields: [
+      ['id', 'id', 'PK'], ['course_id', 'id', 'FK'], ['semester_id', 'id', 'FK'], ['teacher_id', 'uuid', 'FK'], ['room_id', 'id', 'FK'], ['lesson_type', 'enum', ''], ['scheduled_date', 'date', ''], ['start_time', 'time', ''], ['is_cancelled', 'bool', ''],
+    ]},
+    { name: 'ENROLLMENT', fields: [
+      ['id', 'id', 'PK'], ['student_id', 'uuid', 'FK'], ['course_id', 'id', 'FK'], ['semester_id', 'id', 'FK'], ['enrolled_at', 'timestamp', ''], ['is_active', 'bool', ''],
+    ]},
+    { name: 'ATTENDANCE', fields: [
+      ['id', 'id', 'PK'], ['student_id', 'uuid', 'FK'], ['lesson_id', 'id', 'FK'], ['status', 'enum', ''], ['recorded_at', 'timestamp', ''],
+    ]},
+    { name: 'ASSIGNMENT', fields: [
+      ['id', 'id', 'PK'], ['course_id', 'id', 'FK'], ['title', 'string', ''], ['max_score', 'int32', ''], ['weight', 'decimal', ''], ['due_date', 'datetime', ''],
+    ]},
+    { name: 'SUBMISSION', fields: [
+      ['id', 'id', 'PK'], ['assignment_id', 'id', 'FK'], ['student_id', 'uuid', 'FK'], ['status', 'enum', ''], ['score', 'decimal', ''], ['graded_by', 'uuid', 'FK'],
+    ]},
+    { name: 'COURSE_GRADE', fields: [
+      ['id', 'id', 'PK'], ['enrollment_id', 'id', 'FK'], ['numeric_score', 'decimal', ''], ['letter_grade', 'enum', ''], ['passed', 'bool', ''], ['issued_by', 'uuid', 'FK'],
+    ]},
+  ];
+
+  // [from, to, mermaid-cardinality, label (kept from the original), English description for the table]
+  const RELATIONS = [
+    ['DEPARTMENT', 'TEACHER', '||--o{', 'employs', 'One department has many teachers'],
+    ['DEPARTMENT', 'COURSE', '||--o{', 'offers', 'One department has many courses'],
+    ['DEPARTMENT', 'TEACHER', '}o--||', 'headed by', 'Head of department'],
+    ['TEACHER', 'COURSE_TEACHER', '||--o{', 'assigned to', 'Teacher assignments to courses'],
+    ['COURSE', 'COURSE_TEACHER', '||--o{', 'taught by', 'Who teaches the course'],
+    ['SEMESTER', 'COURSE_TEACHER', '||--o{', 'in', 'Which semester it is taught in'],
+    ['COURSE', 'LESSON', '||--o{', 'has sessions', 'Course sessions'],
+    ['SEMESTER', 'LESSON', '||--o{', 'during', 'Which semester it takes place in'],
+    ['TEACHER', 'LESSON', '||--o{', 'conducts', 'Who conducts the lesson'],
+    ['ROOM', 'LESSON', '||--o{', 'hosts', 'Where the lesson takes place'],
+    ['STUDENT', 'ENROLLMENT', '||--o{', 'registers in', "Student's course registrations"],
+    ['COURSE', 'ENROLLMENT', '||--o{', 'receives', 'Course enrollments'],
+    ['SEMESTER', 'ENROLLMENT', '||--o{', 'for', 'Which semester'],
+    ['STUDENT', 'ATTENDANCE', '||--o{', 'recorded at', "Student's attendance"],
+    ['LESSON', 'ATTENDANCE', '||--o{', 'tracks', 'Attendance per lesson'],
+    ['COURSE', 'ASSIGNMENT', '||--o{', 'assigns', 'Course assignments'],
+    ['ASSIGNMENT', 'SUBMISSION', '||--o{', 'answered by', 'Submissions for the assignment'],
+    ['STUDENT', 'SUBMISSION', '||--o{', 'submits', "Student's submissions"],
+    ['TEACHER', 'SUBMISSION', '||--o{', 'grades', 'Who grades the submission'],
+    ['ENROLLMENT', 'COURSE_GRADE', '||--||', 'results in', 'One enrollment maps to one final grade'],
+    ['TEACHER', 'COURSE_GRADE', '||--o{', 'issues', 'Who issued the grade'],
+  ];
+
+  // ---------- Build the diagram text from data (adds accTitle/accDescr for screen readers) ----------
+  function buildDiagramSource() {
+    const lines = ['erDiagram'];
+    lines.push('  accTitle: University courses ER diagram');
+    lines.push('  accDescr: 13 tables and 21 relations covering departments, teachers, students, courses, lessons, attendance, assignments, and grades.');
+    for (const e of ENTITIES) {
+      lines.push(`  ${e.name} {`);
+      for (const [n, t, k] of e.fields) {
+        lines.push(`    ${t} ${n}${k ? ' ' + k : ''}`);
+      }
+      lines.push('  }');
+    }
+    lines.push('');
+    for (const [from, to, card, label] of RELATIONS) {
+      lines.push(`  ${from} ${card} ${to} : "${label}"`);
+    }
+    return lines.join('\n');
+  }
+
+  // ---------- Theme: live listener + manual toggle ----------
+  function isDarkNow() {
+    return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  }
+
+  function applyThemeAttr(isDark) {
+    document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+    const btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.textContent = isDark ? 'Light theme' : 'Dark theme';
+      btn.setAttribute('aria-pressed', String(isDark));
+    }
+  }
+
+  function initTheme() {
+    // Initial value was already set synchronously in <head> to avoid a flash of the wrong theme.
+    applyThemeAttr(isDarkNow());
+
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      applyThemeAttr(e.matches);
+      renderDiagram(); // colors are baked into the SVG at render time, so a live CSS switch isn't enough
+    });
+
+    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+      applyThemeAttr(!isDarkNow());
+      renderDiagram();
+    });
+  }
+
+  // ---------- UI states: loading / ready / error ----------
+  function showLoading() {
+    document.getElementById('erd-status')?.classList.remove('d-none');
+    document.getElementById('erd-error')?.classList.add('d-none');
+    document.getElementById('erd')?.classList.add('d-none');
+  }
+  function showDiagram() {
+    document.getElementById('erd-status')?.classList.add('d-none');
+    document.getElementById('erd-error')?.classList.add('d-none');
+    document.getElementById('erd')?.classList.remove('d-none');
+  }
+  function showError(err) {
+    document.getElementById('erd-status')?.classList.add('d-none');
+    document.getElementById('erd')?.classList.add('d-none');
+    document.getElementById('erd-error')?.classList.remove('d-none');
+    const msg = document.getElementById('erd-error-message');
+    if (msg) {
+      msg.textContent = 'Technical reason: ' + (err && err.message ? err.message : String(err));
+    }
+  }
+
+  // ---------- SVG post-processing (unchanged from the original file) ----------
+  function postProcessSvg(container) {
+    container.querySelectorAll('.node').forEach((node) => {
+      const firstPath = node.querySelector('path[d]');
+      if (!firstPath) return;
+      const d = firstPath.getAttribute('d');
+      const nums = d.match(/-?[\d.]+/g)?.map(Number);
+      if (!nums || nums.length < 8) return;
+      const xs = [nums[0], nums[2], nums[4], nums[6]];
+      const ys = [nums[1], nums[3], nums[5], nums[7]];
+      const x = Math.min(...xs), y = Math.min(...ys);
+      const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', x); rect.setAttribute('y', y);
+      rect.setAttribute('width', w); rect.setAttribute('height', h);
+      rect.setAttribute('rx', '8');
+      for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+        if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+      }
+      firstPath.replaceWith(rect);
+    });
+    container.querySelectorAll('.row-rect-odd path, .row-rect-even path').forEach((p) => {
+      p.setAttribute('stroke', 'none');
+    });
+  }
+
+  // ---------- Render: dynamic import (catchable) instead of the original static import ----------
+  let renderToken = 0;
+
+  async function renderDiagram() {
+    const myToken = ++renderToken;
+    showLoading();
+    try {
+      await document.fonts.ready;
+      const { default: mermaid } = await import('https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs');
+      if (myToken !== renderToken) return; // superseded by a newer retry/theme-change
+
+      const dark = isDarkNow();
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        fontFamily: '"Anthropic Sans", sans-serif',
+        themeVariables: {
+          darkMode: dark,
+          fontSize: '12px',
+          fontFamily: '"Anthropic Sans", sans-serif',
+          lineColor: dark ? '#9c9a92' : '#73726c',
+          textColor: dark ? '#c2c0b6' : '#3d3d3a',
+          primaryColor: dark ? '#3C3489' : '#EEEDFE',
+          primaryBorderColor: dark ? '#AFA9EC' : '#7F77DD',
+          primaryTextColor: dark ? '#EEEDFE' : '#26215C',
+          secondaryColor: dark ? '#085041' : '#E1F5EE',
+          secondaryBorderColor: dark ? '#5DCAA5' : '#0F6E56',
+          secondaryTextColor: dark ? '#E1F5EE' : '#04342C',
+          tertiaryColor: dark ? '#3B6D11' : '#EAF3DE',
+          tertiaryBorderColor: dark ? '#97C459' : '#3B6D11',
+          tertiaryTextColor: dark ? '#EAF3DE' : '#173404',
+        },
+      });
+
+      const { svg } = await mermaid.render('erd-svg', buildDiagramSource());
+      if (myToken !== renderToken) return;
+
+      const erd = document.getElementById('erd');
+      erd.innerHTML = svg;
+      postProcessSvg(erd);
+      showDiagram();
+    } catch (err) {
+      if (myToken !== renderToken) return;
+      console.error('ERD render failed:', err);
+      showError(err);
+    }
+  }
+
+  // ---------- Accessible table (doesn't depend on the diagram render succeeding) ----------
+  function keyBadge(k) {
+    if (!k) return '';
+    const cls = k === 'PK' ? 'text-bg-primary' : k === 'FK' ? 'text-bg-secondary' : 'text-bg-info';
+    return `<span class="badge ${cls}">${k}</span>`;
+  }
+
+  function renderAccessibleTable() {
+    const entBody = document.getElementById('erd-entities-body');
+    if (entBody) {
+      entBody.innerHTML = ENTITIES.flatMap((e) =>
+        e.fields.map(([n, t, k]) => `<tr><td>${e.name}</td><td>${n}</td><td>${t}</td><td>${keyBadge(k)}</td></tr>`)
+      ).join('');
+    }
+    const relBody = document.getElementById('erd-relations-body');
+    if (relBody) {
+      relBody.innerHTML = RELATIONS.map(([from, to, , label, desc]) =>
+        `<tr><td>${from}</td><td>${to}</td><td>${label}</td><td>${desc}</td></tr>`
+      ).join('');
+    }
+  }
+
+  // ---------- Init ----------
+  document.getElementById('erd-retry')?.addEventListener('click', renderDiagram);
+
+  initTheme();
+  renderAccessibleTable();
+  renderDiagram();
+</script>
+</body>
+</html>

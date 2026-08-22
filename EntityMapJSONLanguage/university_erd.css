@@ -1,0 +1,29 @@
+/* university_erd.css
+   Только то, что не покрывает Bootstrap: специфика рендера Mermaid.
+   Контейнеры, отступы, карточки, кнопки, состояния — всё это классы Bootstrap в HTML,
+   сюда вынесено намеренно не всё подряд, а только то, для чего у Bootstrap нет своего решения. */
+
+/* Диаграмма не сжимается под контейнер (erd-007/erd-008): вместо мельчающего текста —
+   собственный скролл внутри рамки. max-width:none отменяет попытку Mermaid ужать SVG. */
+.erd-scroll {
+  overflow: auto;
+  max-height: 70vh;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-body-bg);
+}
+
+.erd-scroll svg {
+  display: block;
+  max-width: none !important;
+}
+
+/* Метки Mermaid наследуют шрифт страницы, а не дефолтный sans-serif движка. */
+.erd-scroll svg .label {
+  font-family: var(--bs-body-font-family), sans-serif;
+}
+
+#erd-status .spinner-border {
+  width: 2.5rem;
+  height: 2.5rem;
+}

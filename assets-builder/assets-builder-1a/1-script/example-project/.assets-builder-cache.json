@@ -1,0 +1,506 @@
+{
+  "cacheVersion": 1,
+  "generatedAt": "2026-08-19T19:10:36.342457+00:00",
+  "projectRoot": "/home/claude/fixture",
+  "files": {
+    "about.html": {
+      "hash": "39837f3c43bb9037",
+      "size": 366,
+      "mtime": "2026-08-19T09:14:55.151482+00:00",
+      "type": "html"
+    },
+    "index.html": {
+      "hash": "2001a1f930bc9346",
+      "size": 391,
+      "mtime": "2026-08-19T09:14:55.149935+00:00",
+      "type": "html"
+    },
+    "shop.html": {
+      "hash": "84629cb516f0b13a",
+      "size": 440,
+      "mtime": "2026-08-19T09:14:55.152534+00:00",
+      "type": "html"
+    },
+    "assets/css/base.css": {
+      "hash": "e9615628e260330e",
+      "size": 92,
+      "mtime": "2026-08-19T09:14:55.129241+00:00",
+      "type": "css"
+    },
+    "assets/css/pages/shop.css": {
+      "hash": "2752feb4a3842b34",
+      "size": 133,
+      "mtime": "2026-08-19T19:09:16.837297+00:00",
+      "type": "css"
+    },
+    "assets/css/print.css": {
+      "hash": "4efadbe62d8affae",
+      "size": 30,
+      "mtime": "2026-08-19T09:14:55.129935+00:00",
+      "type": "css"
+    },
+    "assets/css/shared.css": {
+      "hash": "f73a553ad2856920",
+      "size": 240,
+      "mtime": "2026-08-19T09:14:55.130904+00:00",
+      "type": "css"
+    },
+    "assets/css/unused.css": {
+      "hash": "a3b21ecccfce5fe9",
+      "size": 32,
+      "mtime": "2026-08-19T09:14:55.132850+00:00",
+      "type": "css"
+    },
+    "assets/css/vendor/tiny-lib.min.css": {
+      "hash": "e5da08eb98a2191d",
+      "size": 37,
+      "mtime": "2026-08-19T09:14:55.134021+00:00",
+      "type": "css"
+    },
+    "assets/js/main.js": {
+      "hash": "0883aa5cc108818a",
+      "size": 187,
+      "mtime": "2026-08-19T09:14:55.139584+00:00",
+      "type": "js"
+    },
+    "assets/js/pages/shop.js": {
+      "hash": "dbaa14199240466c",
+      "size": 141,
+      "mtime": "2026-08-19T09:14:55.140361+00:00",
+      "type": "js"
+    },
+    "assets/js/vendor/tiny-lib.min.js": {
+      "hash": "d995911edd59b600",
+      "size": 25,
+      "mtime": "2026-08-19T09:14:55.141293+00:00",
+      "type": "js"
+    }
+  },
+  "parsedCss": {
+    "assets/css/base.css": [
+      {
+        "selector": ":root",
+        "declarations": {
+          "--color-primary": "#3355ff"
+        },
+        "line": 1
+      },
+      {
+        "selector": ".container",
+        "declarations": {
+          "max-width": "1100px",
+          "margin": "0 auto"
+        },
+        "line": 4
+      }
+    ],
+    "assets/css/pages/shop.css": [
+      {
+        "selector": ".product-grid",
+        "declarations": {
+          "display": "grid",
+          "grid-template-columns": "repeat(3, 1fr)"
+        },
+        "line": 1
+      },
+      {
+        "selector": ".card",
+        "declarations": {
+          "padding": "20px"
+        },
+        "line": 5
+      },
+      {
+        "selector": ".btn",
+        "declarations": {
+          "font-weight": "bold"
+        },
+        "line": 8
+      }
+    ],
+    "assets/css/print.css": [
+      {
+        "selector": ".container",
+        "declarations": {
+          "display": "none"
+        },
+        "line": 1
+      }
+    ],
+    "assets/css/shared.css": [
+      {
+        "selector": ".container",
+        "declarations": {
+          "max-width": "1100px",
+          "margin": "0 auto"
+        },
+        "line": 4
+      },
+      {
+        "selector": ".card",
+        "declarations": {
+          "padding": "10px",
+          "border-radius": "4px"
+        },
+        "line": 8
+      },
+      {
+        "selector": ".btn",
+        "declarations": {
+          "background": "blue"
+        },
+        "line": 12
+      },
+      {
+        "selector": ".unused-badge",
+        "declarations": {
+          "color": "gold",
+          "display": "none"
+        },
+        "line": 15
+      }
+    ],
+    "assets/css/unused.css": [
+      {
+        "selector": ".never-linked",
+        "declarations": {
+          "color": "red"
+        },
+        "line": 1
+      }
+    ],
+    "assets/css/vendor/tiny-lib.min.css": [
+      {
+        "selector": ".tl-row",
+        "declarations": {
+          "display": "flex"
+        },
+        "line": 1
+      },
+      {
+        "selector": ".tl-col",
+        "declarations": {
+          "flex": "1"
+        },
+        "line": 1
+      }
+    ]
+  },
+  "parsedJs": {
+    "assets/js/main.js": [
+      {
+        "name": "initApp",
+        "line": 1,
+        "body_hash": "a2460a4e"
+      },
+      {
+        "name": "showToast",
+        "line": 4,
+        "body_hash": "2d570058"
+      },
+      {
+        "name": "legacyHelper",
+        "line": 7,
+        "body_hash": "7b14eb1c"
+      }
+    ],
+    "assets/js/pages/shop.js": [
+      {
+        "name": "initApp",
+        "line": 1,
+        "body_hash": "589d21aa"
+      },
+      {
+        "name": "addToCart",
+        "line": 4,
+        "body_hash": "25eaa342"
+      }
+    ],
+    "assets/js/vendor/tiny-lib.min.js": [
+      {
+        "name": "tl",
+        "line": 1,
+        "body_hash": "28834d79"
+      }
+    ]
+  },
+  "cssSelectors": {
+    ".btn": {
+      "definedIn": [
+        {
+          "file": "assets/css/pages/shop.css",
+          "line": 8
+        },
+        {
+          "file": "assets/css/shared.css",
+          "line": 12
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "about.html",
+          "line": 9,
+          "context": "html-class"
+        }
+      ],
+      "dynamicSuspectIn": [],
+      "status": "used"
+    },
+    ".card": {
+      "definedIn": [
+        {
+          "file": "assets/css/pages/shop.css",
+          "line": 5
+        },
+        {
+          "file": "assets/css/shared.css",
+          "line": 8
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "index.html",
+          "line": 9,
+          "context": "html-class"
+        },
+        {
+          "file": "shop.html",
+          "line": 9,
+          "context": "html-class"
+        }
+      ],
+      "dynamicSuspectIn": [],
+      "status": "used"
+    },
+    ".container": {
+      "definedIn": [
+        {
+          "file": "assets/css/base.css",
+          "line": 4
+        },
+        {
+          "file": "assets/css/print.css",
+          "line": 1
+        },
+        {
+          "file": "assets/css/shared.css",
+          "line": 4
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "about.html",
+          "line": 8,
+          "context": "html-class"
+        },
+        {
+          "file": "index.html",
+          "line": 9,
+          "context": "html-class"
+        }
+      ],
+      "dynamicSuspectIn": [],
+      "status": "used"
+    },
+    ".never-linked": {
+      "definedIn": [
+        {
+          "file": "assets/css/unused.css",
+          "line": 1
+        }
+      ],
+      "usedIn": [],
+      "dynamicSuspectIn": [],
+      "status": "unused"
+    },
+    ".product-grid": {
+      "definedIn": [
+        {
+          "file": "assets/css/pages/shop.css",
+          "line": 1
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "shop.html",
+          "line": 9,
+          "context": "html-class"
+        }
+      ],
+      "dynamicSuspectIn": [],
+      "status": "used"
+    },
+    ".tl-col": {
+      "definedIn": [
+        {
+          "file": "assets/css/vendor/tiny-lib.min.css",
+          "line": 1
+        }
+      ],
+      "usedIn": [],
+      "dynamicSuspectIn": [],
+      "status": "unused"
+    },
+    ".tl-row": {
+      "definedIn": [
+        {
+          "file": "assets/css/vendor/tiny-lib.min.css",
+          "line": 1
+        }
+      ],
+      "usedIn": [],
+      "dynamicSuspectIn": [],
+      "status": "unused"
+    },
+    ".unused-badge": {
+      "definedIn": [
+        {
+          "file": "assets/css/shared.css",
+          "line": 15
+        }
+      ],
+      "usedIn": [],
+      "dynamicSuspectIn": [],
+      "status": "unused"
+    }
+  },
+  "jsSymbols": {
+    "initApp": {
+      "definedIn": [
+        {
+          "file": "assets/js/main.js",
+          "line": 1
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "assets/js/main.js",
+          "line": 10,
+          "context": "reference"
+        },
+        {
+          "file": "assets/js/pages/shop.js",
+          "line": 1,
+          "context": "reference"
+        }
+      ],
+      "status": "used"
+    },
+    "showToast": {
+      "definedIn": [
+        {
+          "file": "assets/js/main.js",
+          "line": 4
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "assets/js/pages/shop.js",
+          "line": 5,
+          "context": "reference"
+        }
+      ],
+      "status": "used"
+    },
+    "legacyHelper": {
+      "definedIn": [
+        {
+          "file": "assets/js/main.js",
+          "line": 7
+        }
+      ],
+      "usedIn": [],
+      "status": "unused"
+    },
+    "initApp@assets/js/pages/shop.js": {
+      "definedIn": [
+        {
+          "file": "assets/js/pages/shop.js",
+          "line": 1
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "assets/js/main.js",
+          "line": 1,
+          "context": "reference"
+        },
+        {
+          "file": "assets/js/main.js",
+          "line": 10,
+          "context": "reference"
+        }
+      ],
+      "status": "used"
+    },
+    "addToCart": {
+      "definedIn": [
+        {
+          "file": "assets/js/pages/shop.js",
+          "line": 4
+        }
+      ],
+      "usedIn": [
+        {
+          "file": "assets/js/pages/shop.js",
+          "line": 7,
+          "context": "reference"
+        }
+      ],
+      "status": "used"
+    },
+    "tl": {
+      "definedIn": [
+        {
+          "file": "assets/js/vendor/tiny-lib.min.js",
+          "line": 1
+        }
+      ],
+      "usedIn": [],
+      "status": "unused"
+    }
+  },
+  "conflicts": [
+    {
+      "conflict_type": "css-selector",
+      "name": ".btn",
+      "files": [
+        "assets/css/pages/shop.css",
+        "assets/css/shared.css"
+      ],
+      "severity": "medium",
+      "detail": "разные свойства — каскад скомбинирует без потерь"
+    },
+    {
+      "conflict_type": "css-selector",
+      "name": ".card",
+      "files": [
+        "assets/css/pages/shop.css",
+        "assets/css/shared.css"
+      ],
+      "severity": "high",
+      "detail": "совпадающие свойства с разными значениями: ['padding']"
+    },
+    {
+      "conflict_type": "css-selector",
+      "name": ".container",
+      "files": [
+        "assets/css/base.css",
+        "assets/css/print.css",
+        "assets/css/shared.css"
+      ],
+      "severity": "low",
+      "detail": "пересекающиеся свойства, но значения совпадают"
+    },
+    {
+      "conflict_type": "js-symbol",
+      "name": "initApp",
+      "files": [
+        "assets/js/main.js",
+        "assets/js/pages/shop.js"
+      ],
+      "severity": "high",
+      "detail": "разное тело у одинакового имени — при конкатенации последнее определение молча победит"
+    }
+  ]
+}
