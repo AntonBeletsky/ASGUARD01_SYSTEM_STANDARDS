@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Полёт — демо-проект</title>
+<style>
+:root {
+  --ink: #16273f;
+  --ink-soft: #3c4f66;
+  --paper: #e9edf0;
+  --paper-deep: #dbe2e7;
+  --paper-line: #c7d1d8;
+  --accent: #2f6f62;
+  --accent-warm: #b5762f;
+  --map-accent-warm: #b5762f;
+  --map-html: #b5652d;
+  --map-html-bg: #f1e2d4;
+  --map-css: #2f6f62;
+  --map-css-bg: #dde8e5;
+  --map-js: #a9781f;
+  --map-js-bg: #f1e7d1;
+  --danger: #9c3b3b;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "URW Palladio L", Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  --sidebar-w: 308px;
+  --topbar-h: 64px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+::selection { background: var(--map-js-bg); color: var(--ink); }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-warm); }
+
+:focus-visible {
+  outline: 2px solid var(--accent-warm);
+  outline-offset: 2px;
+}
+
+/* ---------- Топ-бар ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  height: var(--topbar-h);
+  background: var(--ink);
+  color: #eef2f4;
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.topbar .brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  white-space: nowrap;
+}
+.topbar .brand .compass { flex: none; }
+.topbar .meta {
+  font-size: 12.5px; color: #b9c6d1; white-space: nowrap;
+}
+.topbar .spacer { flex: 1; }
+.topbar .stat-chip {
+  font-size: 12px; color: #cfd9e0; border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+}
+#doc-search {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 8px; padding: 7px 12px;
+  font-family: var(--font-body); font-size: 13px; width: 200px;
+}
+#doc-search::placeholder { color: #93a4b2; }
+#doc-search:focus { background: rgba(255,255,255,.14); }
+
+/* ---------- Раскладка ---------- */
+.layout { display: flex; align-items: flex-start; }
+
+.sidebar {
+  width: var(--sidebar-w); flex: none;
+  position: sticky; top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
+  background: var(--paper-deep);
+  border-right: 1px solid var(--paper-line);
+  padding: 18px 14px 40px;
+}
+.sidebar .quicknav { list-style: none; margin: 0 0 16px; padding: 0; }
+.sidebar .quicknav a {
+  display: block; padding: 6px 8px; border-radius: 6px;
+  text-decoration: none; color: var(--ink-soft); font-size: 13.5px;
+}
+.sidebar .quicknav a:hover { background: rgba(0,0,0,.05); color: var(--ink); }
+
+.tree-eyebrow {
+  font-size: 11px; letter-spacing: .09em; color: var(--ink-soft);
+  text-transform: uppercase; margin: 4px 0 8px 8px; opacity: .75;
+}
+
+.tree, .tree ul { list-style: none; margin: 0; padding-left: 16px; }
+.tree { padding-left: 0; }
+.tree li { position: relative; }
+.tree details > summary {
+  cursor: pointer; list-style: none; padding: 4px 8px; border-radius: 6px;
+  font-size: 13.5px; color: var(--ink); display: flex; align-items: center; gap: 6px;
+}
+.tree details > summary::-webkit-details-marker { display: none; }
+.tree details > summary:hover { background: rgba(0,0,0,.05); }
+.tree details > summary::before {
+  content: "▸"; display: inline-block; font-size: 10px; color: var(--ink-soft);
+  transition: transform .12s ease;
+}
+.tree details[open] > summary::before { transform: rotate(90deg); }
+.tree .file-link {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 8px 4px 22px; border-radius: 6px;
+  text-decoration: none; color: var(--ink-soft); font-size: 13.2px;
+}
+.tree .file-link:hover { background: rgba(0,0,0,.06); color: var(--ink); }
+.tree .file-link.active { background: var(--map-js-bg); color: var(--ink); font-weight: 600; }
+.tree .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.tree .dot.k-html { background: var(--map-html); }
+.tree .dot.k-css  { background: var(--map-css); }
+.tree .dot.k-js   { background: var(--map-js); }
+.tree .dot.k-other{ background: var(--ink-soft); opacity: .5; }
+.tree[data-filtering="true"] li[data-match="false"] { display: none; }
+
+/* ---------- Основной контент ---------- */
+.content { flex: 1; min-width: 0; padding: 32px 40px 120px; max-width: 980px; }
+
+h1.doc-title, h2.section-h, h3.file-h {
+  font-family: var(--font-display); font-weight: 600; color: var(--ink);
+}
+h2.section-h {
+  font-size: 26px; margin: 64px 0 18px; padding-top: 18px;
+  border-top: 1px solid var(--paper-line);
+}
+.content > h2.section-h:first-child,
+.content > section:first-child h2.section-h { margin-top: 0; padding-top: 0; border-top: none; }
+.eyebrow {
+  font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-soft); opacity: .8; margin: 0 0 4px;
+}
+
+.lede { font-size: 16px; color: var(--ink-soft); max-width: 62ch; }
+
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px; margin: 18px 0 28px;
+}
+.stat-card {
+  background: #fff; border: 1px solid var(--paper-line); border-radius: 10px;
+  padding: 14px 16px;
+}
+.stat-card .n { font-family: var(--font-display); font-size: 26px; color: var(--ink); }
+.stat-card .l { font-size: 12px; color: var(--ink-soft); }
+
+.legend-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 26px; }
+.legend-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12.5px; padding: 5px 11px; border-radius: 999px;
+  border: 1px solid var(--paper-line); background: #fff;
+}
+.legend-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.swatch-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 26px; }
+.swatch {
+  width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(0,0,0,.12);
+}
+
+.note-block {
+  border: 1px solid var(--paper-line); border-left: 4px solid var(--accent-warm);
+  background: #fff; border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 14px 0;
+}
+.note-block h4 {
+  margin: 0 0 8px; font-size: 13px; letter-spacing: .04em;
+  font-family: var(--font-display); color: var(--ink);
+}
+.note-block ul { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--ink-soft); }
+.note-block.empty { border-left-color: var(--accent); color: var(--ink-soft); }
+.note-block code { font-family: var(--font-mono); font-size: 12.5px; }
+
+.dep-graph-wrap {
+  background: #fff; border: 1px solid var(--paper-line); border-radius: 12px;
+  padding: 12px; overflow-x: auto; margin: 12px 0 20px;
+}
+.dep-graph { display: block; min-width: 720px; }
+.graph-legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+.graph-legend .ln { display: inline-flex; align-items: center; gap: 6px; }
+.graph-legend .ln svg { flex: none; }
+
+/* ---------- Карточка файла ---------- */
+.file-card {
+  background: #fff; border: 1px solid var(--paper-line); border-radius: 14px;
+  padding: 22px 24px 26px; margin: 0 0 26px; scroll-margin-top: calc(var(--topbar-h) + 12px);
+}
+.file-card .file-path {
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft);
+}
+.file-card h3.file-h { font-size: 19px; margin: 2px 0 4px; word-break: break-word; }
+.file-badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+.badge {
+  font-size: 11px; padding: 3px 9px; border-radius: 999px; font-family: var(--font-mono);
+  border: 1px solid var(--paper-line); color: var(--ink-soft);
+}
+.badge.k-html { border-color: var(--map-html); color: var(--map-html); }
+.badge.k-css  { border-color: var(--map-css);  color: var(--map-css); }
+.badge.k-js   { border-color: var(--map-js);   color: var(--map-js); }
+.badge.warn   { border-color: var(--danger); color: var(--danger); }
+
+.rel-row { display: flex; flex-wrap: wrap; gap: 18px; margin: 4px 0 18px; font-size: 12.8px; }
+.rel-row .rel-group strong { display: block; font-size: 10.5px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-soft); opacity: .75; margin-bottom: 5px; font-weight: 600; }
+.chip-link {
+  display: inline-block; margin: 0 6px 6px 0; padding: 3px 10px; border-radius: 999px;
+  background: var(--paper); text-decoration: none; color: var(--ink); font-size: 12px;
+  border: 1px solid var(--paper-line);
+}
+.chip-link:hover { background: var(--map-js-bg); }
+.chip-plain {
+  display: inline-block; margin: 0 6px 6px 0; padding: 3px 10px; border-radius: 999px;
+  background: var(--paper); color: var(--ink-soft); font-size: 12px; border: 1px dashed var(--paper-line);
+}
+
+.tabs { margin-top: 6px; }
+.tabs input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+.tab-labels { display: flex; gap: 4px; border-bottom: 1px solid var(--paper-line); margin-bottom: 14px; }
+.tab-labels label {
+  cursor: pointer; font-size: 12.5px; padding: 7px 14px; color: var(--ink-soft);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tab-panel { display: none; }
+.tabs input.r-0:checked ~ .tab-panels .tab-panel:nth-child(1) { display: block; }
+.tabs input.r-1:checked ~ .tab-panels .tab-panel:nth-child(2) { display: block; }
+.tabs input.r-2:checked ~ .tab-panels .tab-panel:nth-child(3) { display: block; }
+.tabs input.r-0:checked ~ .tab-labels label.l-0,
+.tabs input.r-1:checked ~ .tab-labels label.l-1,
+.tabs input.r-2:checked ~ .tab-labels label.l-2 { color: var(--ink); border-bottom-color: var(--accent-warm); font-weight: 600; }
+
+.code-wrap { position: relative; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+  background: var(--ink); color: #eef2f4; border: none; opacity: .75;
+  font-family: var(--font-body);
+}
+.copy-btn:hover { opacity: 1; }
+pre.code {
+  margin: 0; padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  background: #101d30; color: #d8e2ea; font-family: var(--font-mono);
+  font-size: 12.6px; line-height: 1.55; max-height: 520px; overflow-y: auto;
+}
+pre.code code { white-space: pre; }
+.tok-tag { color: #7fb0d8; } .tok-attr { color: #e0b168; } .tok-str { color: #9fca8f; }
+.tok-com { color: #6c7f95; font-style: italic; } .tok-doctype { color: #6c7f95; }
+.tok-kw { color: #d391c6; } .tok-num { color: #e0a75e; } .tok-fn { color: #7fb0d8; }
+.tok-sel { color: #7fb0d8; } .tok-prop { color: #9fca8f; } .tok-var { color: #e0b168; }
+
+.struct-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 4px 0 18px; }
+.struct-table th {
+  text-align: left; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-soft); opacity: .75; padding: 6px 10px; border-bottom: 1px solid var(--paper-line);
+}
+.struct-table td { padding: 7px 10px; border-bottom: 1px solid var(--paper); vertical-align: top; }
+.struct-table code { font-family: var(--font-mono); font-size: 12px; background: var(--paper);
+  padding: 1px 5px; border-radius: 4px; }
+.struct-sub-h { font-size: 12px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink-soft); opacity: .8; margin: 20px 0 6px; }
+.kss-comment { font-size: 12.5px; color: var(--ink-soft); margin: 2px 0 4px; }
+.muted { color: var(--ink-soft); opacity: .8; font-size: 13px; }
+.doc-desc { font-size: 13px; color: var(--ink-soft); margin: 2px 0 6px; }
+.func-sig { font-family: var(--font-mono); font-size: 12.8px; color: var(--ink); }
+.func-block { padding: 10px 0; border-top: 1px solid var(--paper); }
+.func-block:first-child { border-top: none; }
+.param-list { margin: 4px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-soft); }
+
+footer.doc-footer {
+  padding: 30px 40px 60px; color: var(--ink-soft); font-size: 12.5px;
+}
+
+@media (max-width: 880px) {
+  .sidebar { position: fixed; left: -100%; transition: left .18s ease; z-index: 50;
+    box-shadow: 8px 0 24px rgba(0,0,0,.2); }
+  .sidebar.open { left: 0; }
+  .content { padding: 24px 18px 100px; }
+  #doc-search { width: 130px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .tree details > summary::before, .sidebar { transition: none; }
+}
+
+@media print {
+  .sidebar, .topbar, .copy-btn { display: none; }
+  .content { max-width: none; padding: 0; }
+  pre.code { max-height: none; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button id="sidebar-toggle" aria-label="Меню" style="background:none;border:none;color:#fff;font-size:18px;display:none">☰</button>
+  <div class="brand"><svg class="compass" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#8a9bab" stroke-width="1" opacity=".55"/><path d="M13,2 L15.8,10.2 L24,13 L15.8,15.8 L13,24 L10.2,15.8 L2,13 L10.2,10.2 Z" fill="#b5762f"/><circle cx="13" cy="13" r="1.6" fill="#eef2f4"/></svg><span>Полёт — демо-проект</span></div>
+  <span class="meta">сгенерировано 22.08.2026 14:51</span>
+  <div class="spacer"></div>
+  <span class="stat-chip">2 HTML</span><span class="stat-chip">2 CSS</span><span class="stat-chip">2 JS</span>
+  <input id="doc-search" type="search" placeholder="Поиск по файлам…" aria-label="Поиск по файлам">
+</header>
+<div class="layout">
+  <nav class="sidebar" aria-label="Навигация по проекту">
+    <ul class="quicknav">
+      <li><a href="#overview">Обзор проекта</a></li>
+      <li><a href="#dependency-map">Карта зависимостей</a></li>
+    </ul>
+    <div class="tree-eyebrow">Файлы проекта</div>
+    <ul class="tree" id="file-tree"><li data-name="css"><details open><summary>css/</summary><ul><li data-name="css/style.css"><a class="file-link" href="#f-css-style-css"><span class="dot k-css"></span>style.css</a></li><li data-name="css/vars.css"><a class="file-link" href="#f-css-vars-css"><span class="dot k-css"></span>vars.css</a></li></ul></details></li><li data-name="js"><details open><summary>js/</summary><ul><li data-name="js/app.js"><a class="file-link" href="#f-js-app-js"><span class="dot k-js"></span>app.js</a></li><li data-name="js/utils.js"><a class="file-link" href="#f-js-utils-js"><span class="dot k-js"></span>utils.js</a></li></ul></details></li><li data-name="about.html"><a class="file-link" href="#f-about-html"><span class="dot k-html"></span>about.html</a></li><li data-name="index.html"><a class="file-link" href="#f-index-html"><span class="dot k-html"></span>index.html</a></li></ul>
+  </nav>
+  <main class="content">
+    <section id="overview"><h2 class="section-h">Обзор проекта</h2><p class="lede">Автоматически собранная карта проекта: 2 HTML, 2 CSS и 2 JS файлов, 11.7 КБ исходного кода, 391 непустых строк.</p><div class="card-grid"><div class="stat-card"><div class="n">2</div><div class="l">HTML-файлов</div></div><div class="stat-card"><div class="n">2</div><div class="l">CSS-файлов</div></div><div class="stat-card"><div class="n">2</div><div class="l">JS-файлов</div></div><div class="stat-card"><div class="n">0</div><div class="l">Прочих файлов</div></div><div class="stat-card"><div class="n">391</div><div class="l">Строк кода</div></div><div class="stat-card"><div class="n">11.7 КБ</div><div class="l">Общий размер</div></div></div><div class="legend-row"><span class="legend-chip"><span class="dot" style="background:var(--map-html)"></span>HTML</span><span class="legend-chip"><span class="dot" style="background:var(--map-css)"></span>CSS</span><span class="legend-chip"><span class="dot" style="background:var(--map-js)"></span>JS</span></div><div class="struct-sub-h">Крупнейшие файлы</div><table class="struct-table"><thead><tr><th>Файл</th><th>Размер</th><th>Строк</th></tr></thead><tbody><tr><td><a href="#f-css-style-css"><code>css/style.css</code></a></td><td>3.5 КБ</td><td>168</td></tr><tr><td><a href="#f-index-html"><code>index.html</code></a></td><td>3.5 КБ</td><td>81</td></tr><tr><td><a href="#f-js-app-js"><code>js/app.js</code></a></td><td>1.8 КБ</td><td>53</td></tr><tr><td><a href="#f-js-utils-js"><code>js/utils.js</code></a></td><td>1.4 КБ</td><td>40</td></tr><tr><td><a href="#f-about-html"><code>about.html</code></a></td><td>879 Б</td><td>32</td></tr></tbody></table><div class="struct-sub-h">Цветовая палитра (по частоте использования в CSS)</div><div class="swatch-row"><span class="swatch" data-label="#fff" style="background:#fff" title="#fff"></span><span class="swatch" data-label="#cfd8dc" style="background:#cfd8dc" title="#cfd8dc"></span><span class="swatch" data-label="rgba(255, 255, 255, 0.3)" style="background:rgba(255, 255, 255, 0.3)" title="rgba(255, 255, 255, 0.3)"></span><span class="swatch" data-label="#4b5a67" style="background:#4b5a67" title="#4b5a67"></span><span class="swatch" data-label="#d0d5da" style="background:#d0d5da" title="#d0d5da"></span><span class="swatch" data-label="rgba(22, 39, 63, 0.08)" style="background:rgba(22, 39, 63, 0.08)" title="rgba(22, 39, 63, 0.08)"></span><span class="swatch" data-label="#e2e6ea" style="background:#e2e6ea" title="#e2e6ea"></span><span class="swatch" data-label="#9fb0bd" style="background:#9fb0bd" title="#9fb0bd"></span><span class="swatch" data-label="#2f6f62" style="background:#2f6f62" title="#2f6f62"></span><span class="swatch" data-label="#1f4b41" style="background:#1f4b41" title="#1f4b41"></span><span class="swatch" data-label="#c08a3e" style="background:#c08a3e" title="#c08a3e"></span><span class="swatch" data-label="#16273f" style="background:#16273f" title="#16273f"></span><span class="swatch" data-label="#f7f7f5" style="background:#f7f7f5" title="#f7f7f5"></span></div><div class="struct-sub-h">Адаптивные брейкпоинты</div><div><span class="chip-plain">max-width: 420px</span><span class="chip-plain">max-width: 768px</span></div><div class="struct-sub-h">Заметки картографа</div><div class="note-block"><h4>Неиспользуемые id / class</h4><p class='muted' style='margin:0 0 8px'>Заданы в HTML, но ни разу не встречены в CSS-селекторах или JS-запросах к DOM. Возможно, задел на будущее или остаток рефакторинга.</p><ul><li><code>#cards-list</code></li><li><code>#lead-form</code></li><li><code>#lead-submit</code></li><li><code>#top</code></li><li><code>.about</code></li><li><code>.card__text</code></li><li><code>.hero__inner</code></li><li><code>.nav</code></li></ul></div><div class="note-block"><h4>CSS-правила без соответствия в HTML</h4><p class='muted' style='margin:0 0 8px'>Селекторы нацелены на классы/id, которых нет ни на одной странице проекта.</p><ul><li><code>css/style.css: .promo-banner</code></li></ul></div><div class="note-block"><h4>TODO / FIXME по проекту</h4><ul><li><code>js/app.js:3 — подключить реальную отправку формы на бэкенд</code></li></ul></div></section>
+    <section id="dependency-map"><h2 class="section-h">Карта зависимостей</h2><p class="lede">Сплошные линии — прямые ссылки (&lt;link&gt;, &lt;script&gt;, import/require). Пунктирные — смысловые связи через DOM: какой JS/CSS обращается к каким элементам HTML.</p><div class="graph-legend"><span class="ln"><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.6" opacity=".5"/></svg>структурная связь (link/script/import)</span><span class="ln"><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--map-accent-warm)" stroke-width="1.4" stroke-dasharray="3 3"/></svg>смысловая связь (DOM id/class)</span></div><div class="dep-graph-wrap"><svg viewBox="0 0 1010 202" width="1010" height="202" xmlns="http://www.w3.org/2000/svg" class="dep-graph" role="img" aria-label="Карта зависимостей проекта">
+    <style>
+      .dep-graph text { font-family: var(--font-body); }
+      .dep-node rect { stroke-width: 1.4; }
+      .dep-node.k-html rect { fill: var(--map-html-bg); stroke: var(--map-html); }
+      .dep-node.k-css rect  { fill: var(--map-css-bg);  stroke: var(--map-css); }
+      .dep-node.k-js rect   { fill: var(--map-js-bg);   stroke: var(--map-js); }
+      .dep-node .dot { }
+      .dep-node.k-html .dot { fill: var(--map-html); }
+      .dep-node.k-css .dot  { fill: var(--map-css); }
+      .dep-node.k-js .dot   { fill: var(--map-js); }
+      .dep-node text.fname { font-size: 12px; fill: var(--ink-soft); }
+      .edge-structural { stroke: var(--ink-soft); opacity: .38; fill: none; stroke-width: 1.4; }
+      .edge-semantic { stroke: var(--map-accent-warm); opacity: .65; fill: none;
+                        stroke-width: 1.3; stroke-dasharray: 3 3; }
+      .col-title { font-family: var(--font-display); font-size: 13px;
+                    letter-spacing: .08em; fill: var(--ink-soft); }
+    </style>
+    <text class="col-title" x="30" y="28">HTML · 2</text><text class="col-title" x="380" y="28">CSS · 2</text><text class="col-title" x="730" y="28">JS · 2</text><path class="edge-structural" d="M 270.0,84.0 C 150.0,84.0 150.0,138.0 30.0,138.0"><title>about.html → index.html</title></path><path class="edge-structural" d="M 270.0,84.0 C 150.0,84.0 150.0,138.0 30.0,138.0"><title>about.html → index.html</title></path><path class="edge-structural" d="M 270.0,84.0 C 325.0,84.0 325.0,138.0 380.0,138.0"><title>about.html → css/vars.css</title></path><path class="edge-structural" d="M 270.0,84.0 C 325.0,84.0 325.0,84.0 380.0,84.0"><title>about.html → css/style.css</title></path><path class="edge-structural" d="M 270.0,138.0 C 150.0,138.0 150.0,84.0 30.0,84.0"><title>index.html → about.html</title></path><path class="edge-structural" d="M 270.0,138.0 C 325.0,138.0 325.0,138.0 380.0,138.0"><title>index.html → css/vars.css</title></path><path class="edge-structural" d="M 270.0,138.0 C 325.0,138.0 325.0,84.0 380.0,84.0"><title>index.html → css/style.css</title></path><path class="edge-structural" d="M 270.0,138.0 C 500.0,138.0 500.0,84.0 730.0,84.0"><title>index.html → js/app.js</title></path><path class="edge-structural" d="M 620.0,84.0 C 500.0,84.0 500.0,138.0 380.0,138.0"><title>css/style.css → css/vars.css</title></path><path class="edge-structural" d="M 970.0,84.0 C 850.0,84.0 850.0,138.0 730.0,138.0"><title>js/app.js → js/utils.js</title></path><path class="edge-semantic" d="M 730.0,84.0 C 500.0,84.0 500.0,138.0 270.0,138.0"><title>js/app.js → index.html (theme-toggle)</title></path><path class="edge-semantic" d="M 730.0,84.0 C 500.0,84.0 500.0,138.0 270.0,138.0"><title>js/app.js → index.html (lead-email)</title></path><path class="edge-semantic" d="M 730.0,84.0 C 500.0,84.0 500.0,138.0 270.0,138.0"><title>js/app.js → index.html (.features, .pricing)</title></path><path class="edge-semantic" d="M 380.0,84.0 C 325.0,84.0 325.0,84.0 270.0,84.0"><title>css/style.css → about.html (.container)</title></path><path class="edge-semantic" d="M 380.0,84.0 C 325.0,84.0 325.0,138.0 270.0,138.0"><title>css/style.css → index.html (.container)</title></path><g class="dep-node k-html" transform="translate(30,64)"><rect width="240" height="40" rx="8"></rect><circle class="dot" cx="14" cy="20" r="4"></circle><text class="fname" x="26" y="24">about.html</text><title>about.html</title></g><g class="dep-node k-html" transform="translate(30,118)"><rect width="240" height="40" rx="8"></rect><circle class="dot" cx="14" cy="20" r="4"></circle><text class="fname" x="26" y="24">index.html</text><title>index.html</title></g><g class="dep-node k-css" transform="translate(380,64)"><rect width="240" height="40" rx="8"></rect><circle class="dot" cx="14" cy="20" r="4"></circle><text class="fname" x="26" y="24">css/style.css</text><title>css/style.css</title></g><g class="dep-node k-css" transform="translate(380,118)"><rect width="240" height="40" rx="8"></rect><circle class="dot" cx="14" cy="20" r="4"></circle><text class="fname" x="26" y="24">css/vars.css</text><title>css/vars.css</title></g><g class="dep-node k-js" transform="translate(730,64)"><rect width="240" height="40" rx="8"></rect><circle class="dot" cx="14" cy="20" r="4"></circle><text class="fname" x="26" y="24">js/app.js</text><title>js/app.js</title></g><g class="dep-node k-js" transform="translate(730,118)"><rect width="240" height="40" rx="8"></rect><circle class="dot" cx="14" cy="20" r="4"></circle><text class="fname" x="26" y="24">js/utils.js</text><title>js/utils.js</title></g></svg></div></section>
+    <h2 class="section-h">Файлы</h2>
+    <article class="file-card" id="f-about-html"><div class="file-path">about.html</div><h3 class="file-h">О нас — Полёт</h3><div class="file-badges"><span class="badge k-html">HTML</span><span class="badge">879 Б</span><span class="badge">32 строк</span></div><div class="rel-row"><div class="rel-group"><strong>Зависит от</strong><a class="chip-link" href="#f-index-html">index.html</a><a class="chip-link" href="#f-css-vars-css">css/vars.css</a><a class="chip-link" href="#f-css-style-css">css/style.css</a></div><div class="rel-group"><strong>Используется в</strong><a class="chip-link" href="#f-index-html">index.html</a></div></div><div class="rel-row"><div class="rel-group"><strong>Стилизуется / скриптуется из</strong><a class="chip-link" href="#f-css-style-css">css/style.css</a></div></div><div class="tabs"><input class="r-0" type="radio" name="tabs-f-about-html" id="tab-0-f-about-html" checked><input class="r-1" type="radio" name="tabs-f-about-html" id="tab-1-f-about-html"><div class="tab-labels"><label class="l-0" for="tab-0-f-about-html">Код</label><label class="l-1" for="tab-1-f-about-html">Структура</label></div><div class="tab-panels"><div class="tab-panel"><div class="code-wrap"><button class="copy-btn" type="button">Копировать</button><pre class="code"><code><span class="tok-doctype">&lt;!DOCTYPE html&gt;</span>
+<span class="tok-tag">&lt;html</span> <span class="tok-attr">lang</span>=<span class="tok-str">&quot;ru&quot;</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;head</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;meta</span> <span class="tok-attr">charset</span>=<span class="tok-str">&quot;UTF-8&quot;</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;title</span><span class="tok-tag">&gt;</span>О нас — Полёт<span class="tok-tag">&lt;/title</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-str">&quot;stylesheet&quot;</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;css/vars.css&quot;</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-str">&quot;stylesheet&quot;</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;css/style.css&quot;</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/head</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;body</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;header</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;site-header&quot;</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container site-header__inner&quot;</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;index.html&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;logo&quot;</span><span class="tok-tag">&gt;</span>Полёт<span class="tok-tag">&lt;/a</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;nav</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav&quot;</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;ul</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav__list&quot;</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;li</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;index.html&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav__link&quot;</span><span class="tok-tag">&gt;</span>Главная<span class="tok-tag">&lt;/a</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/li</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;/ul</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;/nav</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;/header</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;main</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;section</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;about&quot;</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container&quot;</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;h1</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;section-title&quot;</span><span class="tok-tag">&gt;</span>О компании<span class="tok-tag">&lt;/h1</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;p</span><span class="tok-tag">&gt;</span>Мы делаем дроны с 2019 года.<span class="tok-tag">&lt;/p</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/section</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;/main</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;footer</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;site-footer&quot;</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container&quot;</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;p</span><span class="tok-tag">&gt;</span>&amp;copy; 2026 Полёт.<span class="tok-tag">&lt;/p</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;/footer</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/body</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/html</span><span class="tok-tag">&gt;</span>
+</code></pre></div></div><div class="tab-panel"><table class="struct-table"><tbody><tr><th>Заголовок (&lt;title&gt;)</th><td>О нас — Полёт</td></tr><tr><th>lang</th><td>ru</td></tr><tr><th>meta description</th><td>—</td></tr><tr><th>DOCTYPE</th><td>есть</td></tr><tr><th>Слов в тексте</th><td>17</td></tr></tbody></table><div class="struct-sub-h">Семантические landmark-теги</div><div><span class="chip-plain">&lt;footer&gt;</span><span class="chip-plain">&lt;header&gt;</span><span class="chip-plain">&lt;main&gt;</span><span class="chip-plain">&lt;nav&gt;</span><span class="chip-plain">&lt;section&gt;</span></div><div class="struct-sub-h">Структура заголовков</div><table class="struct-table"><thead><tr><th>Уровень</th><th>Текст</th></tr></thead><tbody><tr><td><code>h1</code></td><td>О компании</td></tr></tbody></table><div class="struct-sub-h">id / class на странице</div><div></div><div style='margin-top:6px'><span class="chip-plain">.about</span><span class="chip-plain">.container</span><span class="chip-plain">.logo</span><span class="chip-plain">.nav</span><span class="chip-plain">.nav__link</span><span class="chip-plain">.nav__list</span><span class="chip-plain">.section-title</span><span class="chip-plain">.site-footer</span><span class="chip-plain">.site-header</span><span class="chip-plain">.site-header__inner</span></div></div></div></div></article><article class="file-card" id="f-index-html"><div class="file-path">index.html</div><h3 class="file-h">Полёт — авиастудия дронов</h3><div class="file-badges"><span class="badge k-html">HTML</span><span class="badge">3.5 КБ</span><span class="badge">81 строк</span></div><div class="rel-row"><div class="rel-group"><strong>Зависит от</strong><a class="chip-link" href="#f-about-html">about.html</a><a class="chip-link" href="#f-css-vars-css">css/vars.css</a><a class="chip-link" href="#f-css-style-css">css/style.css</a><a class="chip-link" href="#f-js-app-js">js/app.js</a></div><div class="rel-group"><strong>Используется в</strong><a class="chip-link" href="#f-about-html">about.html</a></div></div><div class="rel-row"><div class="rel-group"><strong>Стилизуется / скриптуется из</strong><a class="chip-link" href="#f-js-app-js">js/app.js</a><a class="chip-link" href="#f-css-style-css">css/style.css</a></div></div><div class="tabs"><input class="r-0" type="radio" name="tabs-f-index-html" id="tab-0-f-index-html" checked><input class="r-1" type="radio" name="tabs-f-index-html" id="tab-1-f-index-html"><div class="tab-labels"><label class="l-0" for="tab-0-f-index-html">Код</label><label class="l-1" for="tab-1-f-index-html">Структура</label></div><div class="tab-panels"><div class="tab-panel"><div class="code-wrap"><button class="copy-btn" type="button">Копировать</button><pre class="code"><code><span class="tok-doctype">&lt;!DOCTYPE html&gt;</span>
+<span class="tok-tag">&lt;html</span> <span class="tok-attr">lang</span>=<span class="tok-str">&quot;ru&quot;</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;head</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;meta</span> <span class="tok-attr">charset</span>=<span class="tok-str">&quot;UTF-8&quot;</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;meta</span> <span class="tok-attr">name</span>=<span class="tok-str">&quot;viewport&quot;</span> <span class="tok-attr">content</span>=<span class="tok-str">&quot;width=device-width, initial-scale=1.0&quot;</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;meta</span> <span class="tok-attr">name</span>=<span class="tok-str">&quot;description&quot;</span> <span class="tok-attr">content</span>=<span class="tok-str">&quot;Демо-лендинг студии «Полёт» — тестовый проект для генератора документации&quot;</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;title</span><span class="tok-tag">&gt;</span>Полёт — авиастудия дронов<span class="tok-tag">&lt;/title</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-str">&quot;stylesheet&quot;</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;css/vars.css&quot;</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-str">&quot;stylesheet&quot;</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;css/style.css&quot;</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/head</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;body</span><span class="tok-tag">&gt;</span>
+  <span class="tok-com">&lt;!-- Шапка сайта: логотип, навигация, CTA --&gt;</span>
+  <span class="tok-tag">&lt;header</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;site-header&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;top&quot;</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container site-header__inner&quot;</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;index.html&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;logo&quot;</span><span class="tok-tag">&gt;</span>Полёт<span class="tok-tag">&lt;/a</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;nav</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav&quot;</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;ul</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav__list&quot;</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;li</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;#features&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav__link&quot;</span><span class="tok-tag">&gt;</span>Возможности<span class="tok-tag">&lt;/a</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/li</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;li</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;#pricing&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav__link&quot;</span><span class="tok-tag">&gt;</span>Тарифы<span class="tok-tag">&lt;/a</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/li</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;li</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;a</span> <span class="tok-attr">href</span>=<span class="tok-str">&quot;about.html&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;nav__link&quot;</span><span class="tok-tag">&gt;</span>О нас<span class="tok-tag">&lt;/a</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/li</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;/ul</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;/nav</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;button</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;btn btn--ghost&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;theme-toggle&quot;</span> <span class="tok-attr">aria-label</span>=<span class="tok-str">&quot;Переключить тему&quot;</span><span class="tok-tag">&gt;</span>🌓<span class="tok-tag">&lt;/button</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;/header</span><span class="tok-tag">&gt;</span>
+
+  <span class="tok-tag">&lt;main</span><span class="tok-tag">&gt;</span>
+    <span class="tok-com">&lt;!-- Герой-секция --&gt;</span>
+    <span class="tok-tag">&lt;section</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;hero&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;hero&quot;</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container hero__inner&quot;</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;h1</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;hero__title&quot;</span><span class="tok-tag">&gt;</span>Снимай мир с высоты птичьего полёта<span class="tok-tag">&lt;/h1</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;p</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;hero__subtitle&quot;</span><span class="tok-tag">&gt;</span>Профессиональные дроны и обучение для видеографов и фотографов.<span class="tok-tag">&lt;/p</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;form</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;hero__form&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;lead-form&quot;</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;input</span> <span class="tok-attr">type</span>=<span class="tok-str">&quot;email&quot;</span> <span class="tok-attr">name</span>=<span class="tok-str">&quot;email&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;lead-email&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;input&quot;</span> <span class="tok-attr">placeholder</span>=<span class="tok-str">&quot;you@example.com&quot;</span> required<span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;button</span> <span class="tok-attr">type</span>=<span class="tok-str">&quot;submit&quot;</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;btn btn--primary&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;lead-submit&quot;</span><span class="tok-tag">&gt;</span>Получить каталог<span class="tok-tag">&lt;/button</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;/form</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/section</span><span class="tok-tag">&gt;</span>
+
+    <span class="tok-com">&lt;!-- Возможности --&gt;</span>
+    <span class="tok-tag">&lt;section</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;features&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;features&quot;</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container&quot;</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;h2</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;section-title&quot;</span><span class="tok-tag">&gt;</span>Возможности<span class="tok-tag">&lt;/h2</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;cards&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;cards-list&quot;</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;article</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card&quot;</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;h3</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card__title&quot;</span><span class="tok-tag">&gt;</span>4K видео<span class="tok-tag">&lt;/h3</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;p</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card__text&quot;</span><span class="tok-tag">&gt;</span>Съёмка в 4K/60fps со стабилизацией.<span class="tok-tag">&lt;/p</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;/article</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;article</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card&quot;</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;h3</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card__title&quot;</span><span class="tok-tag">&gt;</span>60 минут полёта<span class="tok-tag">&lt;/h3</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;p</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card__text&quot;</span><span class="tok-tag">&gt;</span>Увеличенный аккумулятор для долгих сессий.<span class="tok-tag">&lt;/p</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;/article</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;article</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card&quot;</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;h3</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card__title&quot;</span><span class="tok-tag">&gt;</span>Автопилот<span class="tok-tag">&lt;/h3</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;p</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;card__text&quot;</span><span class="tok-tag">&gt;</span>Готовые маршруты облёта объекта.<span class="tok-tag">&lt;/p</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;/article</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/section</span><span class="tok-tag">&gt;</span>
+
+    <span class="tok-com">&lt;!-- Тарифы --&gt;</span>
+    <span class="tok-tag">&lt;section</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;pricing&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;pricing&quot;</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container&quot;</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;h2</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;section-title&quot;</span><span class="tok-tag">&gt;</span>Тарифы<span class="tok-tag">&lt;/h2</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;table</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;pricing-table&quot;</span> <span class="tok-attr">id</span>=<span class="tok-str">&quot;pricing-table&quot;</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;thead</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;tr</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;th</span><span class="tok-tag">&gt;</span>План<span class="tok-tag">&lt;/th</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;th</span><span class="tok-tag">&gt;</span>Цена<span class="tok-tag">&lt;/th</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;th</span><span class="tok-tag">&gt;</span>Дронов<span class="tok-tag">&lt;/th</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/tr</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;/thead</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;tbody</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;tr</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;td</span><span class="tok-tag">&gt;</span>Старт<span class="tok-tag">&lt;/td</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;td</span><span class="tok-tag">&gt;</span>—<span class="tok-tag">&lt;/td</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;td</span><span class="tok-tag">&gt;</span>1<span class="tok-tag">&lt;/td</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/tr</span><span class="tok-tag">&gt;</span>
+            <span class="tok-tag">&lt;tr</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;td</span><span class="tok-tag">&gt;</span>Студия<span class="tok-tag">&lt;/td</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;td</span><span class="tok-tag">&gt;</span>—<span class="tok-tag">&lt;/td</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;td</span><span class="tok-tag">&gt;</span>5<span class="tok-tag">&lt;/td</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/tr</span><span class="tok-tag">&gt;</span>
+          <span class="tok-tag">&lt;/tbody</span><span class="tok-tag">&gt;</span>
+        <span class="tok-tag">&lt;/table</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/section</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;/main</span><span class="tok-tag">&gt;</span>
+
+  <span class="tok-tag">&lt;footer</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;site-footer&quot;</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">&quot;container&quot;</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;p</span><span class="tok-tag">&gt;</span>&amp;copy; 2026 Полёт. Все права защищены.<span class="tok-tag">&lt;/p</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/div</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;/footer</span><span class="tok-tag">&gt;</span>
+
+  <span class="tok-tag">&lt;script</span> <span class="tok-attr">type</span>=<span class="tok-str">&quot;module&quot;</span> <span class="tok-attr">src</span>=<span class="tok-str">&quot;js/app.js&quot;</span><span class="tok-tag">&gt;</span><span class="tok-tag">&lt;/script</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/body</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/html</span><span class="tok-tag">&gt;</span>
+</code></pre></div></div><div class="tab-panel"><table class="struct-table"><tbody><tr><th>Заголовок (&lt;title&gt;)</th><td>Полёт — авиастудия дронов</td></tr><tr><th>lang</th><td>ru</td></tr><tr><th>meta description</th><td>Демо-лендинг студии «Полёт» — тестовый проект для генератора документации</td></tr><tr><th>DOCTYPE</th><td>есть</td></tr><tr><th>Слов в тексте</th><td>63</td></tr></tbody></table><div class="struct-sub-h">Семантические landmark-теги</div><div><span class="chip-plain">&lt;article&gt;</span><span class="chip-plain">&lt;footer&gt;</span><span class="chip-plain">&lt;header&gt;</span><span class="chip-plain">&lt;main&gt;</span><span class="chip-plain">&lt;nav&gt;</span><span class="chip-plain">&lt;section&gt;</span></div><div class="struct-sub-h">Структура заголовков</div><table class="struct-table"><thead><tr><th>Уровень</th><th>Текст</th></tr></thead><tbody><tr><td><code>h1</code></td><td>Снимай мир с высоты птичьего полёта</td></tr><tr><td><code>h2</code></td><td>&nbsp;&nbsp;&nbsp;Возможности</td></tr><tr><td><code>h3</code></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4K видео</td></tr><tr><td><code>h3</code></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;60 минут полёта</td></tr><tr><td><code>h3</code></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Автопилот</td></tr><tr><td><code>h2</code></td><td>&nbsp;&nbsp;&nbsp;Тарифы</td></tr></tbody></table><div class="struct-sub-h">Формы</div><table class="struct-table"><thead><tr><th>action</th><th>method</th><th>поля</th></tr></thead><tbody><tr><td><code>(текущая страница)</code></td><td><code>get</code></td><td>email</td></tr></tbody></table><div class="struct-sub-h">id / class на странице</div><div><span class="chip-plain">#cards-list</span><span class="chip-plain">#features</span><span class="chip-plain">#hero</span><span class="chip-plain">#lead-email</span><span class="chip-plain">#lead-form</span><span class="chip-plain">#lead-submit</span><span class="chip-plain">#pricing</span><span class="chip-plain">#pricing-table</span><span class="chip-plain">#theme-toggle</span><span class="chip-plain">#top</span></div><div style='margin-top:6px'><span class="chip-plain">.btn</span><span class="chip-plain">.btn--ghost</span><span class="chip-plain">.btn--primary</span><span class="chip-plain">.card</span><span class="chip-plain">.card__text</span><span class="chip-plain">.card__title</span><span class="chip-plain">.cards</span><span class="chip-plain">.container</span><span class="chip-plain">.features</span><span class="chip-plain">.hero</span><span class="chip-plain">.hero__form</span><span class="chip-plain">.hero__inner</span><span class="chip-plain">.hero__subtitle</span><span class="chip-plain">.hero__title</span><span class="chip-plain">.input</span><span class="chip-plain">.logo</span><span class="chip-plain">.nav</span><span class="chip-plain">.nav__link</span><span class="chip-plain">.nav__list</span><span class="chip-plain">.pricing</span><span class="chip-plain">.pricing-table</span><span class="chip-plain">.section-title</span><span class="chip-plain">.site-footer</span><span class="chip-plain">.site-header</span><span class="chip-plain">.site-header__inner</span></div><div class="struct-sub-h">Комментарии в разметке</div><ul class="param-list"><li>Шапка сайта: логотип, навигация, CTA</li><li>Герой-секция</li><li>Возможности</li><li>Тарифы</li></ul></div></div></div></article><article class="file-card" id="f-css-style-css"><div class="file-path">css/style.css</div><h3 class="file-h">style.css</h3><div class="file-badges"><span class="badge k-css">CSS</span><span class="badge">3.5 КБ</span><span class="badge">168 строк</span></div><div class="rel-row"><div class="rel-group"><strong>Зависит от</strong><a class="chip-link" href="#f-css-vars-css">css/vars.css</a></div><div class="rel-group"><strong>Используется в</strong><a class="chip-link" href="#f-about-html">about.html</a><a class="chip-link" href="#f-index-html">index.html</a></div></div><div class="rel-row"><div class="rel-group"><strong>Применяется на страницах</strong><a class="chip-link" href="#f-about-html">about.html</a><a class="chip-link" href="#f-index-html">index.html</a></div></div><div class="tabs"><input class="r-0" type="radio" name="tabs-f-css-style-css" id="tab-0-f-css-style-css" checked><input class="r-1" type="radio" name="tabs-f-css-style-css" id="tab-1-f-css-style-css"><div class="tab-labels"><label class="l-0" for="tab-0-f-css-style-css">Код</label><label class="l-1" for="tab-1-f-css-style-css">Структура</label></div><div class="tab-panels"><div class="tab-panel"><div class="code-wrap"><button class="copy-btn" type="button">Копировать</button><pre class="code"><code><span class="tok-kw">@import</span> url(<span class="tok-str">&quot;vars.css&quot;</span>);
+
+<span class="tok-com">/* Базовый сброс отступов и переход на border-box */</span>
+* {
+  <span class="tok-prop">box-sizing</span>: border-box;
+  <span class="tok-prop">margin</span>: <span class="tok-num">0</span>;
+  <span class="tok-prop">padding</span>: <span class="tok-num">0</span>;
+}
+
+body {
+  <span class="tok-prop">font-family</span>: var(<span class="tok-var">--font-body</span>);
+  <span class="tok-prop">color</span>: var(<span class="tok-var">--color-ink</span>);
+  <span class="tok-prop">background</span>: var(<span class="tok-var">--color-paper</span>);
+  <span class="tok-prop">line-height</span>: <span class="tok-num">1.5</span>;
+}
+
+<span class="tok-sel">.container</span> {
+  <span class="tok-prop">max-width</span>: <span class="tok-num">1120px</span>;
+  <span class="tok-prop">margin</span>: <span class="tok-num">0</span> auto;
+  <span class="tok-prop">padding</span>: <span class="tok-num">0</span> var(<span class="tok-var">--space-3</span>);
+}
+
+<span class="tok-com">/*
+  Шапка сайта
+  Липкая шапка с логотипом, навигацией и переключателем темы.
+*/</span>
+<span class="tok-sel">.site-header</span> {
+  <span class="tok-prop">background</span>: var(<span class="tok-var">--color-ink</span>);
+  <span class="tok-prop">color</span>: <span class="tok-num">#fff</span>;
+  <span class="tok-prop">position</span>: sticky;
+  <span class="tok-prop">top</span>: <span class="tok-num">0</span>;
+}
+
+<span class="tok-sel">.site-header__inner</span> {
+  <span class="tok-prop">display</span>: flex;
+  <span class="tok-prop">align-items</span>: center;
+  <span class="tok-prop">justify-content</span>: space-between;
+  <span class="tok-prop">height</span>: <span class="tok-num">64px</span>;
+}
+
+<span class="tok-sel">.logo</span> {
+  <span class="tok-prop">font-family</span>: var(<span class="tok-var">--font-display</span>);
+  <span class="tok-prop">font-size</span>: <span class="tok-num">22px</span>;
+  <span class="tok-prop">color</span>: <span class="tok-num">#fff</span>;
+  <span class="tok-prop">text-decoration</span>: none;
+}
+
+<span class="tok-sel">.nav__list</span> {
+  <span class="tok-prop">display</span>: flex;
+  <span class="tok-prop">gap</span>: var(<span class="tok-var">--space-2</span>);
+  <span class="tok-prop">list-style</span>: none;
+}
+
+<span class="tok-sel">.nav__link</span> {
+  <span class="tok-prop">color</span>: <span class="tok-num">#cfd8dc</span>;
+  <span class="tok-prop">text-decoration</span>: none;
+}
+
+<span class="tok-sel">.nav__link</span>:hover {
+  <span class="tok-prop">color</span>: var(<span class="tok-var">--color-accent</span>);
+}
+
+<span class="tok-com">/*
+  Кнопка
+  Основной интерактивный элемент. Модификаторы:
+  .btn--primary - акцентная заливка для главных действий
+  .btn--ghost - прозрачная кнопка для второстепенных действий
+*/</span>
+<span class="tok-sel">.btn</span> {
+  <span class="tok-prop">display</span>: inline-block;
+  <span class="tok-prop">border</span>: none;
+  <span class="tok-prop">border-radius</span>: var(<span class="tok-var">--radius</span>);
+  <span class="tok-prop">padding</span>: <span class="tok-num">10px</span> <span class="tok-num">18px</span>;
+  <span class="tok-prop">font-size</span>: <span class="tok-num">15px</span>;
+  <span class="tok-prop">cursor</span>: pointer;
+}
+
+<span class="tok-sel">.btn--primary</span> {
+  <span class="tok-prop">background</span>: var(<span class="tok-var">--color-accent</span>);
+  <span class="tok-prop">color</span>: <span class="tok-num">#fff</span>;
+}
+
+<span class="tok-sel">.btn--primary</span>:hover {
+  <span class="tok-prop">background</span>: var(<span class="tok-var">--color-primary-dark</span>);
+}
+
+<span class="tok-sel">.btn--ghost</span> {
+  <span class="tok-prop">background</span>: transparent;
+  <span class="tok-prop">color</span>: <span class="tok-num">#fff</span>;
+  <span class="tok-prop">border</span>: <span class="tok-num">1px</span> solid rgba(<span class="tok-num">255</span>, <span class="tok-num">255</span>, <span class="tok-num">255</span>, <span class="tok-num">0.3</span>);
+}
+
+<span class="tok-com">/* Герой-секция первого экрана */</span>
+<span class="tok-sel">.hero</span> {
+  <span class="tok-prop">padding</span>: <span class="tok-num">96px</span> <span class="tok-num">0</span>;
+  <span class="tok-prop">text-align</span>: center;
+}
+
+<span class="tok-sel">.hero__title</span> {
+  <span class="tok-prop">font-family</span>: var(<span class="tok-var">--font-display</span>);
+  <span class="tok-prop">font-size</span>: <span class="tok-num">48px</span>;
+  <span class="tok-prop">margin-bottom</span>: var(<span class="tok-var">--space-2</span>);
+}
+
+<span class="tok-sel">.hero__subtitle</span> {
+  <span class="tok-prop">font-size</span>: <span class="tok-num">18px</span>;
+  <span class="tok-prop">color</span>: <span class="tok-num">#4b5a67</span>;
+  <span class="tok-prop">margin-bottom</span>: var(<span class="tok-var">--space-3</span>);
+}
+
+<span class="tok-sel">.hero__form</span> {
+  <span class="tok-prop">display</span>: flex;
+  <span class="tok-prop">gap</span>: var(<span class="tok-var">--space-1</span>);
+  <span class="tok-prop">justify-content</span>: center;
+}
+
+<span class="tok-sel">.input</span> {
+  <span class="tok-prop">padding</span>: <span class="tok-num">10px</span> <span class="tok-num">14px</span>;
+  <span class="tok-prop">border</span>: <span class="tok-num">1px</span> solid <span class="tok-num">#d0d5da</span>;
+  <span class="tok-prop">border-radius</span>: var(<span class="tok-var">--radius</span>);
+  <span class="tok-prop">min-width</span>: <span class="tok-num">260px</span>;
+}
+
+<span class="tok-com">/* Сетка карточек с возможностями продукта */</span>
+<span class="tok-sel">.section-title</span> {
+  <span class="tok-prop">font-family</span>: var(<span class="tok-var">--font-display</span>);
+  <span class="tok-prop">font-size</span>: <span class="tok-num">32px</span>;
+  <span class="tok-prop">text-align</span>: center;
+  <span class="tok-prop">margin-bottom</span>: var(<span class="tok-var">--space-3</span>);
+}
+
+<span class="tok-sel">.cards</span> {
+  <span class="tok-prop">display</span>: grid;
+  <span class="tok-prop">grid-template-columns</span>: repeat(<span class="tok-num">3</span>, 1fr);
+  <span class="tok-prop">gap</span>: var(<span class="tok-var">--space-3</span>);
+}
+
+<span class="tok-sel">.card</span> {
+  <span class="tok-prop">background</span>: <span class="tok-num">#fff</span>;
+  <span class="tok-prop">border-radius</span>: var(<span class="tok-var">--radius</span>);
+  <span class="tok-prop">padding</span>: var(<span class="tok-var">--space-3</span>);
+  <span class="tok-prop">box-shadow</span>: <span class="tok-num">0</span> <span class="tok-num">4px</span> <span class="tok-num">14px</span> rgba(<span class="tok-num">22</span>, <span class="tok-num">39</span>, <span class="tok-num">63</span>, <span class="tok-num">0.08</span>);
+}
+
+<span class="tok-sel">.card__title</span> {
+  <span class="tok-prop">margin-bottom</span>: var(<span class="tok-var">--space-1</span>);
+}
+
+<span class="tok-com">/* Таблица тарифов */</span>
+<span class="tok-sel">.pricing-table</span> {
+  <span class="tok-prop">width</span>: <span class="tok-num">100</span>%;
+  <span class="tok-prop">border-collapse</span>: collapse;
+}
+
+<span class="tok-sel">.pricing-table</span> th,
+<span class="tok-sel">.pricing-table</span> td {
+  <span class="tok-prop">border-bottom</span>: <span class="tok-num">1px</span> solid <span class="tok-num">#e2e6ea</span>;
+  <span class="tok-prop">padding</span>: var(<span class="tok-var">--space-2</span>);
+  <span class="tok-prop">text-align</span>: left;
+}
+
+<span class="tok-sel">.site-footer</span> {
+  <span class="tok-prop">background</span>: var(<span class="tok-var">--color-ink</span>);
+  <span class="tok-prop">color</span>: <span class="tok-num">#9fb0bd</span>;
+  <span class="tok-prop">padding</span>: var(<span class="tok-var">--space-3</span>) <span class="tok-num">0</span>;
+  <span class="tok-prop">text-align</span>: center;
+}
+
+<span class="tok-com">/* Адаптив для планшетов и мобильных устройств */</span>
+<span class="tok-kw">@media</span> (<span class="tok-prop">max-width</span>: <span class="tok-num">768px</span>) {
+  <span class="tok-sel">.cards</span> {
+    <span class="tok-prop">grid-template-columns</span>: 1fr;
+  }
+
+  <span class="tok-sel">.hero__title</span> {
+    <span class="tok-prop">font-size</span>: <span class="tok-num">32px</span>;
+  }
+
+  <span class="tok-sel">.hero__form</span> {
+    <span class="tok-prop">flex-direction</span>: column;
+  }
+}
+
+<span class="tok-kw">@media</span> (<span class="tok-prop">max-width</span>: <span class="tok-num">420px</span>) {
+  <span class="tok-sel">.nav__list</span> {
+    <span class="tok-prop">display</span>: none;
+  }
+}
+
+<span class="tok-com">/*
+  Баннер акции
+  Пока не используется ни на одной странице — оставлено на будущее.
+*/</span>
+<span class="tok-sel">.promo-banner</span> {
+  <span class="tok-prop">background</span>: var(<span class="tok-var">--color-accent</span>);
+  <span class="tok-prop">color</span>: <span class="tok-num">#fff</span>;
+  <span class="tok-prop">padding</span>: var(<span class="tok-var">--space-2</span>);
+}
+</code></pre></div></div><div class="tab-panel"><table class="struct-table"><tbody><tr><th>Правил всего (включая вложенные в @media)</th><td>30</td></tr><tr><th>At-правил (@media/@keyframes/…)</th><td>3</td></tr><tr><th>Импортов (@import)</th><td>1</td></tr></tbody></table><div class="struct-sub-h">Медиа-брейкпоинты</div><div><span class="chip-plain">max-width: 420px</span><span class="chip-plain">max-width: 768px</span></div><div class="struct-sub-h">Правила (30)</div><div class="func-block"><div class="func-sig"><code>*</code></div><div class="kss-comment">Базовый сброс отступов и переход на border-box</div><div class="doc-desc"><code>box-sizing: border-box; margin: 0; padding: 0</code></div></div><div class="func-block"><div class="func-sig"><code>body</code></div><div class="doc-desc"><code>font-family: var(--font-body); color: var(--color-ink); background: var(--color-paper); line-height: 1.5</code></div></div><div class="func-block"><div class="func-sig"><code>.container</code></div><div class="doc-desc"><code>max-width: 1120px; margin: 0 auto; padding: 0 var(--space-3)</code></div></div><div class="func-block"><div class="func-sig"><code>.site-header</code></div><div class="kss-comment">Шапка сайта
+  Липкая шапка с логотипом, навигацией и переключателем темы.</div><div class="doc-desc"><code>background: var(--color-ink); color: #fff; position: sticky; top: 0</code></div></div><div class="func-block"><div class="func-sig"><code>.site-header__inner</code></div><div class="doc-desc"><code>display: flex; align-items: center; justify-content: space-between; height: 64px</code></div></div><div class="func-block"><div class="func-sig"><code>.logo</code></div><div class="doc-desc"><code>font-family: var(--font-display); font-size: 22px; color: #fff; text-decoration: none</code></div></div><div class="func-block"><div class="func-sig"><code>.nav__list</code></div><div class="doc-desc"><code>display: flex; gap: var(--space-2); list-style: none</code></div></div><div class="func-block"><div class="func-sig"><code>.nav__link</code></div><div class="doc-desc"><code>color: #cfd8dc; text-decoration: none</code></div></div><div class="func-block"><div class="func-sig"><code>.nav__link:hover</code></div><div class="doc-desc"><code>color: var(--color-accent)</code></div></div><div class="func-block"><div class="func-sig"><code>.btn</code></div><div class="kss-comment">Кнопка
+  Основной интерактивный элемент. Модификаторы:
+  .btn--primary - акцентная заливка для главных действий
+  .btn--ghost - прозрачная кнопка для второстепенных действий</div><div class="doc-desc"><code>display: inline-block; border: none; border-radius: var(--radius); padding: 10px 18px; font-size: 15px; …</code></div></div><div class="func-block"><div class="func-sig"><code>.btn--primary</code></div><div class="doc-desc"><code>background: var(--color-accent); color: #fff</code></div></div><div class="func-block"><div class="func-sig"><code>.btn--primary:hover</code></div><div class="doc-desc"><code>background: var(--color-primary-dark)</code></div></div><div class="func-block"><div class="func-sig"><code>.btn--ghost</code></div><div class="doc-desc"><code>background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.3)</code></div></div><div class="func-block"><div class="func-sig"><code>.hero</code></div><div class="kss-comment">Герой-секция первого экрана</div><div class="doc-desc"><code>padding: 96px 0; text-align: center</code></div></div><div class="func-block"><div class="func-sig"><code>.hero__title</code></div><div class="doc-desc"><code>font-family: var(--font-display); font-size: 48px; margin-bottom: var(--space-2)</code></div></div><div class="func-block"><div class="func-sig"><code>.hero__subtitle</code></div><div class="doc-desc"><code>font-size: 18px; color: #4b5a67; margin-bottom: var(--space-3)</code></div></div><div class="func-block"><div class="func-sig"><code>.hero__form</code></div><div class="doc-desc"><code>display: flex; gap: var(--space-1); justify-content: center</code></div></div><div class="func-block"><div class="func-sig"><code>.input</code></div><div class="doc-desc"><code>padding: 10px 14px; border: 1px solid #d0d5da; border-radius: var(--radius); min-width: 260px</code></div></div><div class="func-block"><div class="func-sig"><code>.section-title</code></div><div class="kss-comment">Сетка карточек с возможностями продукта</div><div class="doc-desc"><code>font-family: var(--font-display); font-size: 32px; text-align: center; margin-bottom: var(--space-3)</code></div></div><div class="func-block"><div class="func-sig"><code>.cards</code></div><div class="doc-desc"><code>display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3)</code></div></div><div class="func-block"><div class="func-sig"><code>.card</code></div><div class="doc-desc"><code>background: #fff; border-radius: var(--radius); padding: var(--space-3); box-shadow: 0 4px 14px rgba(22, 39, 63, 0.08)</code></div></div><div class="func-block"><div class="func-sig"><code>.card__title</code></div><div class="doc-desc"><code>margin-bottom: var(--space-1)</code></div></div><div class="func-block"><div class="func-sig"><code>.pricing-table</code></div><div class="kss-comment">Таблица тарифов</div><div class="doc-desc"><code>width: 100%; border-collapse: collapse</code></div></div><div class="func-block"><div class="func-sig"><code>.pricing-table th</code>, <code>.pricing-table td</code></div><div class="doc-desc"><code>border-bottom: 1px solid #e2e6ea; padding: var(--space-2); text-align: left</code></div></div><div class="func-block"><div class="func-sig"><code>.site-footer</code></div><div class="doc-desc"><code>background: var(--color-ink); color: #9fb0bd; padding: var(--space-3) 0; text-align: center</code></div></div><div class="func-block"><div class="func-sig"><code>.promo-banner</code></div><div class="kss-comment">Баннер акции
+  Пока не используется ни на одной странице — оставлено на будущее.</div><div class="doc-desc"><code>background: var(--color-accent); color: #fff; padding: var(--space-2)</code></div></div><div class="func-block"><div class="func-sig"><code>.cards</code> <span class="muted">внутри @media (max-width: 768px)</span></div><div class="doc-desc"><code>grid-template-columns: 1fr</code></div></div><div class="func-block"><div class="func-sig"><code>.hero__title</code> <span class="muted">внутри @media (max-width: 768px)</span></div><div class="doc-desc"><code>font-size: 32px</code></div></div><div class="func-block"><div class="func-sig"><code>.hero__form</code> <span class="muted">внутри @media (max-width: 768px)</span></div><div class="doc-desc"><code>flex-direction: column</code></div></div><div class="func-block"><div class="func-sig"><code>.nav__list</code> <span class="muted">внутри @media (max-width: 420px)</span></div><div class="doc-desc"><code>display: none</code></div></div><div class="note-block"><h4>Заметка картографа</h4><p class='muted' style='margin:0 0 8px'>Эти классы/id используются в селекторах файла, но не найдены ни в одном HTML-файле проекта. Возможно, элементы добавляются динамически через JS, либо это остатки неиспользуемого кода.</p><div><span class="chip-plain">.promo-banner</span></div></div></div></div></div></article><article class="file-card" id="f-css-vars-css"><div class="file-path">css/vars.css</div><h3 class="file-h">vars.css</h3><div class="file-badges"><span class="badge k-css">CSS</span><span class="badge">599 Б</span><span class="badge">17 строк</span></div><div class="rel-row"><div class="rel-group"><strong>Зависит от</strong><span class="muted">—</span></div><div class="rel-group"><strong>Используется в</strong><a class="chip-link" href="#f-about-html">about.html</a><a class="chip-link" href="#f-index-html">index.html</a><a class="chip-link" href="#f-css-style-css">css/style.css</a></div></div><div class="tabs"><input class="r-0" type="radio" name="tabs-f-css-vars-css" id="tab-0-f-css-vars-css" checked><input class="r-1" type="radio" name="tabs-f-css-vars-css" id="tab-1-f-css-vars-css"><div class="tab-labels"><label class="l-0" for="tab-0-f-css-vars-css">Код</label><label class="l-1" for="tab-1-f-css-vars-css">Структура</label></div><div class="tab-panels"><div class="tab-panel"><div class="code-wrap"><button class="copy-btn" type="button">Копировать</button><pre class="code"><code><span class="tok-com">/* ==========================================================================
+   Design tokens
+   Единая точка правды для цветов, шрифтов и отступов проекта.
+   ========================================================================== */</span>
+
+:root {
+  <span class="tok-var">--color-primary</span>: <span class="tok-num">#2f6f62</span>;
+  <span class="tok-var">--color-primary-dark</span>: <span class="tok-num">#1f4b41</span>;
+  <span class="tok-var">--color-accent</span>: <span class="tok-num">#c08a3e</span>;
+  <span class="tok-var">--color-ink</span>: <span class="tok-num">#16273f</span>;
+  <span class="tok-var">--color-paper</span>: <span class="tok-num">#f7f7f5</span>;
+  <span class="tok-var">--font-display</span>: Georgia, serif;
+  <span class="tok-var">--font-body</span>: -apple-system, <span class="tok-str">&quot;Segoe UI&quot;</span>, sans-serif;
+  <span class="tok-var">--space-1</span>: <span class="tok-num">8px</span>;
+  <span class="tok-var">--space-2</span>: <span class="tok-num">16px</span>;
+  <span class="tok-var">--space-3</span>: <span class="tok-num">24px</span>;
+  <span class="tok-var">--radius</span>: <span class="tok-num">10px</span>;
+}
+</code></pre></div></div><div class="tab-panel"><table class="struct-table"><tbody><tr><th>Правил всего (включая вложенные в @media)</th><td>1</td></tr><tr><th>At-правил (@media/@keyframes/…)</th><td>0</td></tr><tr><th>Импортов (@import)</th><td>0</td></tr></tbody></table><div class="struct-sub-h">CSS custom properties, определённые здесь</div><table class="struct-table"><thead><tr><th>Свойство</th><th>Значение</th></tr></thead><tbody><tr><td><code>--color-primary</code></td><td><span class="swatch" data-label="#2f6f62" style="background:#2f6f62" title="#2f6f62"></span> <code>#2f6f62</code></td></tr><tr><td><code>--color-primary-dark</code></td><td><span class="swatch" data-label="#1f4b41" style="background:#1f4b41" title="#1f4b41"></span> <code>#1f4b41</code></td></tr><tr><td><code>--color-accent</code></td><td><span class="swatch" data-label="#c08a3e" style="background:#c08a3e" title="#c08a3e"></span> <code>#c08a3e</code></td></tr><tr><td><code>--color-ink</code></td><td><span class="swatch" data-label="#16273f" style="background:#16273f" title="#16273f"></span> <code>#16273f</code></td></tr><tr><td><code>--color-paper</code></td><td><span class="swatch" data-label="#f7f7f5" style="background:#f7f7f5" title="#f7f7f5"></span> <code>#f7f7f5</code></td></tr><tr><td><code>--font-display</code></td><td> <code>Georgia, serif</code></td></tr><tr><td><code>--font-body</code></td><td> <code>-apple-system, &quot;Segoe UI&quot;, sans-serif</code></td></tr><tr><td><code>--space-1</code></td><td> <code>8px</code></td></tr><tr><td><code>--space-2</code></td><td> <code>16px</code></td></tr><tr><td><code>--space-3</code></td><td> <code>24px</code></td></tr><tr><td><code>--radius</code></td><td> <code>10px</code></td></tr></tbody></table><div class="struct-sub-h">Правила (1)</div><div class="func-block"><div class="func-sig"><code>:root</code></div><div class="kss-comment">==========================================================================
+   Design tokens
+   Единая точка правды для цветов, шрифтов и отступов проекта.
+   ==========================================================================</div><div class="doc-desc"><code>--color-primary: #2f6f62; --color-primary-dark: #1f4b41; --color-accent: #c08a3e; --color-ink: #16273f; --color-paper: #f7f7f5; …</code></div></div></div></div></div></article><article class="file-card" id="f-js-app-js"><div class="file-path">js/app.js</div><h3 class="file-h">app.js</h3><div class="file-badges"><span class="badge k-js">JS</span><span class="badge">1.8 КБ</span><span class="badge">53 строк</span></div><div class="rel-row"><div class="rel-group"><strong>Зависит от</strong><a class="chip-link" href="#f-js-utils-js">js/utils.js</a></div><div class="rel-group"><strong>Используется в</strong><a class="chip-link" href="#f-index-html">index.html</a></div></div><div class="rel-row"><div class="rel-group"><strong>Управляет элементами на</strong><a class="chip-link" href="#f-index-html">index.html</a></div></div><div class="tabs"><input class="r-0" type="radio" name="tabs-f-js-app-js" id="tab-0-f-js-app-js" checked><input class="r-1" type="radio" name="tabs-f-js-app-js" id="tab-1-f-js-app-js"><div class="tab-labels"><label class="l-0" for="tab-0-f-js-app-js">Код</label><label class="l-1" for="tab-1-f-js-app-js">Структура</label></div><div class="tab-panels"><div class="tab-panel"><div class="code-wrap"><button class="copy-btn" type="button">Копировать</button><pre class="code"><code><span class="tok-kw">import</span> { isValidEmail, debounce, ThemeStore } <span class="tok-kw">from</span> <span class="tok-str">&quot;./utils.js&quot;</span>;
+
+<span class="tok-com">// TODO: подключить реальную отправку формы на бэкенд</span>
+
+<span class="tok-kw">const</span> themeStore = <span class="tok-kw">new</span> <span class="tok-fn">ThemeStore</span>(<span class="tok-str">&quot;light&quot;</span>);
+
+<span class="tok-com">/**
+ * Инициализирует переключатель темы.
+ */</span>
+<span class="tok-kw">function</span> <span class="tok-fn">initThemeToggle</span>() {
+  <span class="tok-kw">const</span> button = document.<span class="tok-fn">getElementById</span>(<span class="tok-str">&quot;theme-toggle&quot;</span>);
+  <span class="tok-kw">if</span> (!button) <span class="tok-kw">return</span>;
+  button.<span class="tok-fn">addEventListener</span>(<span class="tok-str">&quot;click&quot;</span>, () =&gt; {
+    <span class="tok-kw">const</span> next = themeStore.<span class="tok-fn">toggle</span>();
+    document.documentElement.dataset.theme = next;
+  });
+}
+
+<span class="tok-com">/**
+ * Инициализирует форму захвата лида: валидацию и отправку.
+ * @param {string} formSelector - CSS-селектор формы
+ */</span>
+<span class="tok-kw">function</span> <span class="tok-fn">initLeadForm</span>(formSelector) {
+  <span class="tok-kw">const</span> form = document.<span class="tok-fn">querySelector</span>(formSelector);
+  <span class="tok-kw">if</span> (!form) <span class="tok-kw">return</span>;
+
+  <span class="tok-kw">const</span> emailInput = document.<span class="tok-fn">getElementById</span>(<span class="tok-str">&quot;lead-email&quot;</span>);
+
+  form.<span class="tok-fn">addEventListener</span>(<span class="tok-str">&quot;submit&quot;</span>, (event) =&gt; {
+    event.<span class="tok-fn">preventDefault</span>();
+    <span class="tok-kw">if</span> (!<span class="tok-fn">isValidEmail</span>(emailInput.value)) {
+      emailInput.classList.<span class="tok-fn">add</span>(<span class="tok-str">&quot;input--error&quot;</span>);
+      <span class="tok-kw">return</span>;
+    }
+    console.<span class="tok-fn">log</span>(<span class="tok-str">&quot;Отправка каталога на&quot;</span>, emailInput.value);
+  });
+}
+
+<span class="tok-com">/**
+ * Подсвечивает активный пункт навигации при прокрутке.
+ */</span>
+<span class="tok-kw">function</span> <span class="tok-fn">initScrollSpy</span>() {
+  <span class="tok-kw">const</span> sections = document.<span class="tok-fn">querySelectorAll</span>(<span class="tok-str">&quot;.features, .pricing&quot;</span>);
+  <span class="tok-kw">const</span> onScroll = <span class="tok-fn">debounce</span>(() =&gt; {
+    sections.<span class="tok-fn">forEach</span>((section) =&gt; {
+      <span class="tok-kw">const</span> rect = section.<span class="tok-fn">getBoundingClientRect</span>();
+      <span class="tok-kw">if</span> (rect.top &lt; <span class="tok-num">120</span> &amp;&amp; rect.bottom &gt; <span class="tok-num">120</span>) {
+        section.classList.<span class="tok-fn">add</span>(<span class="tok-str">&quot;is-active&quot;</span>);
+      } <span class="tok-kw">else</span> {
+        section.classList.<span class="tok-fn">remove</span>(<span class="tok-str">&quot;is-active&quot;</span>);
+      }
+    });
+  }, <span class="tok-num">100</span>);
+  window.<span class="tok-fn">addEventListener</span>(<span class="tok-str">&quot;scroll&quot;</span>, onScroll);
+}
+
+document.<span class="tok-fn">addEventListener</span>(<span class="tok-str">&quot;DOMContentLoaded&quot;</span>, () =&gt; {
+  <span class="tok-fn">initThemeToggle</span>();
+  <span class="tok-fn">initLeadForm</span>(<span class="tok-str">&quot;#lead-form&quot;</span>);
+  <span class="tok-fn">initScrollSpy</span>();
+});
+</code></pre></div></div><div class="tab-panel"><div class="struct-sub-h">Импорты</div><table class="struct-table"><thead><tr><th>Откуда</th><th>Что</th></tr></thead><tbody><tr><td><code>./utils.js</code></td><td>isValidEmail, debounce, ThemeStore</td></tr></tbody></table><div class="struct-sub-h">Функции (3)</div><div class="func-block"><div class="func-sig">function <strong>initThemeToggle</strong>() <span class="muted">· строка 10</span></div><div class="doc-desc">Инициализирует переключатель темы.</div></div><div class="func-block"><div class="func-sig">function <strong>initLeadForm</strong>(formSelector) <span class="muted">· строка 23</span></div><div class="doc-desc">Инициализирует форму захвата лида: валидацию и отправку.</div><ul class="param-list"><li><code>formSelector</code> — CSS-селектор формы</li></ul></div><div class="func-block"><div class="func-sig">function <strong>initScrollSpy</strong>() <span class="muted">· строка 42</span></div><div class="doc-desc">Подсвечивает активный пункт навигации при прокрутке.</div></div><div class="struct-sub-h">Обращения к DOM</div><table class="struct-table"><thead><tr><th>Метод</th><th>Селектор</th><th>Строка</th></tr></thead><tbody><tr><td><code>getElementById</code></td><td><code>theme-toggle</code></td><td>11</td></tr><tr><td><code>getElementById</code></td><td><code>lead-email</code></td><td>27</td></tr><tr><td><code>querySelectorAll</code></td><td><code>.features, .pricing</code></td><td>43</td></tr></tbody></table><div class="struct-sub-h">Обработчики событий</div><table class="struct-table"><thead><tr><th>Цель</th><th>Событие</th><th>Строка</th></tr></thead><tbody><tr><td><code>button</code></td><td><code>click</code></td><td>13</td></tr><tr><td><code>form</code></td><td><code>submit</code></td><td>29</td></tr><tr><td><code>window</code></td><td><code>scroll</code></td><td>54</td></tr><tr><td><code>document</code></td><td><code>DOMContentLoaded</code></td><td>57</td></tr></tbody></table><div class="note-block"><h4>TODO / FIXME</h4><ul><li><code>TODO</code> (строка 3): подключить реальную отправку формы на бэкенд</li></ul></div></div></div></div></article><article class="file-card" id="f-js-utils-js"><div class="file-path">js/utils.js</div><h3 class="file-h">utils.js</h3><div class="file-badges"><span class="badge k-js">JS</span><span class="badge">1.4 КБ</span><span class="badge">40 строк</span></div><div class="rel-row"><div class="rel-group"><strong>Зависит от</strong><span class="muted">—</span></div><div class="rel-group"><strong>Используется в</strong><a class="chip-link" href="#f-js-app-js">js/app.js</a></div></div><div class="tabs"><input class="r-0" type="radio" name="tabs-f-js-utils-js" id="tab-0-f-js-utils-js" checked><input class="r-1" type="radio" name="tabs-f-js-utils-js" id="tab-1-f-js-utils-js"><div class="tab-labels"><label class="l-0" for="tab-0-f-js-utils-js">Код</label><label class="l-1" for="tab-1-f-js-utils-js">Структура</label></div><div class="tab-panels"><div class="tab-panel"><div class="code-wrap"><button class="copy-btn" type="button">Копировать</button><pre class="code"><code><span class="tok-com">// Небольшие переиспользуемые хелперы без побочных эффектов.</span>
+
+<span class="tok-com">/**
+ * Проверяет строку на формат email.
+ * @param {string} value - введённое значение
+ * @returns {boolean} true, если строка похожа на email
+ */</span>
+<span class="tok-kw">export</span> <span class="tok-kw">function</span> <span class="tok-fn">isValidEmail</span>(value) {
+  <span class="tok-kw">return</span> /^[^\s@]+@[^\s@]+\.[^\s@]+$/.<span class="tok-fn">test</span>(value);
+}
+
+<span class="tok-com">/**
+ * Ограничивает вызов функции не чаще, чем раз в `wait` мс.
+ * @param {Function} fn - исходная функция
+ * @param {number} wait - задержка в миллисекундах
+ * @returns {Function} обёрнутая функция
+ * @example
+ * const onScroll = debounce(() =&gt; console.log(&#x27;scroll&#x27;), 200);
+ */</span>
+<span class="tok-kw">export</span> <span class="tok-kw">function</span> <span class="tok-fn">debounce</span>(fn, wait) {
+  <span class="tok-kw">let</span> timer = <span class="tok-kw">null</span>;
+  <span class="tok-kw">return</span> <span class="tok-kw">function</span> <span class="tok-fn">debounced</span>(...args) {
+    <span class="tok-fn">clearTimeout</span>(timer);
+    timer = <span class="tok-fn">setTimeout</span>(() =&gt; fn.<span class="tok-fn">apply</span>(<span class="tok-kw">this</span>, args), wait);
+  };
+}
+
+<span class="tok-com">/**
+ * Простое хранилище состояния темы в памяти вкладки.
+ */</span>
+<span class="tok-kw">export</span> <span class="tok-kw">class</span> ThemeStore {
+  <span class="tok-com">/**
+   * @param {string} initial - начальная тема (&#x27;light&#x27; | &#x27;dark&#x27;)
+   */</span>
+  <span class="tok-fn">constructor</span>(initial = <span class="tok-str">&quot;light&quot;</span>) {
+    <span class="tok-kw">this</span>.theme = initial;
+  }
+
+  <span class="tok-com">/** Переключает тему на противоположную. */</span>
+  <span class="tok-fn">toggle</span>() {
+    <span class="tok-kw">this</span>.theme = <span class="tok-kw">this</span>.theme === <span class="tok-str">&quot;light&quot;</span> ? <span class="tok-str">&quot;dark&quot;</span> : <span class="tok-str">&quot;light&quot;</span>;
+    <span class="tok-kw">return</span> <span class="tok-kw">this</span>.theme;
+  }
+}
+</code></pre></div></div><div class="tab-panel"><div class="doc-desc">Небольшие переиспользуемые хелперы без побочных эффектов.</div><div class="struct-sub-h">Экспорты</div><div><span class="chip-plain">isValidEmail</span><span class="chip-plain">debounce</span><span class="chip-plain">ThemeStore</span></div><div class="struct-sub-h">Функции (3)</div><div class="func-block"><div class="func-sig">function <strong>isValidEmail</strong>(value) <span class="muted">· строка 8</span> <span class="badge">export</span></div><div class="doc-desc">Проверяет строку на формат email.</div><ul class="param-list"><li><code>value</code> — введённое значение</li></ul><div class="doc-desc"><em>Возвращает:</em> true, если строка похожа на email</div></div><div class="func-block"><div class="func-sig">function <strong>debounce</strong>(fn, wait) <span class="muted">· строка 20</span> <span class="badge">export</span></div><div class="doc-desc">Ограничивает вызов функции не чаще, чем раз в `wait` мс.</div><ul class="param-list"><li><code>fn</code> — исходная функция</li><li><code>wait</code> — задержка в миллисекундах</li></ul><div class="doc-desc"><em>Возвращает:</em> обёрнутая функция</div><pre class="code" style="margin-top:6px"><code>const onScroll = debounce(() =&gt; console.log(&#x27;scroll&#x27;), 200);</code></pre></div><div class="func-block"><div class="func-sig">function <strong>debounced</strong>(...args) <span class="muted">· строка 22</span></div></div><div class="struct-sub-h">Классы (1)</div><div class="func-block"><div class="func-sig">class <strong>ThemeStore</strong> <span class="muted">· строка 31</span></div><div class="doc-desc">Простое хранилище состояния темы в памяти вкладки.</div><div style="margin-left:16px;border-top:1px dashed var(--paper-line);padding-top:8px"><div class="func-block"><div class="func-sig">constructor <strong>constructor</strong>(initial = &quot;light&quot;) <span class="muted">· строка 35</span></div><ul class="param-list"><li><code>initial</code> — начальная тема (&#x27;light&#x27; | &#x27;dark&#x27;)</li></ul></div></div><div style="margin-left:16px;border-top:1px dashed var(--paper-line);padding-top:8px"><div class="func-block"><div class="func-sig">method <strong>toggle</strong>() <span class="muted">· строка 40</span></div><div class="doc-desc">Переключает тему на противоположную.</div></div></div></div></div></div></div></article>
+  </main>
+</div>
+<footer class="doc-footer">
+  Документация сгенерирована автоматически скриптом doc_generator.py v1.0.0 — статический анализ,
+  без выполнения кода проекта. Часть выводов (назначение функций, категории) основана на эвристиках
+  и комментариях в исходном коде и может быть неточной.
+</footer>
+<script>
+(function () {
+  "use strict";
+
+  // ---- Поиск/фильтр по дереву файлов и разделам ----
+  var searchInput = document.getElementById("doc-search");
+  var tree = document.querySelector(".tree");
+  if (searchInput && tree) {
+    searchInput.addEventListener("input", function () {
+      var q = searchInput.value.trim().toLowerCase();
+      var items = tree.querySelectorAll("li[data-name]");
+      if (!q) {
+        tree.setAttribute("data-filtering", "false");
+        items.forEach(function (li) { li.removeAttribute("data-match"); });
+        return;
+      }
+      tree.setAttribute("data-filtering", "true");
+      items.forEach(function (li) {
+        var name = li.getAttribute("data-name") || "";
+        var match = name.indexOf(q) !== -1;
+        li.setAttribute("data-match", match ? "true" : "false");
+        if (match) {
+          var p = li.parentElement;
+          while (p) {
+            var details = p.closest ? p.closest("details") : null;
+            if (!details) break;
+            details.open = true;
+            p = details.parentElement;
+          }
+        }
+      });
+    });
+  }
+
+  // ---- Подсветка активного файла в сайдбаре при прокрутке (scrollspy) ----
+  var fileLinks = Array.prototype.slice.call(document.querySelectorAll(".tree .file-link"));
+  var sections = fileLinks
+    .map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); })
+    .filter(Boolean);
+
+  if (sections.length && "IntersectionObserver" in window) {
+    var byId = {};
+    fileLinks.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var link = byId[entry.target.id];
+        if (!link) return;
+        if (entry.isIntersecting) {
+          fileLinks.forEach(function (a) { a.classList.remove("active"); });
+          link.classList.add("active");
+          var details = link.closest("details");
+          while (details) {
+            details.open = true;
+            details = details.parentElement ? details.parentElement.closest("details") : null;
+          }
+        }
+      });
+    }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
+
+    sections.forEach(function (s) { observer.observe(s); });
+  }
+
+  // ---- Копирование кода ----
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre.code");
+      if (!pre) return;
+      var text = pre.textContent;
+      var done = function () {
+        var old = btn.textContent;
+        btn.textContent = "Скопировано";
+        setTimeout(function () { btn.textContent = old; }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(done);
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta);
+        done();
+      }
+    });
+  });
+
+  // ---- Мобильное меню ----
+  var toggle = document.getElementById("sidebar-toggle");
+  var sidebar = document.querySelector(".sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll(".file-link").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+})();
+</script>
+</body>
+</html>
