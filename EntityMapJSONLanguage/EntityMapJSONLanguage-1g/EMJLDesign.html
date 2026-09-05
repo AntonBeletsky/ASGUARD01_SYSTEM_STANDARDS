@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EntityMap Design — Analysis</title>
+
+  <!-- Theme set synchronously before first paint, matching university_erd.html. -->
+  <script>
+    document.documentElement.setAttribute(
+      'data-bs-theme',
+      matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    );
+  </script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* ============================================================
+       0. Tokens — intentionally minimal. Unlike university_erd.html,
+       this page has no diagram-specific palette to manage; every
+       color need is already covered by Bootstrap's own --bs-* theme
+       variables, so there is nothing project-specific to tokenize.
+       ============================================================ */
+
+    /* ============================================================
+       1. Container layout
+       ============================================================ */
+
+    /* ============================================================
+       2. Child elements
+       ============================================================ */
+    .stat-bar-row + .stat-bar-row {
+      margin-top: .35rem;
+    }
+    .finding-quote {
+      border-left: 3px solid var(--bs-border-color);
+      padding-left: .75rem;
+      font-style: italic;
+    }
+    code.field-token {
+      font-size: .85em;
+    }
+
+    /* ============================================================
+       3. Modal — none on this page.
+       ============================================================ */
+
+    /* ============================================================
+       4. States — none on this page (fully static content, no
+       loading/error/ready lifecycle like the diagram viewer has).
+       ============================================================ */
+
+    /* ============================================================
+       5. Animations — none.
+       ============================================================ */
+
+    /* ============================================================
+       6. Responsive
+       ============================================================ */
+    @media (max-width: 575.98px) {
+      .project-nav .btn { flex: 1 1 40%; }
+    }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h1 class="h4 mb-1">EntityMap Design — Analysis</h1>
+      <p class="text-secondary small mb-0">Specification, data model, and diagram cross-checked against each other · 4 findings</p>
+    </div>
+    <button id="theme-toggle" type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" aria-pressed="false">
+      <span class="theme-toggle-icon d-inline-flex" aria-hidden="true"></span>
+      <span class="theme-toggle-text">Dark theme</span>
+    </button>
+  </div>
+
+  <nav class="project-nav d-flex flex-wrap gap-2 mb-4" aria-label="Project files">
+    <a href="EntityMapJSONLanguage.md" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></svg>
+      1. Language Spec
+    </a>
+    <a href="university_course_map.json" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/></svg>
+      2. Data Model
+    </a>
+    <a href="university_erd.html" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V6A1.5 1.5 0 0 1 6 4.5zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5zM0 11.5A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></svg>
+      3. ER Diagram
+    </a>
+    <a href="EMJLDesign.html" class="btn btn-sm btn-secondary d-flex align-items-center gap-1" aria-current="page">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0z"/><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/></svg>
+      4. Analysis (this page)
+    </a>
+    <a href="readme.md" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></svg>
+      5. README
+    </a>
+  </nav>
+  <p class="text-secondary small">All 5 project files must sit in the same folder for the links above to resolve.</p>
+
+  <main>
+    <!-- ============ OVERVIEW ============ -->
+    <section id="overview" class="mb-5">
+      <h2 class="h5">Overview</h2>
+      <p>Three original files form a chain — <strong>spec → data → visualization</strong>: <code>EntityMapJSONLanguage.md</code> defines a JSON language for describing data structures (SQL schemas, OOP classes, UML), <code>university_course_map.json</code> is a concrete model written in that language, and <code>university_erd.html</code> renders it as an ER diagram. This page is the fourth: cross-checking the three against each other surfaced 4 concrete findings, laid out below.</p>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped">
+          <thead><tr><th>#</th><th>File</th><th>Size</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><code>EntityMapJSONLanguage.md</code></td><td>713 lines</td><td>Language specification v1.0</td></tr>
+            <tr><td>2</td><td><code>university_course_map.json</code></td><td>1199 lines</td><td>University course domain model, written in that language</td></tr>
+            <tr><td>3</td><td><code>university_erd.html</code></td><td>~630 lines</td><td>ER diagram viewer of file 2 (Mermaid.js)</td></tr>
+            <tr><td>4</td><td><code>EMJLDesign.html</code></td><td>this page</td><td>Consistency analysis of files 1 and 2</td></tr>
+            <tr><td>5</td><td><code>readme.md</code></td><td>—</td><td>Project index</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ SPEC SUMMARY ============ -->
+    <section id="spec" class="mb-5">
+      <h2 class="h5">Language spec — structure summary</h2>
+      <div class="accordion" id="spec-accordion">
+
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#spec-root">Root object</button></h3>
+          <div id="spec-root" class="accordion-collapse collapse" data-bs-parent="#spec-accordion">
+            <div class="accordion-body">
+              <p>Four top-level keys: <code>$entitymap</code> (version, required), <code>meta</code> (project metadata), <code>entities</code> (required array), <code>relations</code> (required array, may be empty).</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#spec-kinds">Entity kinds</button></h3>
+          <div id="spec-kinds" class="accordion-collapse collapse" data-bs-parent="#spec-accordion">
+            <div class="accordion-body">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead><tr><th><code>kind</code></th><th>Maps to (DB)</th><th>Maps to (OOP)</th><th>Maps to (UML)</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>class</code></td><td>Table</td><td>Class</td><td>Class</td></tr>
+                    <tr><td><code>table</code></td><td>Table</td><td>—</td><td>—</td></tr>
+                    <tr><td><code>interface</code></td><td>View / Protocol</td><td>Interface</td><td>Interface</td></tr>
+                    <tr><td><code>abstract</code></td><td>—</td><td>Abstract Class</td><td>Abstract Class</td></tr>
+                    <tr><td><code>struct</code></td><td>—</td><td>Struct / Record</td><td>—</td></tr>
+                    <tr><td><code>enum</code></td><td>ENUM type</td><td>Enum</td><td>Enumeration</td></tr>
+                    <tr><td><code>value_object</code></td><td>Embedded / JSON col</td><td>Value Object</td><td>—</td></tr>
+                    <tr><td><code>mixin</code></td><td>—</td><td>Mixin / Trait</td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#spec-fields">Field types</button></h3>
+          <div id="spec-fields" class="accordion-collapse collapse" data-bs-parent="#spec-accordion">
+            <div class="accordion-body">
+              <ul class="mb-0">
+                <li><strong>Primitives:</strong> <code class="field-token">bool</code>, <code class="field-token">int/int8/int16/int32/int64/uint</code>, <code class="field-token">float</code>, <code class="field-token">double</code>, <code class="field-token">decimal</code>, <code class="field-token">string</code>, <code class="field-token">text</code>, <code class="field-token">char</code>, <code class="field-token">bytes</code></li>
+                <li><strong>Date/time:</strong> <code class="field-token">date</code>, <code class="field-token">time</code>, <code class="field-token">datetime</code>, <code class="field-token">timestamp</code>, <code class="field-token">duration</code></li>
+                <li><strong>Identity:</strong> <code class="field-token">uuid</code>, <code class="field-token">id</code> (surrogate PK), <code class="field-token">ref</code></li>
+                <li><strong>Structured:</strong> <code class="field-token">json</code>, <code class="field-token">array</code> (requires <code>items_type</code>), <code class="field-token">map</code>, <code class="field-token">enum</code> (requires <code>ref_id</code>), <code class="field-token">any</code></li>
+              </ul>
+              <p class="mt-2 mb-0 text-secondary small">Constraints are single-column only (<code>pk</code>, <code>fk</code>, <code>unique</code>, <code>index</code>, <code>not_null</code>, <code>auto</code>, <code>check</code>, <code>default</code>, <code>virtual</code>, <code>immutable</code>, <code>encrypted</code>, <code>deprecated</code>) — no composite/multi-column constraint mechanism exists. Relevant to Enrollment and CourseTeacher below.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#spec-rel">Relation kinds &amp; multiplicity</button></h3>
+          <div id="spec-rel" class="accordion-collapse collapse" data-bs-parent="#spec-accordion">
+            <div class="accordion-body">
+              <p><strong>11 kinds</strong> — UML/OOP: <code class="field-token">association</code>, <code class="field-token">directed_association</code>, <code class="field-token">aggregation</code>, <code class="field-token">composition</code>, <code class="field-token">inheritance</code>, <code class="field-token">realization</code>, <code class="field-token">dependency</code>. DB-specific: <code class="field-token">foreign_key</code>, <code class="field-token">many_to_many</code>, <code class="field-token">self</code>, <code class="field-token">mixin</code>.</p>
+              <p class="mb-0"><strong>7 multiplicity tokens:</strong> <code class="field-token">one_to_one</code>, <code class="field-token">one_to_zero_one</code>, <code class="field-token">one_to_many</code>, <code class="field-token">one_to_zero_many</code>, <code class="field-token">many_to_one</code>, <code class="field-token">many_to_many</code>, <code class="field-token">zero_one_to_many</code> — plus a free-text <code>multiplicity_raw</code> escape hatch. Note: no "many-to-zero-or-one" token exists (relevant to Finding 3).</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#spec-deploy">Deployment targets</button></h3>
+          <div id="spec-deploy" class="accordion-collapse collapse" data-bs-parent="#spec-accordion">
+            <div class="accordion-body">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead><tr><th>Target</th><th>Action</th></tr></thead>
+                  <tbody>
+                    <tr><td>SQL (PostgreSQL)</td><td><code>class</code>/<code>table</code> → <code>CREATE TABLE</code>; <code>foreign_key</code> → <code>ALTER TABLE ... ADD CONSTRAINT</code>; <code>enum</code> → <code>CREATE TYPE ... AS ENUM</code></td></tr>
+                    <tr><td>SQL (MySQL)</td><td>Same, <code>uuid</code>→<code>CHAR(36)</code>, <code>bool</code>→<code>TINYINT(1)</code></td></tr>
+                    <tr><td>Python (dataclass)</td><td>Entity → <code>@dataclass</code>; <code>inheritance</code> → base class; <code>realization</code> → ABC</td></tr>
+                    <tr><td>C#</td><td>Entity → <code>class</code>/<code>interface</code>; <code>inheritance</code> → <code>: Base</code></td></tr>
+                    <tr><td>TypeScript</td><td>Entity → <code>interface</code>/<code>class</code>; enums → <code>enum</code></td></tr>
+                    <tr><td>Java</td><td>Entity → class/interface; JPA annotations</td></tr>
+                    <tr><td>OpenAPI</td><td>Entity → schema component</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ MODEL STATISTICS ============ -->
+    <section id="model" class="mb-5">
+      <h2 class="h5">Data model — statistics</h2>
+      <p><strong>18 entities</strong> (5 enum + 13 class) · <strong>21 relations</strong> · <strong>127 fields</strong> total (101 typed + 26 enum literals) · <strong>28%</strong> of typed fields are nullable · every class entity has exactly one <code>pk</code> field.</p>
+
+      <div class="table-responsive mb-4">
+        <table class="table table-sm table-striped">
+          <thead><tr><th>id</th><th>Name</th><th>Kind</th><th>Fields</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><code>lesson_type</code></td><td>LessonType</td><td>enum</td><td>6</td><td>Lesson format (lecture, seminar, lab…)</td></tr>
+            <tr><td><code>day_of_week</code></td><td>DayOfWeek</td><td>enum</td><td>6</td><td>Day of week — unused, see Finding 4</td></tr>
+            <tr><td><code>attendance_status</code></td><td>AttendanceStatus</td><td>enum</td><td>4</td><td>Attendance status</td></tr>
+            <tr><td><code>grade_letter</code></td><td>GradeLetter</td><td>enum</td><td>5</td><td>Letter grade A–F</td></tr>
+            <tr><td><code>submission_status</code></td><td>SubmissionStatus</td><td>enum</td><td>5</td><td>Submission status</td></tr>
+            <tr><td><code>department</code></td><td>Department</td><td>class</td><td>6</td><td>Academic department</td></tr>
+            <tr><td><code>semester</code></td><td>Semester</td><td>class</td><td>5</td><td>Academic term</td></tr>
+            <tr><td><code>room</code></td><td>Room</td><td>class</td><td>6</td><td>Classroom</td></tr>
+            <tr><td><code>teacher</code></td><td>Teacher</td><td>class</td><td>8</td><td>Teacher</td></tr>
+            <tr><td><code>student</code></td><td>Student</td><td>class</td><td>10</td><td>Student</td></tr>
+            <tr><td><code>course</code></td><td>Course</td><td>class</td><td>8</td><td>Course</td></tr>
+            <tr><td><code>course_teacher</code></td><td>CourseTeacher</td><td>class</td><td>5</td><td>Junction — who teaches which course, and when</td></tr>
+            <tr><td><code>lesson</code></td><td>Lesson</td><td>class</td><td>12</td><td>A specific class session</td></tr>
+            <tr><td><code>enrollment</code></td><td>Enrollment</td><td>class</td><td>7</td><td>Student's registration for a course in a term</td></tr>
+            <tr><td><code>attendance</code></td><td>Attendance</td><td>class</td><td>6</td><td>Record of a student attending a lesson</td></tr>
+            <tr><td><code>assignment</code></td><td>Assignment</td><td>class</td><td>9</td><td>Course assignment</td></tr>
+            <tr><td><code>submission</code></td><td>Submission</td><td>class</td><td>11</td><td>Student's submission for an assignment</td></tr>
+            <tr><td><code>course_grade</code></td><td>CourseGrade</td><td>class</td><td>8</td><td>Final grade (one per enrollment)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <h3 class="h6">Field types (101 total)</h3>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>id</code></span><span>25</span></div><div class="progress" role="progressbar" aria-label="id" aria-valuenow="25" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:100%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>string</code></span><span>22</span></div><div class="progress" role="progressbar" aria-label="string" aria-valuenow="22" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:88%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>bool</code></span><span>10</span></div><div class="progress" role="progressbar" aria-label="bool" aria-valuenow="10" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:40%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>uuid</code></span><span>9</span></div><div class="progress" role="progressbar" aria-label="uuid" aria-valuenow="9" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:36%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>text</code></span><span>7</span></div><div class="progress" role="progressbar" aria-label="text" aria-valuenow="7" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:28%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>timestamp</code></span><span>6</span></div><div class="progress" role="progressbar" aria-label="timestamp" aria-valuenow="6" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:24%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>date</code> / <code>decimal</code></span><span>5</span></div><div class="progress" role="progressbar" aria-label="date and decimal" aria-valuenow="5" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:20%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>enum</code></span><span>4</span></div><div class="progress" role="progressbar" aria-label="enum" aria-valuenow="4" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:16%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>int32</code></span><span>3</span></div><div class="progress" role="progressbar" aria-label="int32" aria-valuenow="3" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:12%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>int8</code> / <code>time</code></span><span>2</span></div><div class="progress" role="progressbar" aria-label="int8 and time" aria-valuenow="2" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:8%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>datetime</code></span><span>1</span></div><div class="progress" role="progressbar" aria-label="datetime" aria-valuenow="1" aria-valuemin="0" aria-valuemax="25"><div class="progress-bar" style="width:4%"></div></div></div>
+        </div>
+        <div class="col-md-6">
+          <h3 class="h6">Constraint tokens</h3>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>fk</code></span><span>21</span></div><div class="progress" role="progressbar" aria-label="fk" aria-valuenow="21" aria-valuemin="0" aria-valuemax="21"><div class="progress-bar bg-secondary" style="width:100%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>index</code></span><span>20</span></div><div class="progress" role="progressbar" aria-label="index" aria-valuenow="20" aria-valuemin="0" aria-valuemax="21"><div class="progress-bar bg-secondary" style="width:95%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>auto</code></span><span>15</span></div><div class="progress" role="progressbar" aria-label="auto" aria-valuenow="15" aria-valuemin="0" aria-valuemax="21"><div class="progress-bar bg-secondary" style="width:71%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>pk</code></span><span>13</span></div><div class="progress" role="progressbar" aria-label="pk" aria-valuenow="13" aria-valuemin="0" aria-valuemax="21"><div class="progress-bar bg-secondary" style="width:62%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>unique</code></span><span>9</span></div><div class="progress" role="progressbar" aria-label="unique" aria-valuenow="9" aria-valuemin="0" aria-valuemax="21"><div class="progress-bar bg-secondary" style="width:43%"></div></div></div>
+          <div class="stat-bar-row"><div class="d-flex justify-content-between small"><span><code>immutable</code></span><span>2</span></div><div class="progress" role="progressbar" aria-label="immutable" aria-valuenow="2" aria-valuemin="0" aria-valuemax="21"><div class="progress-bar bg-secondary" style="width:10%"></div></div></div>
+          <p class="text-secondary small mt-3 mb-0">Not used at all: <code>not_null</code>, <code>check</code>, <code>default</code>, <code>virtual</code>, <code>encrypted</code>, <code>deprecated</code> — 6 of 12 defined tokens go untouched in this particular model.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VALIDATION ============ -->
+    <section id="validation" class="mb-5">
+      <h2 class="h5">Formal validation — spec §9.4</h2>
+      <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16" class="flex-shrink-0 mt-1" aria-hidden="true"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>
+        <div>These 9 checks pass only <strong>after</strong> stripping 29 lines of <code>//</code> comments from <code>university_course_map.json</code> — the file does not parse with a strict JSON parser as uploaded. See Finding 1.</div>
+      </div>
+      <ul class="list-group">
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> Unique <code>id</code> across all entities — 18/18</li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> Unique <code>id</code> across all relations — 21/21</li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> Every relation's <code>from</code>/<code>to</code> references an existing entity</li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> Every <code>from_field</code> exists on its entity</li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> Every <code>to_field</code> exists on its entity</li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> <code>enum</code>-typed fields have a valid <code>ref_id</code></li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-secondary-color)" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/></svg> <code>array</code> fields have <code>items_type</code> — <span class="text-secondary">N/A, no array-typed fields exist</span></li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> <code>enum</code>-kind entities carry no <code>type</code> on their fields</li>
+        <li class="list-group-item d-flex align-items-center gap-2"><svg width="16" height="16" fill="var(--bs-success)" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> No field has both <code>nullable: true</code> and <code>not_null</code></li>
+      </ul>
+    </section>
+
+    <!-- ============ FINDINGS ============ -->
+    <section id="findings" class="mb-4">
+      <h2 class="h5">Findings — cross-checking the files against each other</h2>
+      <div class="accordion" id="findings-accordion">
+
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#f1">
+              <span class="badge text-bg-warning me-2">Format</span> The <code>.json</code> file isn't strict JSON
+            </button>
+          </h3>
+          <div id="f1" class="accordion-collapse collapse show" data-bs-parent="#findings-accordion">
+            <div class="accordion-body">
+              <p><code>university_course_map.json</code> contains 29 lines of <code>//</code> section-divider comments (JSONC style). Standard parsers — <code>JSON.parse()</code>, Python's <code>json.load()</code>, <code>jq</code> — fail on it as uploaded. The spec itself only sanctions comments via the <code>$comment</code>/<code>comment</code> keys, never raw <code>//</code>. After stripping those 29 lines, the file parses cleanly and passes every §9.4 rule above.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">
+              <span class="badge text-bg-info me-2">Comment vs. constraint</span> A relation's comment contradicts its own field
+            </button>
+          </h3>
+          <div id="f2" class="accordion-collapse collapse" data-bs-parent="#findings-accordion">
+            <div class="accordion-body">
+              <p>The <code>dept_has_teachers</code> relation (<code>kind: "aggregation"</code>) carries this comment:</p>
+              <p class="finding-quote">"Many teachers belong to one department. Teachers can exist without a department (visiting staff), but a department cannot be deleted while teachers reference it."</p>
+              <p>But <code>teacher.department_id</code> is declared <code>"nullable": false</code> with <code>cascade: "restrict"</code> — the schema does not actually allow a teacher without a department, contradicting the comment. For contrast, <code>lesson_held_in_room</code> gets this right: <code>room_id</code> really is <code>nullable: true</code>, <code>cascade: "set_null"</code>, and its comment ("Nullable for online-only lessons") matches the schema exactly.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f3">
+              <span class="badge text-bg-danger me-2">Diagram vs. JSON</span> "Head of department" shown as mandatory, declared optional
+            </button>
+          </h3>
+          <div id="f3" class="accordion-collapse collapse" data-bs-parent="#findings-accordion">
+            <div class="accordion-body">
+              <p>The most concrete, unambiguous finding. In JSON, <code>dept_head_is_teacher</code> is explicitly optional: <code>"multiplicity": "one_to_zero_one"</code>, and <code>department.head_teacher_id</code> is <code>"nullable": true</code> ("set after teachers exist").</p>
+              <p>The diagram draws it as:</p>
+              <p class="finding-quote"><code>DEPARTMENT }o--|| TEACHER : "headed by"</code></p>
+              <p>The <code>||</code> token on the TEACHER side means <em>exactly one, mandatory</em> in Mermaid's crow's-foot notation — directly contradicting the JSON's own <code>nullable: true</code>. The correct token for "zero or one" (<code>o|</code>/<code>|o</code>) never appears anywhere across all 21 relations in the diagram — of the 4 nullable-FK relations in the model, this is the only one where the JSON itself expressed the optionality precisely (via <code>one_to_zero_one</code>), and the diagram still got it wrong.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f4">
+              <span class="badge text-bg-secondary me-2">Dead code</span> <code>DayOfWeek</code> enum is defined but never used
+            </button>
+          </h3>
+          <div id="f4" class="accordion-collapse collapse" data-bs-parent="#findings-accordion">
+            <div class="accordion-body">
+              <p><code>day_of_week</code> is the only one of 5 enum entities with zero <code>ref_id</code> references anywhere in the model — no field, anywhere, points to it. It looks like groundwork for a recurring-schedule feature (e.g. "every Tuesday") that was never wired up: <code>Lesson</code> uses a concrete <code>scheduled_date</code> instead.</p>
+              <p class="mb-0">It's also incomplete: the comment calls it "ISO weekday for recurring schedule slots," but it only lists 6 values (<code>MON, TUE, WED, THU, FRI, SAT</code>) — no <code>SUN</code>. A six-day academic week is a plausible reason, but the comment doesn't say so.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-secondary small border-top pt-3">
+    Cross-checked: <code>EntityMapJSONLanguage.md</code> · <code>university_course_map.json</code> · <code>university_erd.html</code>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+  // Page-level chrome: theme toggle. Identical pattern to university_erd.html —
+  // no widget/controller on this page, since every interactive element
+  // (accordion, nav links) is native Bootstrap with zero custom JS needed.
+  const MOON_ICON = '<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/><path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.73 1.73 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097z"/></svg>';
+  const SUN_ICON = '<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/></svg>';
+
+  function syncThemeButton(isDark) {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    btn.querySelector('.theme-toggle-icon').innerHTML = isDark ? SUN_ICON : MOON_ICON;
+    btn.querySelector('.theme-toggle-text').textContent = isDark ? 'Light theme' : 'Dark theme';
+    btn.setAttribute('aria-pressed', String(isDark));
+  }
+
+  syncThemeButton(document.documentElement.getAttribute('data-bs-theme') === 'dark');
+
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
+    syncThemeButton(e.matches);
+  });
+  document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-bs-theme') !== 'dark';
+    document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+    syncThemeButton(isDark);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+@import url("vars.css");
+
+/* Base reset: strip default spacing and switch to border-box */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+/*
+  Site header
+  Sticky header with logo, navigation, and theme toggle.
+*/
+.site-header {
+  background: var(--color-ink);
+  color: #fff;
+  position: sticky;
+  top: 0;
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.nav__list {
+  display: flex;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.nav__link {
+  color: #cfd8dc;
+  text-decoration: none;
+}
+
+.nav__link:hover {
+  color: var(--color-accent);
+}
+
+/*
+  Button
+  The main interactive element. Modifiers:
+  .btn--primary - solid accent fill for primary actions
+  .btn--ghost - transparent button for secondary actions
+*/
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* First-screen hero section */
+.hero {
+  padding: 96px 0;
+  text-align: center;
+}
+
+.hero__title {
+  font-family: var(--font-display);
+  font-size: 48px;
+  margin-bottom: var(--space-2);
+}
+
+.hero__subtitle {
+  font-size: 18px;
+  color: #4b5a67;
+  margin-bottom: var(--space-3);
+}
+
+.hero__form {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: center;
+}
+
+.input {
+  padding: 10px 14px;
+  border: 1px solid #d0d5da;
+  border-radius: var(--radius);
+  min-width: 260px;
+}
+
+/* Feature card grid */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: var(--space-3);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  box-shadow: 0 4px 14px rgba(22, 39, 63, 0.08);
+}
+
+.card__title {
+  margin-bottom: var(--space-1);
+}
+
+/* Pricing table */
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pricing-table th,
+.pricing-table td {
+  border-bottom: 1px solid #e2e6ea;
+  padding: var(--space-2);
+  text-align: left;
+}
+
+.site-footer {
+  background: var(--color-ink);
+  color: #9fb0bd;
+  padding: var(--space-3) 0;
+  text-align: center;
+}
+
+/* Responsive tweaks for tablets and phones */
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__title {
+    font-size: 32px;
+  }
+
+  .hero__form {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 420px) {
+  .nav__list {
+    display: none;
+  }
+}
+
+/*
+  Promo banner
+  Not used on any page yet — kept around for a future campaign.
+*/
+.promo-banner {
+  background: var(--color-accent);
+  color: #fff;
+  padding: var(--space-2);
+}

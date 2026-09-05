@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Skylark demo landing page — a sample project for the documentation generator">
+  <title>Skylark — drone film studio</title>
+  <link rel="stylesheet" href="css/vars.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Site header: logo, navigation, CTA -->
+  <header class="site-header" id="top">
+    <div class="container site-header__inner">
+      <a href="index.html" class="logo">Skylark</a>
+      <nav class="nav">
+        <ul class="nav__list">
+          <li><a href="#features" class="nav__link">Features</a></li>
+          <li><a href="#pricing" class="nav__link">Pricing</a></li>
+          <li><a href="about.html" class="nav__link">About</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn--ghost" id="theme-toggle" aria-label="Toggle theme">🌓</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero section -->
+    <section class="hero" id="hero">
+      <div class="container hero__inner">
+        <h1 class="hero__title">Film the world from a bird's-eye view</h1>
+        <p class="hero__subtitle">Professional drones and training for videographers and photographers.</p>
+        <form class="hero__form" id="lead-form">
+          <input type="email" name="email" id="lead-email" class="input" placeholder="you@example.com" required>
+          <button type="submit" class="btn btn--primary" id="lead-submit">Get the catalog</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+      <div class="container">
+        <h2 class="section-title">Features</h2>
+        <div class="cards" id="cards-list">
+          <article class="card">
+            <h3 class="card__title">4K video</h3>
+            <p class="card__text">4K/60fps footage with stabilization.</p>
+          </article>
+          <article class="card">
+            <h3 class="card__title">60-minute flights</h3>
+            <p class="card__text">Extended battery for long sessions.</p>
+          </article>
+          <article class="card">
+            <h3 class="card__title">Autopilot</h3>
+            <p class="card__text">Ready-made flight paths around a subject.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing" id="pricing">
+      <div class="container">
+        <h2 class="section-title">Pricing</h2>
+        <table class="pricing-table" id="pricing-table">
+          <thead>
+            <tr><th>Plan</th><th>Price</th><th>Drones</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Starter</td><td>—</td><td>1</td></tr>
+            <tr><td>Studio</td><td>—</td><td>5</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 Skylark. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

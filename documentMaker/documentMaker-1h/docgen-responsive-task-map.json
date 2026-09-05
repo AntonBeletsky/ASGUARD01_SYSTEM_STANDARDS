@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "total_issues": 4,
+    "guide_version": "docgen-responsive-audit-1 (mobile viewport 430x932 field test)"
+  },
+  "files": [
+    {
+      "file": "doc_generator.py",
+      "issues": [
+        {
+          "id": "docgen-r1",
+          "category": "SIDEBAR_TOGGLE_INVISIBLE",
+          "severity": "CRITICAL",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 3007,
+              "end": 3007
+            },
+            "context": "<button id=\"sidebar-toggle\" ... style=\"...;display:none\">\u2606</button>",
+            "scope": "DOCUMENT_TEMPLATE + @media (max-width: 880px) block, line 2094"
+          },
+          "current": "The hamburger button exists in markup and its click handler already toggles .sidebar.open in DOC_JS, but nothing ever overrides its inline display:none -- the sidebar is moved off-screen at <=880px (line 2095) with literally no visible control to bring it back.",
+          "expected": "Add '#sidebar-toggle { display: block; }' inside the existing @media (max-width: 880px) block. No JS change needed -- the open/close logic already works, it's purely a missing CSS override.",
+          "description": "Confirmed by screenshot at 430x932: no sidebar, no visible way to reach it, and the file tree -- the primary navigation for the whole document -- is completely unreachable on a phone.",
+          "rule_ref": "DOC_CSS \u00a7media(max-width:880px) already handles .sidebar/.content/#doc-search for this breakpoint; the toggle button was left out",
+          "dependencies": [],
+          "status": "done"
+        },
+        {
+          "id": "docgen-r2",
+          "category": "TOPBAR_OVERFLOW",
+          "severity": "HIGH",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 1855,
+              "end": 1886
+            },
+            "context": ".topbar { display: flex; ... } .topbar .meta { ... white-space: nowrap; }",
+            "scope": "DOC_CSS .topbar and children"
+          },
+          "current": "brand name + generated-timestamp + 3 stat chips + search input are all white-space:nowrap flex children with no wrap/hide strategy; on a 430px viewport this doesn't fit and the row overflows/clips (confirmed: timestamp text cut off mid-word in screenshot, horizontal scrollbar present).",
+          "expected": "In the existing 880px media query, hide the lowest-value elements first: .topbar .meta (timestamp -- already duplicated nowhere else, but least essential) and the .stat-chip trio (same counts are already in the Overview stat cards) via display:none, and let .brand truncate with text-overflow:ellipsis in a constrained flex-basis instead of pure nowrap.",
+          "description": "Same screenshot: 'generated 2026-08-31 08:2...' is visibly clipped at the viewport edge, and a horizontal scrollbar is visible at the very top of the page.",
+          "rule_ref": "chat finding -- topbar has zero children marked expendable at the existing mobile breakpoint",
+          "dependencies": [
+            {
+              "issue_id": "docgen-r1",
+              "file": "doc_generator.py",
+              "description": "Both land in the same @media block; sensible to land together rather than as two separate mobile-CSS passes."
+            }
+          ],
+          "status": "done"
+        },
+        {
+          "id": "docgen-r3",
+          "category": "STRUCT_TABLE_OVERFLOW",
+          "severity": "HIGH",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 2430,
+              "end": 2876
+            },
+            "context": "10 call sites emit <table class=\"struct-table\"> directly with no wrapping element",
+            "scope": "_struct_panel_html/_struct_panel_css/_struct_panel_js/build_overview_section"
+          },
+          "current": "Unlike pre.code (line 2062) and .dep-graph-wrap (line 1998), which both have overflow-x:auto, none of the 10 struct-table emission sites are wrapped in a scrollable container -- a table with a long selector string or file path forces the whole page to scroll horizontally instead of just that table.",
+          "expected": "Add a single '.table-wrap { overflow-x: auto; }' CSS rule and wrap each of the 10 '<table class=\"struct-table\">' emissions in '<div class=\"table-wrap\">...</div>' -- one CSS rule, ten mechanical wraps, no per-table special-casing needed.",
+          "description": "Not directly visible in the two provided screenshots (Skylark's table content happens to be short), but confirmed by code inspection: every other horizontally-constrained element in this document has an overflow wrapper except these ten, which is the kind of inconsistency likely to surface exactly when someone's DOM-query selectors or file paths are longer than Skylark's.",
+          "rule_ref": "internal consistency -- pre.code and .dep-graph-wrap already establish the overflow-x:auto wrapper pattern this should follow",
+          "dependencies": [],
+          "status": "done"
+        },
+        {
+          "id": "docgen-r4",
+          "category": "SIDEBAR_NO_BULK_TOGGLE",
+          "severity": "LOW",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 2270,
+              "end": 2287
+            },
+            "context": "build_sidebar_tree() / _render_children_html() -- per-folder <details> only, no all-at-once control",
+            "scope": "sidebar tree rendering"
+          },
+          "current": "Folder collapsing already works natively (<details>/<summary>, confirmed working) and asset-file grouping already works for both flat and nested layouts (confirmed working via direct test against the exact file list from the screenshot). What's genuinely missing is only a convenience on top of both: no single 'collapse all / expand all' control for a project with many top-level folders.",
+          "expected": "One small control (plain <button>, a few lines of JS toggling every .tree details[open] at once) above the tree -- optional polish, not a fix for broken behavior.",
+          "description": "Raised in response to 'is folder collapsing supported' -- yes, already shipped; this is the one adjacent, genuinely-missing convenience worth naming so it doesn't get silently dropped from consideration.",
+          "rule_ref": "none -- enhancement, not a violation of any existing documented behavior",
+          "dependencies": [],
+          "status": "done"
+        }
+      ]
+    }
+  ]
+}

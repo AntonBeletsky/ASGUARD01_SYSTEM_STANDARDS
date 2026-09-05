@@ -1,0 +1,18 @@
+/* ==========================================================================
+   Design tokens
+   Single source of truth for the project's colors, fonts, and spacing.
+   ========================================================================== */
+
+:root {
+  --color-primary: #2f6f62;
+  --color-primary-dark: #1f4b41;
+  --color-accent: #c08a3e;
+  --color-ink: #16273f;
+  --color-paper: #f7f7f5;
+  --font-display: Georgia, serif;
+  --font-body: -apple-system, "Segoe UI", sans-serif;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --radius: 10px;
+}

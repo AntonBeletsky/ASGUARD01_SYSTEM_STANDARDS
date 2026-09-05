@@ -1,0 +1,18 @@
+@import url("base.css");
+@import url("print.css") print;
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.card {
+  padding: 10px;
+  border-radius: 4px;
+}
+.btn {
+  background: blue;
+}
+.unused-badge {
+  color: gold;
+  display: none;
+}

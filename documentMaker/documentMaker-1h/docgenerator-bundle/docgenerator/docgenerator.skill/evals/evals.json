@@ -1,0 +1,35 @@
+{
+  "skill_name": "docgenerator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I've got an old landing page project in ./client-site (index.html, a couple CSS files, one app.js). Can you document it for me? I want something I can just open in a browser.",
+      "expected_output": "Runs scripts/doc_generator.py against ./client-site, produces a single self-contained documentation.html, presents it as a file, and gives a short (1-2 sentence) orientation to what's inside rather than re-describing every section.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I'm handing this repo off to a contractor who's never seen it. Can you help them get oriented? It's a static HTML/CSS/JS site, no framework.",
+      "expected_output": "Recognizes this as Mode A (a deliverable would genuinely help a handoff) even though the word 'documentation' never appears, runs the generator, and frames the result as an onboarding aid.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Quick question - in this project, does script.js touch anything in about.html, or only index.html?",
+      "expected_output": "Mode B: runs the generator (or imports doc_generator functions directly) to get ground-truth DOM/edge data rather than eyeballing the source files, then answers the specific question directly in chat - no file necessarily produced or presented unless it's genuinely useful here.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Can you generate documentation for my app? It's mostly .tsx files with a few .css modules, built with Vite.",
+      "expected_output": "Runs the tool but proactively flags, before or alongside the results, that TypeScript/JSX/CSS Modules are outside what this analysis can see (per references/limitations.md) - doesn't present a sparse result as if it were a complete picture, and doesn't silently skip running it either.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Document the frontend in ./project - everything's under ./project/vendor/webapp actually, sorry, should've said that.",
+      "expected_output": "First run reports 0 or very few files found; agent recognizes the likely cause (scanned root doesn't contain the real source, or 'vendor' is in the default ignore list), checks with the user or retries against the corrected path, rather than reporting an empty/broken result as final.",
+      "files": []
+    }
+  ]
+}
