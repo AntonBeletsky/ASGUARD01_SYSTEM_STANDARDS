@@ -1,0 +1,10 @@
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.card {
+  padding: 20px;
+}
+.btn {
+  font-weight: bold;
+}

@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "generatedAt": "2026-08-23T19:41:18.319438+00:00",
+    "mode": "extended",
+    "totalFiles": 12,
+    "htmlPages": 3,
+    "cssFiles": 6,
+    "jsFiles": 3
+  },
+  "classification": {
+    "shared": [
+      "assets/css/base.css",
+      "assets/css/print.css",
+      "assets/css/shared.css",
+      "assets/js/main.js"
+    ],
+    "page-specific": [
+      "assets/css/pages/shop.css",
+      "assets/js/pages/shop.js"
+    ],
+    "orphan": [
+      "assets/css/unused.css"
+    ],
+    "vendor": [
+      "assets/css/vendor/tiny-lib.min.css",
+      "assets/js/vendor/tiny-lib.min.js"
+    ]
+  },
+  "conflicts": {
+    "css": [
+      {
+        "conflict_type": "css-selector",
+        "name": ".btn",
+        "files": [
+          "assets/css/pages/shop.css",
+          "assets/css/shared.css"
+        ],
+        "severity": "medium",
+        "detail": "different properties — the cascade will combine them without loss"
+      },
+      {
+        "conflict_type": "css-selector",
+        "name": ".card",
+        "files": [
+          "assets/css/pages/shop.css",
+          "assets/css/shared.css"
+        ],
+        "severity": "high",
+        "detail": "overlapping properties with different values: ['padding']"
+      },
+      {
+        "conflict_type": "css-selector",
+        "name": ".container",
+        "files": [
+          "assets/css/base.css",
+          "assets/css/print.css",
+          "assets/css/shared.css"
+        ],
+        "severity": "low",
+        "detail": "overlapping properties, but the values match"
+      }
+    ],
+    "js": [
+      {
+        "conflict_type": "js-symbol",
+        "name": "initApp",
+        "files": [
+          "assets/js/main.js",
+          "assets/js/pages/shop.js"
+        ],
+        "severity": "high",
+        "detail": "same name, different body — the last definition silently wins when concatenated"
+      }
+    ],
+    "jsOrder": []
+  },
+  "externalAssets": [
+    {
+      "page": "index.html",
+      "kind": "js-src",
+      "href": "https://cdn.example.com/analytics.js",
+      "line": 6
+    }
+  ],
+  "dominoTop": [
+    {
+      "file": "assets/css/base.css",
+      "affectedPages": 3
+    },
+    {
+      "file": "assets/css/print.css",
+      "affectedPages": 3
+    },
+    {
+      "file": "assets/css/shared.css",
+      "affectedPages": 3
+    },
+    {
+      "file": "assets/js/main.js",
+      "affectedPages": 3
+    }
+  ],
+  "cache": {
+    "reused": 0,
+    "rescanned": 12
+  },
+  "usage": {
+    "unusedCss": [
+      ".never-linked",
+      ".tl-col",
+      ".tl-row",
+      ".unused-badge"
+    ],
+    "dynamicSuspectCss": [],
+    "unusedJs": [
+      "legacyHelper",
+      "tl"
+    ]
+  },
+  "output": {
+    "css": "/home/claude/fixture/dist/style.css",
+    "js": "/home/claude/fixture/dist/scripts.js",
+    "cssSizeBytes": 3264,
+    "jsSizeBytes": 1735,
+    "originalCssBytes": 564,
+    "originalJsBytes": 353
+  }
+}
