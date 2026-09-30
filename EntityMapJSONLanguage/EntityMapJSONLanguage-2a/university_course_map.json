@@ -1,0 +1,1199 @@
+{
+  "$entitymap": "1.0",
+  "$comment": "University Course Management — educational EntityMap example. Covers departments, teachers, students, courses, lessons, attendance, assignments and grading.",
+
+  "meta": {
+    "title":       "University Course Domain Model",
+    "version":     "1.0.0",
+    "author":      "EntityMap Example",
+    "created":     "2025-04-28",
+    "description": "A complete academic domain: departments house teachers and courses; students enroll per semester; lessons run in rooms; attendance is tracked per lesson; assignments are submitted and graded; a final course grade is stored per enrollment.",
+    "tags": ["university", "education", "courses", "students", "grading"]
+  },
+
+  "entities": [
+
+    // ═══════════════════════════════════════════════════════════════
+    //  ENUMERATIONS
+    // ═══════════════════════════════════════════════════════════════
+
+    {
+      "id":      "lesson_type",
+      "name":    "LessonType",
+      "kind":    "enum",
+      "comment": "Academic format of a lesson session.",
+      "fields": [
+        { "name": "LECTURE",  "comment": "One teacher speaks to the full group. Theory-heavy." },
+        { "name": "SEMINAR",  "comment": "Interactive discussion, student presentations." },
+        { "name": "LAB",      "comment": "Hands-on laboratory or computer practice." },
+        { "name": "PRACTICE", "comment": "Guided exercise session, smaller group." },
+        { "name": "EXAM",     "comment": "Formal examination session." },
+        { "name": "CONSULT",  "comment": "Optional office-hour style consultation." }
+      ]
+    },
+
+    {
+      "id":      "day_of_week",
+      "name":    "DayOfWeek",
+      "kind":    "enum",
+      "comment": "ISO weekday for recurring schedule slots.",
+      "fields": [
+        { "name": "MON" }, { "name": "TUE" }, { "name": "WED" },
+        { "name": "THU" }, { "name": "FRI" }, { "name": "SAT" }
+      ]
+    },
+
+    {
+      "id":      "attendance_status",
+      "name":    "AttendanceStatus",
+      "kind":    "enum",
+      "comment": "How a student's presence at a lesson is recorded.",
+      "fields": [
+        { "name": "PRESENT", "comment": "Was in the room on time." },
+        { "name": "LATE",    "comment": "Arrived, but after the lesson started." },
+        { "name": "ABSENT",  "comment": "Did not attend. No reason given." },
+        { "name": "EXCUSED", "comment": "Absent with an accepted medical or admin excuse." }
+      ]
+    },
+
+    {
+      "id":      "grade_letter",
+      "name":    "GradeLetter",
+      "kind":    "enum",
+      "comment": "Standard letter-grade scale used for final course grades.",
+      "fields": [
+        { "name": "A", "comment": "Excellent — 90–100 points." },
+        { "name": "B", "comment": "Good — 75–89 points." },
+        { "name": "C", "comment": "Satisfactory — 60–74 points." },
+        { "name": "D", "comment": "Poor — 50–59 points. Conditionally passes." },
+        { "name": "F", "comment": "Fail — below 50 points. Must retake." }
+      ]
+    },
+
+    {
+      "id":      "submission_status",
+      "name":    "SubmissionStatus",
+      "kind":    "enum",
+      "comment": "Lifecycle state of a student assignment submission.",
+      "fields": [
+        { "name": "DRAFT",     "comment": "Saved by student but not submitted yet." },
+        { "name": "SUBMITTED", "comment": "Handed in, awaiting review." },
+        { "name": "GRADED",    "comment": "Teacher has reviewed and scored." },
+        { "name": "RETURNED",  "comment": "Sent back for revision." },
+        { "name": "LATE",      "comment": "Submitted after the deadline." }
+      ]
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    //  CORE ACADEMIC STRUCTURE
+    // ═══════════════════════════════════════════════════════════════
+
+    {
+      "id":      "department",
+      "name":    "Department",
+      "kind":    "class",
+      "comment": "Academic department (кафедра). Groups related courses and teachers under one organizational unit.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"],
+          "comment": "Surrogate primary key."
+        },
+        {
+          "name": "code",
+          "type": "string",
+          "length": 10,
+          "nullable": false,
+          "constraints": ["unique"],
+          "comment": "Short department code, e.g. 'CS', 'MATH', 'PHYS'."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "length": 150,
+          "nullable": false,
+          "comment": "Full official name of the department."
+        },
+        {
+          "name": "building",
+          "type": "string",
+          "length": 50,
+          "nullable": true,
+          "comment": "Main building where the department is located."
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "length": 100,
+          "nullable": true,
+          "constraints": ["unique"],
+          "comment": "Contact email address for the department office."
+        },
+        {
+          "name": "head_teacher_id",
+          "type": "id",
+          "nullable": true,
+          "constraints": ["fk"],
+          "comment": "FK → Teacher.id. Head / chair of the department. Nullable: set after teachers exist."
+        }
+      ]
+    },
+
+    {
+      "id":      "semester",
+      "name":    "Semester",
+      "kind":    "class",
+      "comment": "An academic term. Enrollments, lessons, and grades belong to a specific semester.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "length": 20,
+          "nullable": false,
+          "constraints": ["unique"],
+          "comment": "Human label, e.g. 'Fall 2025', 'Spring 2026'."
+        },
+        {
+          "name": "start_date",
+          "type": "date",
+          "nullable": false,
+          "comment": "First day of the semester (classes start)."
+        },
+        {
+          "name": "end_date",
+          "type": "date",
+          "nullable": false,
+          "comment": "Last day of the semester (including exam week)."
+        },
+        {
+          "name": "is_active",
+          "type": "bool",
+          "default": false,
+          "comment": "True for the currently running semester. At most one should be true at a time.",
+          "$comment": "Enforce single-active constraint at application level or via DB trigger."
+        }
+      ]
+    },
+
+    {
+      "id":      "room",
+      "name":    "Room",
+      "kind":    "class",
+      "comment": "Physical classroom or lecture hall where lessons take place.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "number",
+          "type": "string",
+          "length": 20,
+          "nullable": false,
+          "constraints": ["unique"],
+          "comment": "Room identifier, e.g. '101', 'A-204', 'Online'."
+        },
+        {
+          "name": "building",
+          "type": "string",
+          "length": 50,
+          "nullable": true,
+          "comment": "Building name or abbreviation."
+        },
+        {
+          "name": "capacity",
+          "type": "int32",
+          "nullable": false,
+          "comment": "Max number of students the room can hold."
+        },
+        {
+          "name": "has_projector",
+          "type": "bool",
+          "default": false,
+          "comment": "Whether the room has a projector / display."
+        },
+        {
+          "name": "has_computers",
+          "type": "bool",
+          "default": false,
+          "comment": "Whether the room has workstation computers (lab room)."
+        }
+      ]
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    //  PEOPLE
+    // ═══════════════════════════════════════════════════════════════
+
+    {
+      "id":        "teacher",
+      "name":      "Teacher",
+      "kind":      "class",
+      "namespace": "people",
+      "comment":   "University instructor. Belongs to one department, can teach multiple courses.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "constraints": ["pk", "auto"],
+          "comment": "UUID primary key."
+        },
+        {
+          "name": "department_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Department.id. Primary department affiliation."
+        },
+        {
+          "name": "first_name",
+          "type": "string",
+          "length": 80,
+          "nullable": false
+        },
+        {
+          "name": "last_name",
+          "type": "string",
+          "length": 80,
+          "nullable": false,
+          "constraints": ["index"],
+          "comment": "Indexed for name-based search."
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "length": 254,
+          "nullable": false,
+          "constraints": ["unique"]
+        },
+        {
+          "name": "academic_title",
+          "type": "string",
+          "length": 60,
+          "nullable": true,
+          "comment": "e.g. 'Prof.', 'Dr.', 'Assoc. Prof.'"
+        },
+        {
+          "name": "bio",
+          "type": "text",
+          "nullable": true,
+          "comment": "Short teacher biography for student-facing profile."
+        },
+        {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "comment": "False = on leave or no longer employed."
+        }
+      ],
+      "methods": [
+        {
+          "name":    "fullName",
+          "visibility": "public",
+          "returns": "string",
+          "comment": "Returns 'Dr. John Smith' format with title prefix."
+        }
+      ]
+    },
+
+    {
+      "id":        "student",
+      "name":      "Student",
+      "kind":      "class",
+      "namespace": "people",
+      "comment":   "Person enrolled at the university. Can enroll in multiple courses per semester.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "student_number",
+          "type": "string",
+          "length": 20,
+          "nullable": false,
+          "constraints": ["unique", "index"],
+          "comment": "Official university student ID number."
+        },
+        {
+          "name": "first_name",
+          "type": "string",
+          "length": 80,
+          "nullable": false
+        },
+        {
+          "name": "last_name",
+          "type": "string",
+          "length": 80,
+          "nullable": false,
+          "constraints": ["index"]
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "length": 254,
+          "nullable": false,
+          "constraints": ["unique"],
+          "comment": "University-issued student email."
+        },
+        {
+          "name": "date_of_birth",
+          "type": "date",
+          "nullable": true
+        },
+        {
+          "name": "year_of_study",
+          "type": "int8",
+          "nullable": false,
+          "comment": "Academic year level: 1 = freshman … 4 = senior (or 5/6 for longer programs)."
+        },
+        {
+          "name": "gpa",
+          "type": "decimal",
+          "precision": 4,
+          "scale": 2,
+          "nullable": true,
+          "comment": "Cumulative GPA, recalculated after each semester. NULL = no grades yet.",
+          "$comment": "Consider computing this as a DB view rather than storing it."
+        },
+        {
+          "name": "enrolled_at",
+          "type": "date",
+          "nullable": false,
+          "constraints": ["immutable"],
+          "comment": "Date the student was first admitted to the university."
+        },
+        {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "comment": "False = graduated, suspended, or withdrawn."
+        }
+      ],
+      "methods": [
+        {
+          "name":    "fullName",
+          "visibility": "public",
+          "returns": "string",
+          "comment": "Returns 'First Last' display string."
+        },
+        {
+          "name":    "activeEnrollments",
+          "visibility": "public",
+          "returns": "array",
+          "comment": "Returns enrollments in the currently active semester."
+        }
+      ]
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    //  COURSES & LESSONS
+    // ═══════════════════════════════════════════════════════════════
+
+    {
+      "id":      "course",
+      "name":    "Course",
+      "kind":    "class",
+      "comment": "An academic discipline / subject offered by a department. One course can run multiple semesters.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "department_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Department.id. Owning department."
+        },
+        {
+          "name": "code",
+          "type": "string",
+          "length": 15,
+          "nullable": false,
+          "constraints": ["unique"],
+          "comment": "Course code, e.g. 'CS301', 'MATH201'."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "length": 200,
+          "nullable": false,
+          "comment": "Full course title, e.g. 'Introduction to Algorithms'."
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "comment": "Syllabus summary shown to students before enrolling."
+        },
+        {
+          "name": "credits",
+          "type": "int8",
+          "nullable": false,
+          "comment": "Number of ECTS or credit-hours. Typically 3–6."
+        },
+        {
+          "name": "max_students",
+          "type": "int32",
+          "default": 30,
+          "comment": "Maximum enrollment capacity per semester offering."
+        },
+        {
+          "name": "is_elective",
+          "type": "bool",
+          "default": false,
+          "comment": "True = optional elective. False = mandatory core curriculum."
+        }
+      ]
+    },
+
+    {
+      "id":      "course_teacher",
+      "name":    "CourseTeacher",
+      "kind":    "class",
+      "comment": "Junction: which teacher(s) teach which course in a given semester. Resolves the many-to-many between Course and Teacher.",
+      "$comment": "A single course can have a lecturer + a lab instructor in the same semester.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "course_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"]
+        },
+        {
+          "name": "teacher_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["fk", "index"]
+        },
+        {
+          "name": "semester_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"]
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "length": 40,
+          "nullable": true,
+          "comment": "Optional role label, e.g. 'Lecturer', 'Lab Instructor', 'Teaching Assistant'."
+        }
+      ]
+    },
+
+    {
+      "id":      "lesson",
+      "name":    "Lesson",
+      "kind":    "class",
+      "comment": "A single scheduled class session — one occurrence of a course on a specific date and time. Attendance is tracked per lesson.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "course_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Course.id. Which course this lesson belongs to."
+        },
+        {
+          "name": "semester_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Semester.id. Redundant but useful for quick querying."
+        },
+        {
+          "name": "teacher_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Teacher.id. Who conducted this specific lesson."
+        },
+        {
+          "name": "room_id",
+          "type": "id",
+          "nullable": true,
+          "constraints": ["fk"],
+          "comment": "FK → Room.id. Nullable for fully online lessons."
+        },
+        {
+          "name": "lesson_type",
+          "type": "enum",
+          "ref_id": "lesson_type",
+          "comment": "Format of this session."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "length": 200,
+          "nullable": true,
+          "comment": "Optional topic title, e.g. 'Binary Trees — Part 2'."
+        },
+        {
+          "name": "scheduled_date",
+          "type": "date",
+          "nullable": false,
+          "constraints": ["index"],
+          "comment": "Calendar date of the lesson."
+        },
+        {
+          "name": "start_time",
+          "type": "time",
+          "nullable": false,
+          "comment": "Lesson start time (local university timezone)."
+        },
+        {
+          "name": "end_time",
+          "type": "time",
+          "nullable": false,
+          "comment": "Lesson end time."
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "nullable": true,
+          "comment": "Teacher's notes or materials link for this lesson."
+        },
+        {
+          "name": "is_cancelled",
+          "type": "bool",
+          "default": false,
+          "comment": "True if the lesson was cancelled (e.g. sick day). Attendance rows still exist but are marked EXCUSED."
+        }
+      ]
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    //  ENROLLMENT & ATTENDANCE
+    // ═══════════════════════════════════════════════════════════════
+
+    {
+      "id":      "enrollment",
+      "name":    "Enrollment",
+      "kind":    "class",
+      "comment": "Records that a specific student is registered for a specific course in a specific semester. The main junction between Student and Course.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "student_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Student.id."
+        },
+        {
+          "name": "course_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Course.id."
+        },
+        {
+          "name": "semester_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Semester.id."
+        },
+        {
+          "name": "enrolled_at",
+          "type": "timestamp",
+          "nullable": false,
+          "constraints": ["auto", "immutable"],
+          "comment": "Timestamp when the student clicked 'Enroll'."
+        },
+        {
+          "name": "dropped_at",
+          "type": "timestamp",
+          "nullable": true,
+          "comment": "If non-null, the student dropped the course on this date."
+        },
+        {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "comment": "False = dropped or administratively removed."
+        }
+      ]
+    },
+
+    {
+      "id":      "attendance",
+      "name":    "Attendance",
+      "kind":    "class",
+      "comment": "One row per (Student × Lesson). Records whether a student was present at a particular lesson.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "student_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Student.id."
+        },
+        {
+          "name": "lesson_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Lesson.id."
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "ref_id": "attendance_status",
+          "comment": "Presence status recorded by the teacher."
+        },
+        {
+          "name": "recorded_at",
+          "type": "timestamp",
+          "constraints": ["auto"],
+          "comment": "When the attendance was entered into the system."
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "length": 200,
+          "nullable": true,
+          "comment": "Optional teacher note, e.g. 'Left 20 min early.' or 'Medical certificate attached.'"
+        }
+      ]
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    //  ASSIGNMENTS & GRADING
+    // ═══════════════════════════════════════════════════════════════
+
+    {
+      "id":      "assignment",
+      "name":    "Assignment",
+      "kind":    "class",
+      "comment": "A task, homework or exam that belongs to a course. Students submit responses that get graded.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "course_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Course.id. Assignments die with their course (composition)."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "length": 200,
+          "nullable": false,
+          "comment": "Assignment title, e.g. 'Homework 3 — Sorting Algorithms'."
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "comment": "Full task description. May contain Markdown."
+        },
+        {
+          "name": "max_score",
+          "type": "int32",
+          "default": 100,
+          "comment": "Maximum points a student can earn."
+        },
+        {
+          "name": "weight",
+          "type": "decimal",
+          "precision": 5,
+          "scale": 2,
+          "default": 1.0,
+          "comment": "Weight in final course grade calculation. E.g. 0.30 = 30% of the grade.",
+          "$comment": "All assignment weights for a course should sum to 1.0."
+        },
+        {
+          "name": "due_date",
+          "type": "datetime",
+          "nullable": true,
+          "comment": "Submission deadline. Null = no deadline (in-class work)."
+        },
+        {
+          "name": "allow_late",
+          "type": "bool",
+          "default": false,
+          "comment": "Whether late submissions are accepted at all (possibly with penalty)."
+        },
+        {
+          "name": "late_penalty_pct",
+          "type": "decimal",
+          "precision": 5,
+          "scale": 2,
+          "default": 0.0,
+          "comment": "Percentage deducted per day late. 0 = no penalty (or late not allowed)."
+        }
+      ]
+    },
+
+    {
+      "id":      "submission",
+      "name":    "Submission",
+      "kind":    "class",
+      "comment": "A student's response to an assignment. One student → one submission per assignment (re-submissions update the same row).",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "assignment_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Assignment.id."
+        },
+        {
+          "name": "student_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["fk", "index"],
+          "comment": "FK → Student.id."
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "ref_id": "submission_status",
+          "comment": "Current lifecycle state."
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": true,
+          "comment": "Text body of the submission (answers, code, essay, etc.)."
+        },
+        {
+          "name": "file_url",
+          "type": "string",
+          "length": 500,
+          "nullable": true,
+          "comment": "URL of uploaded file (PDF, ZIP, etc.) in storage.",
+          "$comment": "Store in object storage (S3 / GCS). Only keep the URL here."
+        },
+        {
+          "name": "submitted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "comment": "Timestamp of final submission. Null = still a draft."
+        },
+        {
+          "name": "score",
+          "type": "decimal",
+          "precision": 7,
+          "scale": 2,
+          "nullable": true,
+          "comment": "Points awarded by the teacher. Null = not graded yet."
+        },
+        {
+          "name": "feedback",
+          "type": "text",
+          "nullable": true,
+          "comment": "Teacher's written feedback, returned to the student."
+        },
+        {
+          "name": "graded_at",
+          "type": "timestamp",
+          "nullable": true,
+          "comment": "When the teacher completed grading."
+        },
+        {
+          "name": "graded_by",
+          "type": "uuid",
+          "nullable": true,
+          "constraints": ["fk"],
+          "comment": "FK → Teacher.id. Who graded this submission."
+        }
+      ]
+    },
+
+    {
+      "id":      "course_grade",
+      "name":    "CourseGrade",
+      "kind":    "class",
+      "comment": "Final grade awarded to a student for a course at the end of a semester. One record per enrollment.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "id",
+          "constraints": ["pk", "auto"]
+        },
+        {
+          "name": "enrollment_id",
+          "type": "id",
+          "nullable": false,
+          "constraints": ["fk", "unique"],
+          "comment": "FK → Enrollment.id. One final grade per enrollment."
+        },
+        {
+          "name": "numeric_score",
+          "type": "decimal",
+          "precision": 5,
+          "scale": 2,
+          "nullable": true,
+          "comment": "Weighted average of all submission scores. Null = not yet calculated."
+        },
+        {
+          "name": "letter_grade",
+          "type": "enum",
+          "ref_id": "grade_letter",
+          "comment": "Final letter grade derived from numeric_score."
+        },
+        {
+          "name": "passed",
+          "type": "bool",
+          "nullable": false,
+          "comment": "True if the student passes the course (letter_grade ≠ F)."
+        },
+        {
+          "name": "issued_at",
+          "type": "timestamp",
+          "nullable": true,
+          "comment": "When the teacher officially submitted the grade."
+        },
+        {
+          "name": "issued_by",
+          "type": "uuid",
+          "nullable": true,
+          "constraints": ["fk"],
+          "comment": "FK → Teacher.id. Teacher who signed off the grade."
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "nullable": true,
+          "comment": "Administrative notes, e.g. 'Incomplete — medical leave. Extension granted.'"
+        }
+      ]
+    }
+
+  ],
+
+  // ═══════════════════════════════════════════════════════════════
+  //  RELATIONS
+  // ═══════════════════════════════════════════════════════════════
+
+  "relations": [
+
+    // ── Department ─────────────────────────────────────────────────
+
+    {
+      "id":           "dept_has_teachers",
+      "name":         "Department → Teacher",
+      "kind":         "aggregation",
+      "from":         "teacher",
+      "to":           "department",
+      "from_field":   "department_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict",
+      "comment":      "Many teachers belong to one department. Teachers can exist without a department (visiting staff), but a department cannot be deleted while teachers reference it."
+    },
+
+    {
+      "id":           "dept_has_courses",
+      "name":         "Department → Course",
+      "kind":         "aggregation",
+      "from":         "course",
+      "to":           "department",
+      "from_field":   "department_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict",
+      "comment":      "Many courses belong to one department."
+    },
+
+    {
+      "id":           "dept_head_is_teacher",
+      "name":         "Department.head_teacher_id → Teacher",
+      "kind":         "association",
+      "from":         "department",
+      "to":           "teacher",
+      "from_field":   "head_teacher_id",
+      "to_field":     "id",
+      "multiplicity": "one_to_zero_one",
+      "cascade":      "set_null",
+      "comment":      "A department may have one head teacher. If teacher is deleted, head becomes null."
+    },
+
+    // ── Course ↔ Teacher (many-to-many via CourseTeacher) ──────────
+
+    {
+      "id":           "course_teacher_fk_course",
+      "name":         "CourseTeacher → Course",
+      "kind":         "composition",
+      "from":         "course_teacher",
+      "to":           "course",
+      "from_field":   "course_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "delete",
+      "comment":      "CourseTeacher rows die when their course is deleted."
+    },
+
+    {
+      "id":           "course_teacher_fk_teacher",
+      "name":         "CourseTeacher → Teacher",
+      "kind":         "foreign_key",
+      "from":         "course_teacher",
+      "to":           "teacher",
+      "from_field":   "teacher_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict",
+      "comment":      "Cannot remove a teacher who is assigned to courses."
+    },
+
+    {
+      "id":           "course_teacher_fk_semester",
+      "name":         "CourseTeacher → Semester",
+      "kind":         "foreign_key",
+      "from":         "course_teacher",
+      "to":           "semester",
+      "from_field":   "semester_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict"
+    },
+
+    // ── Lesson ──────────────────────────────────────────────────────
+
+    {
+      "id":           "lesson_belongs_to_course",
+      "name":         "Lesson → Course",
+      "kind":         "composition",
+      "from":         "lesson",
+      "to":           "course",
+      "from_field":   "course_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "delete",
+      "comment":      "A lesson cannot exist without its course. Deleting a course cascades to all its lessons."
+    },
+
+    {
+      "id":           "lesson_in_semester",
+      "name":         "Lesson → Semester",
+      "kind":         "foreign_key",
+      "from":         "lesson",
+      "to":           "semester",
+      "from_field":   "semester_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict"
+    },
+
+    {
+      "id":           "lesson_taught_by_teacher",
+      "name":         "Lesson → Teacher",
+      "kind":         "association",
+      "from":         "lesson",
+      "to":           "teacher",
+      "from_field":   "teacher_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict",
+      "comment":      "Each lesson is conducted by one teacher."
+    },
+
+    {
+      "id":           "lesson_held_in_room",
+      "name":         "Lesson → Room",
+      "kind":         "aggregation",
+      "from":         "lesson",
+      "to":           "room",
+      "from_field":   "room_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "set_null",
+      "comment":      "Lessons are held in a room (aggregation: room exists independently). Nullable for online-only lessons."
+    },
+
+    // ── Enrollment ──────────────────────────────────────────────────
+
+    {
+      "id":           "enrollment_fk_student",
+      "name":         "Enrollment → Student",
+      "kind":         "foreign_key",
+      "from":         "enrollment",
+      "to":           "student",
+      "from_field":   "student_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict",
+      "comment":      "Many enrollments per student (one per course per semester)."
+    },
+
+    {
+      "id":           "enrollment_fk_course",
+      "name":         "Enrollment → Course",
+      "kind":         "foreign_key",
+      "from":         "enrollment",
+      "to":           "course",
+      "from_field":   "course_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict"
+    },
+
+    {
+      "id":           "enrollment_fk_semester",
+      "name":         "Enrollment → Semester",
+      "kind":         "foreign_key",
+      "from":         "enrollment",
+      "to":           "semester",
+      "from_field":   "semester_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict"
+    },
+
+    // ── Attendance ──────────────────────────────────────────────────
+
+    {
+      "id":           "attendance_fk_student",
+      "name":         "Attendance → Student",
+      "kind":         "foreign_key",
+      "from":         "attendance",
+      "to":           "student",
+      "from_field":   "student_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict",
+      "comment":      "Many attendance records per student."
+    },
+
+    {
+      "id":           "attendance_fk_lesson",
+      "name":         "Attendance → Lesson",
+      "kind":         "composition",
+      "from":         "attendance",
+      "to":           "lesson",
+      "from_field":   "lesson_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "delete",
+      "comment":      "Attendance rows die with their lesson (composition)."
+    },
+
+    // ── Assignment ──────────────────────────────────────────────────
+
+    {
+      "id":           "assignment_belongs_to_course",
+      "name":         "Assignment → Course",
+      "kind":         "composition",
+      "from":         "assignment",
+      "to":           "course",
+      "from_field":   "course_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "delete",
+      "comment":      "Assignments are parts of a course. They cannot exist independently."
+    },
+
+    // ── Submission ──────────────────────────────────────────────────
+
+    {
+      "id":           "submission_fk_assignment",
+      "name":         "Submission → Assignment",
+      "kind":         "composition",
+      "from":         "submission",
+      "to":           "assignment",
+      "from_field":   "assignment_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "delete",
+      "comment":      "Submissions die when the assignment is deleted."
+    },
+
+    {
+      "id":           "submission_fk_student",
+      "name":         "Submission → Student",
+      "kind":         "foreign_key",
+      "from":         "submission",
+      "to":           "student",
+      "from_field":   "student_id",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "restrict"
+    },
+
+    {
+      "id":           "submission_graded_by_teacher",
+      "name":         "Submission.graded_by → Teacher",
+      "kind":         "association",
+      "from":         "submission",
+      "to":           "teacher",
+      "from_field":   "graded_by",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "set_null",
+      "comment":      "Tracks who graded a submission. Optional: some submissions may be auto-graded."
+    },
+
+    // ── CourseGrade ─────────────────────────────────────────────────
+
+    {
+      "id":           "course_grade_fk_enrollment",
+      "name":         "CourseGrade → Enrollment",
+      "kind":         "composition",
+      "from":         "course_grade",
+      "to":           "enrollment",
+      "from_field":   "enrollment_id",
+      "to_field":     "id",
+      "multiplicity": "one_to_one",
+      "cascade":      "delete",
+      "comment":      "One final grade per enrollment. Grade cannot exist without an enrollment."
+    },
+
+    {
+      "id":           "course_grade_issued_by_teacher",
+      "name":         "CourseGrade.issued_by → Teacher",
+      "kind":         "association",
+      "from":         "course_grade",
+      "to":           "teacher",
+      "from_field":   "issued_by",
+      "to_field":     "id",
+      "multiplicity": "many_to_one",
+      "cascade":      "set_null",
+      "comment":      "The teacher who officially signed off the final grade."
+    }
+
+  ]
+}
