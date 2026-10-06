@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<!--
+  Diagram Editor — ER diagram editor, Bootstrap 5.3.8, vanilla ES2022, no jQuery.
+  Structure (containerization-11 / orchestration-2):
+    <style>   1. tokens  2. layout  3. dialog  4. states  5. responsive
+    <body>    .diagram-page (orchestrator) > .theme-container + .diagram-container
+    <script>  ThemeController, DiagramController, DiagramPageController, INIT
+  Configuration, three layers (later wins): static DEFAULTS < new DiagramController(sel, opts)
+  < data attributes, e.g. <section class="diagram-container" data-diagram-history-limit="50">.
+  Hooks in JS: data-ref (cached once), data-action, data-id, data-state only. No ids/classes as hooks.
+  Lifecycle states (root data-state), allowed transitions in DiagramController.TRANSITIONS:
+    idle -> dragging | panning | drawing | dialog;  drawing -> idle | dialog;  others -> idle.
+    Normalize is an instant command (idle -> idle): one history entry, then the view is fitted.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Diagram Editor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+<style>
+  /* 0. Page shell (orchestrator root): owns the window height, widgets only grow into it. */
+  .diagram-page { min-height: 100vh; min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  /* 1. Tokens: derived from Bootstrap variables, so both color modes work without overrides. */
+  .diagram-container {
+    --diagram-line: var(--bs-body-color);
+    --diagram-edge: var(--bs-primary);
+    --diagram-select: var(--bs-danger);
+  }
+  /* 2. Layout and child elements (Pattern A: role classes live under a prefixed ancestor). */
+  .diagram-container .diagram-canvas { position: relative; min-height: 22rem; overflow: hidden; background: var(--bs-tertiary-bg); touch-action: none; user-select: none; }
+  .diagram-container .diagram-canvas > svg { display: block; }
+  .diagram-container .diagram-entity .body { fill: var(--bs-body-bg); stroke: var(--diagram-edge); }
+  .diagram-container .diagram-entity .header { fill: var(--bs-primary-bg-subtle); stroke: var(--diagram-edge); cursor: grab; }
+  .diagram-container .diagram-entity text { fill: var(--bs-body-color); font: 11px var(--bs-font-sans-serif); pointer-events: none; }
+  .diagram-container .diagram-entity .title { fill: var(--bs-primary-text-emphasis); font-weight: 600; font-size: 12px; }
+  .diagram-container .diagram-field .cell { fill: transparent; cursor: pointer; }
+  .diagram-container .diagram-field .key { fill: var(--bs-success-text-emphasis); font-weight: 600; }
+  .diagram-container .diagram-relation .line, .diagram-container .diagram-relation .cardinality { fill: none; stroke: var(--diagram-line); stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .diagram-container .diagram-relation .cardinality { pointer-events: none; }
+  .diagram-container .diagram-relation .hit { fill: none; stroke: transparent; stroke-width: 24; vector-effect: non-scaling-stroke; pointer-events: stroke; cursor: pointer; }
+  .diagram-container .diagram-relation:hover .line, .diagram-container .diagram-relation:hover .cardinality { stroke: var(--diagram-edge); }
+  .diagram-container .diagram-relation text { fill: var(--bs-body-color); font: 11px var(--bs-font-sans-serif); paint-order: stroke; stroke: var(--bs-tertiary-bg); stroke-width: 5px; pointer-events: none; }
+  .diagram-container .btn[aria-pressed="true"] { background: var(--bs-secondary-bg); border-color: var(--bs-primary); }
+  /* 3. Dialog (custom role="dialog" overlay, state comes from this._state.modal). */
+  .diagram-container .diagram-modal-overlay { position: fixed; inset: 0; z-index: 1055; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgb(0 0 0 / .5); }
+  .diagram-container .diagram-dialog { width: min(32rem, 100%); max-height: 90vh; overflow-y: auto; }
+  /* 4. States (data-state only). */
+  .diagram-container[data-state="drawing"] .diagram-canvas { cursor: crosshair; }
+  .diagram-container[data-state="panning"] .diagram-canvas, .diagram-container[data-state="dragging"] .diagram-canvas { cursor: grabbing; }
+  .diagram-container .diagram-entity[data-state="selected"] .body, .diagram-container .diagram-entity:focus-visible .body { stroke: var(--diagram-select); stroke-width: 2.5; }
+  .diagram-container .diagram-entity:focus-visible { outline: none; }
+  .diagram-container .diagram-field[data-state="selected"] .cell { fill: var(--bs-success-bg-subtle); }
+  .diagram-container .diagram-relation[data-state="selected"] .line, .diagram-container .diagram-relation[data-state="selected"] .cardinality { stroke: var(--diagram-select); stroke-width: 3; }
+  /* 5. Responsive: touch targets, desktop inspector. */
+  @media (pointer: coarse) { .diagram-container .btn, .diagram-container .form-control, .diagram-container .form-select { min-height: 44px; } .diagram-container .btn { min-width: 44px; } .diagram-container .diagram-relation .hit { stroke-width: 44; } }
+  @media (min-width: 768px) { .diagram-container .diagram-inspector { flex: 0 0 20rem; position: relative; } .diagram-container .diagram-inspector .offcanvas-body { position: absolute; inset: 0; overflow-y: auto; padding: 1rem; } }
+</style>
+</head>
+<body>
+<div class="diagram-page bg-body text-body d-flex flex-column" data-bs-theme="light">
+  <div class="container-fluid pt-3 pb-0 d-flex flex-column flex-grow-1">
+    <header class="d-flex justify-content-between align-items-start gap-3 mb-3">
+      <div>
+        <h1 class="h3 mb-1">Diagram Editor</h1>
+        <p class="text-body-secondary small mb-0">Drag entities, draw relations, edit fields. There is no live save: export JSON when you are done.</p>
+      </div>
+      <section class="theme-container" aria-label="Theme">
+        <button type="button" class="btn btn-outline-secondary" data-action="toggle-theme" data-ref="theme-button" aria-pressed="false">Dark theme</button>
+      </section>
+    </header>
+    <main class="d-flex flex-column flex-grow-1">
+      <section class="diagram-container card shadow-sm rounded-bottom-0 flex-grow-1" aria-label="Diagram editor" data-state="idle">
+        <div class="card-header d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Diagram tools">
+          <div class="btn-group" role="group" aria-label="Create">
+            <button type="button" class="btn btn-outline-secondary" data-action="add-entity">+ Entity</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="toggle-draw-relation" data-ref="draw-button" aria-pressed="false">Draw relation</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="modal-open-junction">+ Many-to-many</button>
+          </div>
+          <button type="button" class="btn btn-outline-danger" data-action="delete-selected" data-ref="delete-button" disabled>Delete</button>
+          <div class="btn-group" role="group" aria-label="Zoom">
+            <button type="button" class="btn btn-outline-secondary" data-action="decrease-zoom" aria-label="Zoom out">&minus;</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="reset-zoom" data-ref="zoom-button" aria-label="Reset zoom, current level 100%">100%</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="increase-zoom" aria-label="Zoom in">+</button>
+          </div>
+          <button type="button" class="btn btn-outline-secondary" data-action="normalize-layout" data-ref="normalize-button" aria-label="Normalize layout">Normalize</button>
+          <div class="btn-group" role="group" aria-label="History">
+            <button type="button" class="btn btn-outline-secondary" data-action="undo-change" data-ref="undo-button" disabled>Undo</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="redo-change" data-ref="redo-button" disabled>Redo</button>
+          </div>
+          <div class="btn-group ms-md-auto" role="group" aria-label="Model">
+            <button type="button" class="btn btn-outline-secondary" data-action="modal-open-validate">Validate</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="export-model">Export JSON</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="import-model">Import JSON</button>
+          </div>
+          <button type="button" class="btn btn-outline-primary d-md-none" data-action="open-inspector">Properties</button>
+          <input type="file" accept="application/json,.json" data-action="import-file" data-ref="import-input" hidden aria-label="Import JSON file">
+        </div>
+        <div class="alert alert-danger alert-dismissible m-2 mb-0" role="alert" data-ref="error" hidden>
+          <span data-ref="error-text"></span>
+          <button type="button" class="btn-close" aria-label="Dismiss message" data-action="dismiss-error"></button>
+        </div>
+        <p class="visually-hidden" role="status" data-ref="status"></p>
+        <div class="d-flex flex-column flex-md-row flex-grow-1">
+          <div class="diagram-canvas flex-grow-1" data-ref="canvas">
+            <svg class="position-absolute top-0 start-0 w-100 h-100" data-ref="svg" role="group" aria-label="Diagram canvas. Tab to an entity, press Enter to select it, use arrow keys to move it.">
+              <rect data-action="pan-canvas" width="100%" height="100%" fill="transparent"/>
+              <g data-ref="viewport"><g data-ref="relations"></g><g data-ref="entities"></g></g>
+            </svg>
+            <span class="badge text-bg-warning position-absolute top-0 end-0 m-2" data-ref="dirty-badge" hidden>Unsaved changes</span>
+            <p class="position-absolute top-50 start-50 translate-middle text-body-secondary text-center" data-ref="empty" hidden>The model is empty. Add an entity or import a JSON file.</p>
+            <div class="position-absolute bottom-0 end-0 m-2 p-2 rounded border bg-body small pe-none d-none d-md-block" aria-hidden="true">
+              <div><svg width="34" height="12" class="me-1"><path d="M0 6h34M22 1v10" fill="none" stroke="currentColor" stroke-width="2"/></svg>one</div>
+              <div><svg width="34" height="12" class="me-1"><path d="M0 6h34M20 6l14-5M20 6l14 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>many</div>
+            </div>
+            <ul class="visually-hidden" aria-label="Model outline" data-ref="outline"></ul>
+          </div>
+          <aside class="diagram-inspector offcanvas-md offcanvas-end border-start" tabindex="-1" aria-labelledby="diagram-inspector-title" data-ref="inspector">
+            <div class="offcanvas-header d-md-none">
+              <h2 class="offcanvas-title h6" id="diagram-inspector-title">Properties</h2>
+              <button type="button" class="btn-close" aria-label="Close properties" data-action="close-inspector"></button>
+            </div>
+            <div class="offcanvas-body flex-column" data-ref="inspector-body"></div>
+          </aside>
+        </div>
+        <div class="diagram-modal-overlay" data-ref="overlay" hidden>
+          <div class="diagram-dialog card" role="dialog" aria-modal="true" aria-labelledby="diagram-dialog-title" tabindex="-1" data-ref="dialog">
+            <div class="card-header"><h2 class="h6 mb-0" id="diagram-dialog-title" data-ref="dialog-title"></h2></div>
+            <div class="card-body" data-ref="dialog-body"></div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary" data-action="modal-cancel" data-ref="dialog-cancel">Cancel</button>
+              <button type="button" class="btn btn-primary" data-action="modal-confirm" data-ref="dialog-confirm">OK</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+<script>
+(() => {
+'use strict';
+
+/** @typedef {{id:string,name:string,type:string,key:''|'PK'|'FK'|'UK'}} Field */
+/** @typedef {{id:string,name:string,x:number,y:number,fields:Field[]}} Entity */
+/** @typedef {{id:string,fromField:string,toField:string,label:string}} Relation fromField is the FK (many side), toField the PK/UK (one side). */
+
+/** Theme switch widget. Owns only its button; emits `theme:mode-changed`, never touches the page. */
+class ThemeController {
+  constructor(selector) {
+    this._root = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!this._root) return;
+    const $ = (sel) => this._root.querySelector(sel);
+    this._ac = new AbortController();
+    this._media = window.matchMedia('(prefers-color-scheme: dark)');
+    this._state = { mode: this._media.matches ? 'dark' : 'light' };
+    this._refs = { button: $('[data-ref="theme-button"]') };
+    this._bind();
+    this._render();
+    this._emit();
+  }
+  _bind() {
+    const sig = { signal: this._ac.signal };
+    this._root.addEventListener('click', (e) => {
+      if (!e.target.closest('[data-action="toggle-theme"]')) return;
+      this._state.mode = this._state.mode === 'dark' ? 'light' : 'dark';
+      this._render(); this._emit();
+    }, sig);
+    this._media.addEventListener('change', (e) => { this._state.mode = e.matches ? 'dark' : 'light'; this._render(); this._emit(); }, sig);
+  }
+  _render() { this._refs.button.setAttribute('aria-pressed', String(this._state.mode === 'dark')); }
+  _emit() { document.dispatchEvent(new CustomEvent('theme:mode-changed', { detail: { mode: this._state.mode } })); }
+  destroy() { this._ac.abort(); }
+}
+
+/** ER diagram editor. One controller, one state object, UI is a projection of this._state. */
+class DiagramController {
+  static DEFAULTS = Object.freeze({
+    historyLimit: 100, coalesceMs: 800, nudge: 4, nudgeLarge: 20, minZoom: 0.4, maxZoom: 2.5, zoomStep: 0.1,
+    entityWidth: 220, headerHeight: 30, rowHeight: 26, markerLength: 16, markerSpread: 7, gridSize: 10, layoutGapX: 120, layoutMinGapY: 120, layoutMaxGapY: 260, layoutMaxRowWidth: 1600, layoutSweeps: 6, fitPadding: 40, maxName: 64, maxEntities: 200,
+    maxImportBytes: 1048576, exportFilename: 'diagram-export.json'
+  });
+  static FORBIDDEN_KEYS = Object.freeze(['__proto__', 'constructor', 'prototype']);
+  static KEYS = Object.freeze(['', 'PK', 'FK', 'UK']);
+  static TYPES = Object.freeze(['string', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'text', 'uuid']);
+  static ESCAPES = Object.freeze({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#96;' });
+  static TRANSITIONS = Object.freeze({ idle: ['dragging', 'panning', 'drawing', 'dialog'], dragging: ['idle'], panning: ['idle'], drawing: ['idle', 'dialog'], dialog: ['idle'] });
+  static SEED = Object.freeze({
+    entities: [
+      ['curator', 'CURATOR', 40, 30, [['id', 'PK'], ['name', ''], ['email', 'UK']]],
+      ['student', 'STUDENT', 380, 30, [['id', 'PK'], ['name', ''], ['email', 'UK'], ['curator_id', 'FK']]],
+      ['subject', 'SUBJECT', 720, 30, [['id', 'PK'], ['name', 'UK'], ['credits', ''], ['teacher_id', 'FK']]],
+      ['teacher', 'TEACHER', 1060, 30, [['id', 'PK'], ['name', ''], ['email', 'UK']]],
+      ['course', 'COURSE', 550, 300, [['id', 'PK'], ['student_id', 'FK'], ['subject_id', 'FK'], ['grade', '']]]],
+    relations: [['student', 'curator_id', 'curator', 'id', 'advised by'], ['subject', 'teacher_id', 'teacher', 'id', 'taught by'],
+      ['course', 'student_id', 'student', 'id', 'taken by'], ['course', 'subject_id', 'subject', 'id', 'covers']]
+  });
+
+  constructor(selector, opts = {}) {
+    this._root = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!this._root) return;
+    const $ = (sel) => this._root.querySelector(sel);
+    this._cfg = { ...DiagramController.DEFAULTS, ...opts, ...this._readDataAttrs() };
+    this._state = {
+      entities: [], relations: [], selection: null, mode: 'idle', zoom: 1, panX: 0, panY: 0, drag: null,
+      draw: null, modal: null, dirty: false, error: '', status: '', undo: [], redo: [], idSeq: 0,
+      lastCommit: { tag: '', at: 0 }
+    };
+    this._lastFocused = null;
+    this._ac = new AbortController();
+    const names = ['canvas', 'svg', 'viewport', 'relations', 'entities', 'outline', 'empty', 'inspector', 'inspector-body', 'overlay',
+      'dialog', 'dialog-title', 'dialog-body', 'dialog-cancel', 'dialog-confirm', 'draw-button', 'delete-button', 'zoom-button',
+      'undo-button', 'redo-button', 'dirty-badge', 'import-input', 'error', 'error-text', 'status', 'normalize-button'];
+    this._refs = Object.fromEntries(names.map((n) => [n, $(`[data-ref="${n}"]`)]));
+    this._seed();
+    this._bind();
+    this._syncSize();
+    this._render();
+  }
+
+  /* ---- config ---- */
+  /** Reads data-diagram-* attributes; invalid numbers fall back to DEFAULTS, ranges are clamped. */
+  _readDataAttrs() {
+    const d = this._root.dataset, out = {};
+    const num = (v, key, min, max) => { const n = Number(v); if (v !== undefined && v !== '' && Number.isFinite(n)) out[key] = Math.min(max, Math.max(min, n)); };
+    num(d.diagramHistoryLimit, 'historyLimit', 1, 500);
+    num(d.diagramMinZoom, 'minZoom', 0.1, 1);
+    num(d.diagramMaxZoom, 'maxZoom', 1, 5);
+    num(d.diagramMarkerLength, 'markerLength', 8, 32);
+    num(d.diagramMarkerSpread, 'markerSpread', 3, 16);
+    num(d.diagramGridSize, 'gridSize', 1, 50);
+    num(d.diagramLayoutGapX, 'layoutGapX', 40, 400);
+    num(d.diagramLayoutMinGapY, 'layoutMinGapY', 40, 400);
+    num(d.diagramLayoutMaxRowWidth, 'layoutMaxRowWidth', 600, 6000);
+    num(d.diagramLayoutSweeps, 'layoutSweeps', 1, 20);
+    num(d.diagramFitPadding, 'fitPadding', 0, 200);
+    num(d.diagramMaxImportBytes, 'maxImportBytes', 1024, 10485760);
+    return out;
+  }
+  /** Escapes the 7 characters that can break out of text or attribute context. */
+  _esc(value) { return String(value ?? '').replace(/[&<>"'`/]/g, (c) => DiagramController.ESCAPES[c]); }
+  _id(prefix) { return `${prefix}-${Date.now().toString(36)}${++this._state.idSeq}`; }
+  _throttle(fn, ms) { let last = 0; return (...a) => { const now = Date.now(); if (now - last >= ms) { last = now; fn(...a); } }; }
+  /** One call per animation frame; the LAST call always runs, so the viewBox never stays stale. */
+  _frame(fn) { let id = 0; return (...a) => { cancelAnimationFrame(id); id = requestAnimationFrame(() => fn(...a)); }; }
+  _seed() {
+    const { entities, relations } = DiagramController.SEED, s = this._state;
+    s.entities = entities.map(([id, name, x, y, fields]) => ({ id, name, x, y, fields: fields.map(([n, key]) => ({ id: `${id}.${n}`, name: n, type: 'string', key })) }));
+    s.relations = relations.map(([a, af, b, bf, label], i) => ({ id: `seed-${i + 1}`, fromField: `${a}.${af}`, toField: `${b}.${bf}`, label }));
+  }
+
+  /* ---- model lookups ---- */
+  _entity(id) { return this._state.entities.find((e) => e.id === id) || null; }
+  _owner(fieldId) { for (const entity of this._state.entities) { const field = entity.fields.find((f) => f.id === fieldId); if (field) return { entity, field }; } return null; }
+  _relation(id) { return this._state.relations.find((r) => r.id === id) || null; }
+  _keyField(entity) { return entity.fields.find((f) => f.key === 'PK') || entity.fields.find((f) => f.key === 'UK') || null; }
+
+  /* ---- state machine and history ---- */
+  _go(next) { if (!DiagramController.TRANSITIONS[this._state.mode].includes(next)) return false; this._state.mode = next; return true; }
+  _snapshot() { return JSON.stringify({ entities: this._state.entities, relations: this._state.relations }); }
+  /** Call BEFORE mutating. Edits with the same tag inside coalesceMs share one history entry. */
+  _commit(tag = '') {
+    const s = this._state, now = Date.now();
+    s.dirty = true;
+    if (tag && s.lastCommit.tag === tag && now - s.lastCommit.at < this._cfg.coalesceMs) { s.lastCommit.at = now; return; }
+    s.undo.push(this._snapshot());
+    if (s.undo.length > this._cfg.historyLimit) s.undo.shift();
+    s.redo = []; s.lastCommit = { tag, at: now };
+  }
+  _restore(json) { const data = JSON.parse(json); Object.assign(this._state, { entities: data.entities, relations: data.relations, selection: null, draw: null, dirty: true }); this._render(); }
+  _undo() { const s = this._state; if (s.mode !== 'idle' || !s.undo.length) return; s.redo.push(this._snapshot()); this._restore(s.undo.pop()); this._say('Undone'); }
+  _redo() { const s = this._state; if (s.mode !== 'idle' || !s.redo.length) return; s.undo.push(this._snapshot()); this._restore(s.redo.pop()); this._say('Redone'); }
+  _say(message) { this._state.status = message; this._renderChrome(); }
+  _fail(message) { this._state.error = message; this._renderChrome(); }
+
+  /* ---- rendering (projection of state) ---- */
+  _render() { this._renderCanvas(); this._renderInspector(); this._renderChrome(); this._applyView(); }
+  _applyView() { const s = this._state; this._refs.viewport.setAttribute('transform', `translate(${s.panX},${s.panY}) scale(${s.zoom})`); }
+  /** Zoom (never above 100%) and pan so the whole model is visible and centered. */
+  _fitView() {
+    const s = this._state, c = this._cfg; if (!s.entities.length) return;
+    const vb = this._refs.svg.viewBox.baseVal, xs = s.entities.map((e) => e.x), ys = s.entities.map((e) => e.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs) + c.entityWidth, y0 = Math.min(...ys);
+    const y1 = Math.max(...s.entities.map((e) => e.y + c.headerHeight + e.fields.length * c.rowHeight));
+    const fit = Math.min(1, (vb.width - 2 * c.fitPadding) / (x1 - x0), (vb.height - 2 * c.fitPadding) / (y1 - y0));
+    s.zoom = Math.min(c.maxZoom, Math.max(c.minZoom, Math.round(fit * 100) / 100));
+    s.panX = Math.round((vb.width - (x1 - x0) * s.zoom) / 2 - x0 * s.zoom); s.panY = Math.round((vb.height - (y1 - y0) * s.zoom) / 2 - y0 * s.zoom);
+    this._applyView();
+  }
+  _syncSize() { const r = this._refs.canvas.getBoundingClientRect(); this._refs.svg.setAttribute('viewBox', `0 0 ${Math.max(1, Math.round(r.width))} ${Math.max(1, Math.round(r.height))}`); }
+  _renderChrome() {
+    const s = this._state, r = this._refs, pct = Math.round(s.zoom * 100);
+    this._root.dataset.state = s.mode;
+    r['undo-button'].disabled = !s.undo.length; r['redo-button'].disabled = !s.redo.length; r['delete-button'].disabled = !s.selection; r['normalize-button'].disabled = s.mode !== 'idle' || !s.entities.length;
+    r['draw-button'].setAttribute('aria-pressed', String(s.mode === 'drawing'));
+    r['zoom-button'].textContent = `${pct}%`; r['zoom-button'].setAttribute('aria-label', `Reset zoom, current level ${pct}%`);
+    r['dirty-badge'].hidden = !s.dirty; r.error.hidden = !s.error; r['error-text'].textContent = s.error;
+    r.status.textContent = s.status; r.empty.hidden = s.entities.length > 0;
+  }
+  _renderCanvas() {
+    const s = this._state, c = this._cfg, e = (v) => this._esc(v), sel = s.selection;
+    const state = (type, id) => (sel && sel.type === type && sel.id === id ? 'selected' : '');
+    this._refs.entities.innerHTML = s.entities.map((en) => {
+      const rows = en.fields.map((f, i) => `<g class="diagram-field" data-action="select-field" data-id="${e(f.id)}" data-state="${state('field', f.id)}" transform="translate(0,${c.headerHeight + i * c.rowHeight})"><rect class="cell" width="${c.entityWidth}" height="${c.rowHeight}"/><text x="10" y="17">${e(f.name)}</text><text class="key" x="${c.entityWidth - 10}" y="17" text-anchor="end">${e(f.key)}</text></g>`).join('');
+      return `<g class="diagram-entity" data-action="select-entity" data-id="${e(en.id)}" data-state="${state('entity', en.id)}" tabindex="0" role="group" aria-label="${e(en.name)}, ${en.fields.length} fields" transform="translate(${en.x},${en.y})"><rect class="body" width="${c.entityWidth}" height="${c.headerHeight + en.fields.length * c.rowHeight}"/><g data-action="drag-entity" data-id="${e(en.id)}"><rect class="header" width="${c.entityWidth}" height="${c.headerHeight}"/><text class="title" x="10" y="20">${e(en.name)}</text></g>${rows}</g>`;
+    }).join('');
+    this._refs.relations.innerHTML = s.relations.map((r) => {
+      const from = this._owner(r.fromField), to = this._owner(r.toField);
+      if (!from || !to || from.entity === to.entity) return '';
+      const p = this._edge(from.entity, to.entity), q = this._edge(to.entity, from.entity), len = Math.hypot(q.x - p.x, q.y - p.y);
+      if (![p.x, p.y, q.x, q.y, len].every(Number.isFinite) || len < 1) return '';
+      const ux = (q.x - p.x) / len, uy = (q.y - p.y) / len, path = `M${p.x} ${p.y}L${q.x} ${q.y}`, M = DiagramController._marker;
+      const L = Math.min(c.markerLength, len / 3), S = c.markerSpread * L / c.markerLength;
+      const marks = M('many', p.x, p.y, ux, uy, L, S) + M('one', q.x, q.y, -ux, -uy, L, S);
+      const showLabel = r.label && len > DiagramController._labelSpace(r.label, L);
+      const title = `${e(from.entity.name)}.${e(from.field.name)} references ${e(to.entity.name)}.${e(to.field.name)}, many to one${r.label ? `: ${e(r.label)}` : ''}`;
+      return `<g class="diagram-relation" data-action="select-relation" data-id="${e(r.id)}" data-state="${state('relation', r.id)}"><title>${title}</title><path class="line" d="${path}"/><path class="hit" d="${path}"/><path class="cardinality" d="${marks}"/>${showLabel ? `<text x="${(p.x + q.x) / 2}" y="${(p.y + q.y) / 2 - 6}" text-anchor="middle">${e(r.label)}</text>` : ''}</g>`;
+    }).join('');
+    this._refs.outline.innerHTML = s.entities.map((en) => `<li>${e(en.name)}: ${en.fields.map((f) => e(f.name) + (f.key ? ` (${f.key})` : '')).join(', ')}</li>`).join('')
+      + s.relations.map((r) => { const a = this._owner(r.fromField), b = this._owner(r.toField); return a && b ? `<li>${e(a.entity.name)}.${e(a.field.name)} references ${e(b.entity.name)}.${e(b.field.name)}, many to one</li>` : ''; }).join('');
+  }
+  /** Space a relation label needs on a line (shared by rendering and layout). */
+  static _labelSpace(label, markerLength) { return label.length * 6 + 2 * markerLength + 16; }
+  /**
+   * Pure layered layout (no DOM, no state, independent of current positions => deterministic and idempotent).
+   * Parent (PK side) above child (FK side); cycles broken by DFS; barycenter ordering; components in rows; singles in a grid.
+   * @returns {{positions: Map<string,{x:number,y:number}>, levels: number}}
+   */
+  static _layout(entities, relations, cfg) {
+    const byId = new Map(entities.map((e) => [e.id, e])), owner = new Map(), W = cfg.entityWidth, pitch = W + cfg.layoutGapX;
+    entities.forEach((e) => e.fields.forEach((f) => owner.set(f.id, e.id)));
+    const cmp = (a, b) => { const x = byId.get(a).name, y = byId.get(b).name; return x < y ? -1 : x > y ? 1 : a < b ? -1 : a > b ? 1 : 0; };
+    const height = (id) => cfg.headerHeight + byId.get(id).fields.length * cfg.rowHeight;
+    const parents = new Map(entities.map((e) => [e.id, new Set()])), children = new Map(entities.map((e) => [e.id, new Set()]));
+    let maxLabel = 0;
+    for (const r of relations) {
+      const c = owner.get(r.fromField), p = owner.get(r.toField);
+      if (!c || !p || c === p) continue;
+      parents.get(c).add(p); children.get(p).add(c); maxLabel = Math.max(maxLabel, (r.label || '').length);
+    }
+    const gapY = Math.min(cfg.layoutMaxGapY, Math.max(cfg.layoutMinGapY, DiagramController._labelSpace('x'.repeat(maxLabel), cfg.markerLength) + 24));
+    const seen = new Set(), comps = [];
+    for (const id of [...byId.keys()].sort(cmp)) {
+      if (seen.has(id)) continue;
+      const comp = [], stack = [id];
+      while (stack.length) { const x = stack.pop(); if (seen.has(x)) continue; seen.add(x); comp.push(x); stack.push(...parents.get(x), ...children.get(x)); }
+      comps.push(comp.sort(cmp));
+    }
+    const place = (comp) => {
+      const inside = new Set(comp), back = new Set(), mark = new Map();
+      const par = (x) => [...parents.get(x)].filter((p) => !back.has(`${p}>${x}`)).sort(cmp);
+      const kids = (x) => [...children.get(x)].filter((c) => !back.has(`${x}>${c}`)).sort(cmp);
+      const dfs = (u) => { mark.set(u, 1); for (const v of [...children.get(u)].sort(cmp)) { if (mark.get(v) === 1) back.add(`${u}>${v}`); else if (!mark.get(v)) dfs(v); } mark.set(u, 2); };
+      for (const x of [...comp.filter((n) => !parents.get(n).size), ...comp]) if (!mark.get(x)) dfs(x);
+      const level = new Map(), lv = (x) => { if (!level.has(x)) level.set(x, par(x).reduce((m, p) => Math.max(m, lv(p) + 1), 0)); return level.get(x); };
+      comp.forEach(lv);
+      for (const x of comp) if (!par(x).length && kids(x).length) level.set(x, Math.min(...kids(x).map((k) => level.get(k))) - 1);
+      const layers = []; comp.forEach((x) => (layers[level.get(x)] ||= []).push(x));
+      const rows = layers.filter(Boolean), pos = new Map(), index = () => rows.forEach((l) => l.forEach((x, i) => pos.set(x, i)));
+      index();
+      for (let k = 0; k < cfg.layoutSweeps; k++) {
+        const down = k % 2 === 0, order = rows.map((_, i) => i).slice(1);
+        for (const i of down ? order : order.reverse().map((j) => j - 1)) {
+          const key = new Map(rows[i].map((x) => { const ps = (down ? par(x) : kids(x)).map((n) => pos.get(n)); return [x, ps.length ? ps.reduce((a, b) => a + b, 0) / ps.length : pos.get(x)]; }));
+          rows[i].sort((a, b) => key.get(a) - key.get(b) || pos.get(a) - pos.get(b)); index();
+        }
+      }
+      const left = new Map();
+      rows.forEach((l) => {
+        const want = l.map((x, j) => { const ps = par(x).map((p) => left.get(p)); return ps.length ? ps.reduce((a, b) => a + b, 0) / ps.length : j * pitch; });
+        const out = want.map((v, j) => v), sum = (a) => a.reduce((p, q) => p + q, 0);
+        for (let j = 1; j < out.length; j++) out[j] = Math.max(out[j], out[j - 1] + pitch);
+        const shift = (sum(want) - sum(out)) / out.length;
+        l.forEach((x, j) => left.set(x, out[j] + shift));
+      });
+      const minX = Math.min(...comp.map((x) => left.get(x))), items = [], tops = []; let y = 0;
+      rows.forEach((l, i) => { tops[i] = y; y += Math.max(...l.map(height)) + gapY; l.forEach((x) => items.push({ id: x, x: left.get(x) - minX, y: tops[i] })); });
+      return { items, width: Math.max(...items.map((it) => it.x)) + W, height: y - gapY, levels: rows.length };
+    };
+    const singles = comps.filter((c) => c.length === 1 && !parents.get(c[0]).size && !children.get(c[0]).size).map((c) => c[0]);
+    const groups = comps.filter((c) => !singles.includes(c[0])).map(place).sort((a, b) => b.items.length - a.items.length || cmp(a.items[0].id, b.items[0].id));
+    const positions = new Map(); let x = 0, y = 0, rowH = 0;
+    for (const g of groups) {
+      if (x > 0 && x + g.width > cfg.layoutMaxRowWidth) { y += rowH + gapY; x = 0; rowH = 0; }
+      g.items.forEach((it) => positions.set(it.id, { x: x + it.x, y: y + it.y }));
+      x += g.width + cfg.layoutGapX; rowH = Math.max(rowH, g.height);
+    }
+    if (singles.length) {
+      if (groups.length) y += rowH + gapY;
+      const cols = Math.max(1, Math.floor((cfg.layoutMaxRowWidth + cfg.layoutGapX) / pitch)), cell = Math.max(...singles.map(height)) + gapY;
+      singles.forEach((id, i) => positions.set(id, { x: (i % cols) * pitch, y: y + Math.floor(i / cols) * cell }));
+    }
+    for (const p of positions.values()) { p.x = Math.round(p.x / cfg.gridSize) * cfg.gridSize; p.y = Math.round(p.y / cfg.gridSize) * cfg.gridSize; }
+    return { positions, levels: Math.max(0, ...groups.map((g) => g.levels), singles.length ? 1 : 0) };
+  }
+  /** Pure geometry. Crow's foot ("many") or bar ("one") at edge point (x, y); (ux, uy) is the unit vector pointing away from the entity. */
+  static _marker(kind, x, y, ux, uy, length, spread) {
+    const f = (v) => Math.round(v * 10) / 10, px = -uy * spread, py = ux * spread;
+    if (kind === 'one') { const cx = x + ux * length * 0.7, cy = y + uy * length * 0.7; return `M${f(cx + px)} ${f(cy + py)}L${f(cx - px)} ${f(cy - py)}`; }
+    const ax = f(x + ux * length), ay = f(y + uy * length), tx = x - ux * 2, ty = y - uy * 2;
+    return `M${ax} ${ay}L${f(tx + px)} ${f(ty + py)}M${ax} ${ay}L${f(tx)} ${f(ty)}M${ax} ${ay}L${f(tx - px)} ${f(ty - py)}`;
+  }
+  /** Point where the center-to-center line leaves the box of `a`. */
+  _edge(a, b) {
+    const c = this._cfg, w = c.entityWidth, h = c.headerHeight + a.fields.length * c.rowHeight, bh = c.headerHeight + b.fields.length * c.rowHeight;
+    const cx = a.x + w / 2, cy = a.y + h / 2, dx = b.x + w / 2 - cx, dy = b.y + bh / 2 - cy;
+    const k = Math.min(dx ? (w / 2) / Math.abs(dx) : Infinity, dy ? (h / 2) / Math.abs(dy) : Infinity);
+    return { x: Math.round(cx + dx * k), y: Math.round(cy + dy * k) };
+  }
+  _renderInspector() {
+    const sel = this._state.selection, e = (v) => this._esc(v), body = this._refs['inspector-body'];
+    let html = '<p class="text-body-secondary small">Select an entity or a relation to edit it.</p>';
+    const owner = sel && (sel.type === 'field' ? this._owner(sel.id) : null);
+    const entity = sel && (sel.type === 'entity' ? this._entity(sel.id) : owner && owner.entity);
+    if (entity) {
+      html = `<label class="form-label w-100">Entity name<input type="text" class="form-control" maxlength="${this._cfg.maxName}" data-action="update-entity-name" data-id="${e(entity.id)}" value="${e(entity.name)}"></label>
+        <div class="d-flex justify-content-between align-items-center my-2"><h3 class="h6 mb-0">Fields</h3><button type="button" class="btn btn-outline-primary btn-sm" data-action="add-field" data-id="${e(entity.id)}">Add field</button></div>
+        <ul class="list-unstyled mb-0">${entity.fields.map((f) => `<li class="d-flex gap-1 mb-1"><input type="text" class="form-control" aria-label="Field name" maxlength="${this._cfg.maxName}" data-action="update-field-name" data-id="${e(f.id)}" value="${e(f.name)}"><select class="form-select w-auto" aria-label="Key type" data-action="update-field-key" data-id="${e(f.id)}">${DiagramController.KEYS.map((k) => `<option value="${e(k)}"${k === f.key ? ' selected' : ''}>${e(k || 'none')}</option>`).join('')}</select><button type="button" class="btn btn-outline-danger" aria-label="Delete field ${e(f.name)}" data-action="delete-field" data-id="${e(f.id)}">&times;</button></li>`).join('')}</ul>`;
+    } else if (sel && sel.type === 'relation' && this._relation(sel.id)) {
+      const r = this._relation(sel.id), a = this._owner(r.fromField), b = this._owner(r.toField);
+      html = `<p class="small">${a && b ? `${e(a.entity.name)}.${e(a.field.name)} &rarr; ${e(b.entity.name)}.${e(b.field.name)} (many to one)` : 'Broken relation'}</p>
+        <label class="form-label w-100">Label<input type="text" class="form-control" maxlength="${this._cfg.maxName}" data-action="update-relation-label" data-id="${e(r.id)}" value="${e(r.label)}"></label>`;
+    }
+    body.innerHTML = html;
+  }
+  _renderDialog() {
+    const m = this._state.modal, r = this._refs, e = (v) => this._esc(v);
+    r.overlay.hidden = !m;
+    if (!m) return;
+    r['dialog-title'].textContent = m.title;
+    r['dialog-confirm'].hidden = m.type === 'report'; r['dialog-confirm'].textContent = m.confirmLabel || 'OK';
+    r['dialog-cancel'].textContent = m.type === 'report' ? 'Close' : 'Cancel';
+    if (m.type === 'confirm') r['dialog-body'].innerHTML = `<p class="mb-0">${e(m.message)}</p>`;
+    if (m.type === 'report') r['dialog-body'].innerHTML = m.issues.length ? `<ul class="mb-0">${m.issues.map((i) => `<li class="text-${i.level}-emphasis">${e(i.text)}</li>`).join('')}</ul>` : '<p class="mb-0">No problems found.</p>';
+    if (m.type === 'junction') {
+      const options = (value) => this._state.entities.map((en) => `<option value="${e(en.id)}"${en.id === value ? ' selected' : ''}>${e(en.name)}</option>`).join('');
+      r['dialog-body'].innerHTML = `<label class="form-label w-100">First entity<select class="form-select" data-action="modal-set-entity-a">${options(m.a)}</select></label><label class="form-label w-100 mb-0">Second entity<select class="form-select" data-action="modal-set-entity-b">${options(m.b)}</select></label>`;
+    }
+    r.dialog.querySelector('select, input, [data-action="modal-confirm"]:not([hidden]), [data-action="modal-cancel"]').focus();
+  }
+
+  /* ---- actions ---- */
+  _select(type, id) { this._state.selection = { type, id }; this._renderCanvas(); this._renderInspector(); this._renderChrome(); }
+  _deselect() { if (!this._state.selection) return; this._state.selection = null; this._renderCanvas(); this._renderInspector(); this._renderChrome(); }
+  _addEntity() {
+    const s = this._state, n = s.entities.length;
+    if (n >= this._cfg.maxEntities) return this._fail('Entity limit reached.');
+    this._commit();
+    const entity = { id: this._id('entity'), name: 'NEW_ENTITY', x: Math.round((40 - s.panX) / s.zoom + (n * 24) % 240), y: Math.round((40 - s.panY) / s.zoom + (n * 24) % 240), fields: [{ id: this._id('field'), name: 'id', type: 'integer', key: 'PK' }] };
+    s.entities.push(entity); this._select('entity', entity.id); this._say('Entity added');
+  }
+  _addField(entityId) {
+    const entity = this._entity(entityId); if (!entity) return;
+    this._commit(); entity.fields.push({ id: this._id('field'), name: 'new_field', type: 'string', key: '' });
+    this._render();
+  }
+  _fkName(parent) { return `${parent.name.toLowerCase().replace(/\W+/g, '_')}_id`; }
+  /** Child gets a new FK field pointing at the parent's PK/UK. */
+  _connect(parentId, childId) {
+    const parent = this._entity(parentId), child = this._entity(childId), key = parent && this._keyField(parent);
+    if (!parent || !child || parent === child) return this._fail('Pick two different entities.');
+    if (!key) return this._fail(`${parent.name} needs a PK or UK field to be referenced.`);
+    this._commit();
+    const fk = { id: this._id('field'), name: this._fkName(parent), type: key.type, key: 'FK' }, rel = { id: this._id('relation'), fromField: fk.id, toField: key.id, label: '' };
+    child.fields.push(fk); this._state.relations.push(rel);
+    this._state.draw = null; this._go('idle'); this._select('relation', rel.id); this._say('Relation created');
+  }
+  _createJunction(aId, bId) {
+    const a = this._entity(aId), b = this._entity(bId), ka = a && this._keyField(a), kb = b && this._keyField(b);
+    if (!a || !b || a === b) return this._fail('Pick two different entities.');
+    if (!ka || !kb) return this._fail('Both entities need a PK or UK field.');
+    this._commit();
+    const fa = { id: this._id('field'), name: this._fkName(a), type: ka.type, key: 'FK' }, fb = { id: this._id('field'), name: this._fkName(b), type: kb.type, key: 'FK' };
+    const junction = { id: this._id('entity'), name: `${a.name}_${b.name}`.slice(0, this._cfg.maxName), x: Math.round((a.x + b.x) / 2), y: Math.max(a.y, b.y) + 240, fields: [{ id: this._id('field'), name: 'id', type: 'integer', key: 'PK' }, fa, fb] };
+    this._state.entities.push(junction);
+    this._state.relations.push({ id: this._id('relation'), fromField: fa.id, toField: ka.id, label: '' }, { id: this._id('relation'), fromField: fb.id, toField: kb.id, label: '' });
+    this._select('entity', junction.id); this._say('Junction entity created');
+  }
+  _requestDelete(kind, id) {
+    const target = kind === 'entity' ? this._entity(id) : kind === 'field' ? this._owner(id)?.field : this._relation(id);
+    if (!target) return;
+    this._openModal({ type: 'confirm', title: `Delete ${kind}?`, message: `This removes ${kind === 'relation' ? 'the relation' : `"${target.name}"`} and the relations attached to it.`, confirmLabel: 'Delete', target: { kind, id } });
+  }
+  _deleteTarget({ kind, id }) {
+    const s = this._state; this._commit();
+    const fieldIds = kind === 'entity' ? (this._entity(id)?.fields.map((f) => f.id) ?? []) : kind === 'field' ? [id] : [];
+    if (kind === 'entity') s.entities = s.entities.filter((en) => en.id !== id);
+    if (kind === 'field') s.entities.forEach((en) => { en.fields = en.fields.filter((f) => f.id !== id); });
+    s.relations = s.relations.filter((r) => (kind === 'relation' ? r.id !== id : !fieldIds.includes(r.fromField) && !fieldIds.includes(r.toField)));
+    s.selection = null; this._render(); this._say(`${kind} deleted`);
+  }
+  _setZoom(value) { const s = this._state; s.zoom = Math.min(this._cfg.maxZoom, Math.max(this._cfg.minZoom, Math.round(value * 100) / 100)); this._applyView(); this._renderChrome(); }
+  /** Instant command (idle -> idle): re-layout from scratch, one history entry, fit the view. */
+  _normalizeLayout() {
+    const s = this._state; if (s.mode !== 'idle' || !s.entities.length) return;
+    this._syncSize();
+    const { positions, levels } = DiagramController._layout(s.entities, s.relations, this._cfg);
+    if (!s.entities.some((e) => positions.get(e.id).x !== e.x || positions.get(e.id).y !== e.y)) { this._fitView(); this._say('Already normalized'); return; }
+    this._commit(); s.entities.forEach((e) => Object.assign(e, positions.get(e.id)));
+    this._render(); this._fitView(); this._say(`Layout normalized: ${s.entities.length} entities, ${s.relations.length} relations, ${levels} levels`);
+  }
+  _validateModel() {
+    const issues = [];
+    for (const en of this._state.entities) {
+      if (!en.fields.some((f) => f.key === 'PK')) issues.push({ level: 'warning', text: `${en.name} has no primary key.` });
+      const names = en.fields.map((f) => f.name);
+      names.filter((n, i) => names.indexOf(n) !== i).forEach((n) => issues.push({ level: 'danger', text: `${en.name} has a duplicate field "${n}".` }));
+      for (const f of en.fields.filter((x) => x.key === 'FK')) if (!this._state.relations.some((r) => r.fromField === f.id)) issues.push({ level: 'warning', text: `${en.name}.${f.name} is a foreign key without a relation.` });
+    }
+    for (const r of this._state.relations) { const to = this._owner(r.toField); if (!to || !['PK', 'UK'].includes(to.field.key)) issues.push({ level: 'danger', text: 'A relation points at a field that is not PK or UK.' }); }
+    return issues;
+  }
+  _openModal(modal) {
+    if (!this._go('dialog')) return;
+    this._lastFocused = document.activeElement; this._state.modal = modal; this._renderDialog(); this._renderChrome();
+  }
+  _closeModal() { this._state.modal = null; this._state.draw = null; this._go('idle'); this._renderDialog(); this._renderChrome(); this._lastFocused?.focus(); }
+
+  /* ---- import / export ---- */
+  /** Validates untrusted JSON into a staged model; throws before any state is touched. */
+  static _validate(data, cfg) {
+    const bad = (m) => { throw new Error(`Import failed: ${m}`); };
+    const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+    const walk = (v, depth = 0) => { if (depth > 8) bad('nesting is too deep'); if (v && typeof v === 'object') for (const k of Object.keys(v)) { if (DiagramController.FORBIDDEN_KEYS.includes(k)) bad(`forbidden key "${k}"`); walk(v[k], depth + 1); } };
+    const safeId = (v) => typeof v === 'string' && /^[\w.-]{1,64}$/.test(v);
+    const text = (v, max) => String(v ?? '').slice(0, max);
+    const num = (v, fallback) => (v !== null && v !== '' && Number.isFinite(Number(v)) ? Math.max(-1e5, Math.min(1e5, Number(v))) : fallback);
+    if (!isObj(data)) bad('the root must be an object'); walk(data);
+    if (typeof data.$entitymap !== 'string' || !data.$entitymap.startsWith('1.')) bad('missing or unsupported $entitymap version');
+    if (!Array.isArray(data.entities) || !Array.isArray(data.relations)) bad('entities[] and relations[] are required');
+    if (data.entities.length > cfg.maxEntities) bad('too many entities');
+    const layout = isObj(data.layout) ? data.layout : {}, byEntity = new Map(), seen = new Set();
+    const entities = data.entities.map((e, i) => {
+      if (!isObj(e) || !safeId(e.id)) bad(`entity #${i + 1} has no valid id`);
+      if (seen.has(e.id)) bad(`duplicate entity id "${e.id}"`); seen.add(e.id);
+      const fields = new Map();
+      for (const f of Array.isArray(e.fields) ? e.fields : []) {
+        if (!isObj(f) || !f.name) bad(`entity "${e.id}" has an invalid field`);
+        const name = text(f.name, cfg.maxName), c = Array.isArray(f.constraints) ? f.constraints : [];
+        if (fields.has(name)) bad(`duplicate field "${name}" in "${e.id}"`);
+        fields.set(name, { id: `${e.id}.${name}`, name, type: DiagramController.TYPES.includes(f.type) ? f.type : 'string', key: c.includes('pk') ? 'PK' : c.includes('fk') ? 'FK' : c.includes('unique') ? 'UK' : '' });
+      }
+      byEntity.set(e.id, fields);
+      const pos = isObj(layout[e.id]) ? layout[e.id] : {};
+      return { id: e.id, name: text(e.name || e.id, cfg.maxName), x: num(pos.x, 40 + (i % 4) * 280), y: num(pos.y, 40 + Math.floor(i / 4) * 300), fields: [...fields.values()] };
+    });
+    const relations = [], used = new Set(); let skipped = 0;
+    for (const r of data.relations) {
+      const from = isObj(r) && byEntity.get(r.from)?.get(r.from_field), to = isObj(r) && byEntity.get(r.to)?.get(r.to_field);
+      if (!from || !to || !['PK', 'UK'].includes(to.key)) { skipped++; continue; }
+      const id = safeId(r.id) && !used.has(r.id) ? r.id : `relation-${relations.length + 1}`; used.add(id);
+      relations.push({ id, fromField: from.id, toField: to.id, label: text(r.comment ?? r.label, cfg.maxName) });
+    }
+    return { entities, relations, skipped, hasLayout: Object.keys(layout).length > 0 };
+  }
+  _importFile(file) {
+    if (!file) return;
+    if (file.size > this._cfg.maxImportBytes) return this._fail(`The file is larger than ${Math.round(this._cfg.maxImportBytes / 1024)} KB.`);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const staged = DiagramController._validate(JSON.parse(reader.result), this._cfg);
+        this._commit(); Object.assign(this._state, { entities: staged.entities, relations: staged.relations, selection: null });
+        if (!staged.hasLayout) { const { positions } = DiagramController._layout(staged.entities, staged.relations, this._cfg); staged.entities.forEach((e) => Object.assign(e, positions.get(e.id))); }
+        this._render(); if (!staged.hasLayout) this._fitView();
+        this._say(`Imported ${staged.entities.length} entities${staged.skipped ? `, skipped ${staged.skipped} invalid relations` : ''}`);
+      } catch (err) { this._fail(err instanceof SyntaxError ? 'Import failed: the file is not valid JSON.' : err.message); }
+    };
+    reader.onerror = () => this._fail('Import failed: the file could not be read.');
+    reader.readAsText(file);
+  }
+  _exportModel() {
+    const s = this._state, keyToConstraints = { PK: ['pk'], FK: ['fk'], UK: ['unique'], '': [] };
+    const payload = {
+      $entitymap: '1.0.0', meta: {},
+      entities: s.entities.map((en) => ({ id: en.id, name: en.name, kind: 'class', fields: en.fields.map((f) => ({ name: f.name, type: f.type, ...(f.key ? { constraints: keyToConstraints[f.key] } : {}) })) })),
+      relations: s.relations.flatMap((r) => { const a = this._owner(r.fromField), b = this._owner(r.toField); return a && b ? [{ id: r.id, kind: 'foreign_key', from: a.entity.id, to: b.entity.id, from_field: a.field.name, to_field: b.field.name, multiplicity: 'many_to_one', ...(r.label ? { comment: r.label } : {}) }] : []; }),
+      layout: Object.fromEntries(s.entities.map((en) => [en.id, { x: en.x, y: en.y }]))
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const link = document.createElement('a'); link.href = url; link.download = this._cfg.exportFilename; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    s.dirty = false; this._say('Exported'); 
+  }
+
+  /* ---- events ---- */
+  _bind() {
+    const sig = { signal: this._ac.signal }, root = this._root;
+    root.addEventListener('click', (e) => { const el = e.target.closest('[data-action]'); if (el) this._act(el.dataset.action, el); }, sig);
+    root.addEventListener('input', (e) => { const el = e.target.closest('[data-action]'); if (el && el.matches('input[type="text"]')) this._edit(el); }, sig);
+    root.addEventListener('change', (e) => { const el = e.target.closest('[data-action]'); if (el && !el.matches('input[type="text"]')) this._edit(el); }, sig);
+    root.addEventListener('pointerdown', (e) => this._onPointerDown(e), sig);
+    root.addEventListener('keydown', (e) => this._onKeyDown(e), sig);
+    document.addEventListener('pointermove', this._throttle((e) => this._dragTo(e), 16), sig);
+    document.addEventListener('pointerup', (e) => this._onPointerEnd(e), sig);
+    document.addEventListener('pointercancel', (e) => this._onPointerEnd(e), sig);
+    window.addEventListener('beforeunload', (e) => { if (this._state.dirty) { e.preventDefault(); e.returnValue = ''; } }, sig);
+    this._resizeObserver = new ResizeObserver(this._frame(() => this._syncSize()));
+    this._resizeObserver.observe(this._refs.canvas);
+  }
+  _act(action, el) {
+    const s = this._state, c = this._cfg;
+    switch (action) {
+      case 'add-entity': this._addEntity(); break;
+      case 'normalize-layout': this._normalizeLayout(); break;
+      case 'toggle-draw-relation':
+        if (s.mode === 'drawing') { s.draw = null; this._go('idle'); this._say('Drawing cancelled'); } else if (this._go('drawing')) { s.draw = { parent: null }; this._say('Pick the parent entity (the one with the key)'); }
+        this._renderChrome(); break;
+      case 'modal-open-junction': if (s.entities.length < 2) return this._fail('Add at least two entities first.'); this._openModal({ type: 'junction', title: 'Create many-to-many', confirmLabel: 'Create', a: s.entities[0].id, b: s.entities[1].id }); break;
+      case 'modal-open-validate': this._openModal({ type: 'report', title: 'Model validation', issues: this._validateModel() }); break;
+      case 'modal-cancel': this._closeModal(); break;
+      case 'modal-confirm': {
+        const m = s.modal; this._closeModal();
+        if (m.type === 'confirm') this._deleteTarget(m.target); else if (m.type === 'junction') this._createJunction(m.a, m.b);
+        break;
+      }
+      case 'delete-selected': if (s.selection) this._requestDelete(s.selection.type, s.selection.id); break;
+      case 'delete-field': this._requestDelete('field', el.dataset.id); break;
+      case 'add-field': this._addField(el.dataset.id); break;
+      case 'decrease-zoom': this._setZoom(s.zoom - c.zoomStep); break;
+      case 'increase-zoom': this._setZoom(s.zoom + c.zoomStep); break;
+      case 'reset-zoom': this._setZoom(1); break;
+      case 'undo-change': this._undo(); break;
+      case 'redo-change': this._redo(); break;
+      case 'export-model': this._exportModel(); break;
+      case 'import-model': this._refs['import-input'].click(); break;
+      case 'open-inspector': window.bootstrap.Offcanvas.getOrCreateInstance(this._refs.inspector).show(); break;
+      case 'close-inspector': window.bootstrap.Offcanvas.getOrCreateInstance(this._refs.inspector).hide(); break;
+      case 'dismiss-error': s.error = ''; this._renderChrome(); break;
+    }
+  }
+  /** Inspector edits mutate in place and skip the inspector re-render so focus and caret survive typing. */
+  _edit(el) {
+    const s = this._state, id = el.dataset.id, max = this._cfg.maxName;
+    switch (el.dataset.action) {
+      case 'update-entity-name': { const en = this._entity(id); if (!en) return; this._commit(`name:${id}`); en.name = el.value.slice(0, max); break; }
+      case 'update-field-name': { const o = this._owner(id); if (!o) return; this._commit(`field:${id}`); o.field.name = el.value.slice(0, max); break; }
+      case 'update-field-key': { const o = this._owner(id); if (!o || !DiagramController.KEYS.includes(el.value)) return; this._commit(); o.field.key = el.value; break; }
+      case 'update-relation-label': { const r = this._relation(id); if (!r) return; this._commit(`label:${id}`); r.label = el.value.slice(0, max); break; }
+      case 'modal-set-entity-a': s.modal.a = el.value; return;
+      case 'modal-set-entity-b': s.modal.b = el.value; return;
+      case 'import-file': this._importFile(el.files[0]); el.value = ''; return;
+      default: return;
+    }
+    this._renderCanvas(); this._renderChrome();
+  }
+  _onPointerDown(e) {
+    const el = e.target.closest('[data-action]'), s = this._state;
+    if (!el || s.mode === 'dialog' || e.button > 0) return;
+    const action = el.dataset.action, id = el.dataset.id;
+    if (s.mode === 'drawing' && (action === 'drag-entity' || action === 'select-entity')) return this._pick(id);
+    if (action === 'drag-entity') { this._select('entity', id); this._startDrag({ kind: 'entity', id, ox: this._entity(id).x, oy: this._entity(id).y }, e); }
+    else if (action === 'select-field') this._select('field', id);
+    else if (action === 'select-relation') this._select('relation', id);
+    else if (action === 'pan-canvas') { this._deselect(); this._startDrag({ kind: 'pan', ox: s.panX, oy: s.panY }, e); }
+  }
+  _startDrag(drag, e) {
+    if (!this._go(drag.kind === 'pan' ? 'panning' : 'dragging')) return;
+    this._state.drag = { ...drag, x: e.clientX, y: e.clientY, moved: false };
+    try { this._refs.svg.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
+    this._renderChrome();
+  }
+  /** viewBox is kept 1:1 with canvas pixels, so pointer deltas only need the zoom factor. */
+  _dragTo(e) {
+    const s = this._state, d = s.drag; if (!d) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    if (d.kind === 'pan') { s.panX = d.ox + dx; s.panY = d.oy + dy; this._applyView(); return; }
+    const en = this._entity(d.id); if (!en) return;
+    if (!d.moved) { this._commit(); d.moved = true; }
+    en.x = Math.round(d.ox + dx / s.zoom); en.y = Math.round(d.oy + dy / s.zoom);
+    this._renderCanvas();
+  }
+  _onPointerEnd(e) {
+    const s = this._state; if (!s.drag) return;
+    if (e.type === 'pointerup') this._dragTo(e);
+    s.drag = null; this._go('idle'); this._renderChrome();
+  }
+  _pick(entityId) {
+    const s = this._state;
+    if (!s.draw.parent) { s.draw.parent = entityId; this._say('Now pick the child entity (it receives the foreign key)'); } else this._connect(s.draw.parent, entityId);
+  }
+  _focusEntity(id) { for (const g of this._refs.entities.querySelectorAll('[data-action="select-entity"]')) if (g.dataset.id === id) { g.focus(); break; } }
+  _onKeyDown(e) {
+    const s = this._state, inField = e.target.closest('input, textarea, select, [contenteditable]');
+    if (s.mode === 'dialog') {
+      if (e.key === 'Escape') { e.preventDefault(); this._closeModal(); } else if (e.key === 'Tab') {
+        const items = [...this._refs.dialog.querySelectorAll('select, input, button')].filter((x) => !x.hidden && !x.disabled), first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+      return;
+    }
+    if (e.key === 'Escape' && s.mode === 'drawing') { s.draw = null; this._go('idle'); this._say('Drawing cancelled'); this._renderChrome(); return; }
+    if (inField) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? this._redo() : this._undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); this._redo(); return; }
+    const node = e.target.closest('[data-action="select-entity"]'); if (!node) return;
+    const id = node.dataset.id, step = e.shiftKey ? this._cfg.nudgeLarge : this._cfg.nudge, arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (s.mode === 'drawing') this._pick(id); else { this._select('entity', id); this._focusEntity(id); } }
+    else if (arrows[e.key]) { e.preventDefault(); const en = this._entity(id); this._commit(`nudge:${id}`); en.x += arrows[e.key][0] * step; en.y += arrows[e.key][1] * step; this._select('entity', id); this._focusEntity(id); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); this._requestDelete('entity', id); }
+  }
+  destroy() { this._ac.abort(); this._resizeObserver?.disconnect(); }
+}
+
+/** Orchestrator: no state, no render. Applies the theme to its own root and owns the child widgets. */
+class DiagramPageController {
+  constructor(selector) {
+    this._root = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!this._root) return;
+    this._ac = new AbortController();
+    // Listen first: ThemeController emits its initial mode from its constructor.
+    document.addEventListener('theme:mode-changed', (e) => { this._root.dataset.bsTheme = e.detail.mode; }, { signal: this._ac.signal });
+    this._widgets = [new ThemeController('.theme-container'), new DiagramController('.diagram-container')];
+  }
+  destroy() { this._ac.abort(); this._widgets.forEach((w) => w.destroy()); }
+}
+
+document.addEventListener('DOMContentLoaded', () => new DiagramPageController('.diagram-page'));
+})();
+</script>
+</body>
+</html>
