@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<!--
+  Diagram Editor — ER diagram editor, Bootstrap 5.3.8, vanilla ES2022, no jQuery.
+  Structure (containerization-11 / orchestration-2):
+    <style>   1. tokens  2. layout  3. dialog  4. states  5. responsive
+    <body>    .diagram-page (orchestrator) > .theme-container + .diagram-container
+    <script>  ThemeController, DiagramController, DiagramPageController, INIT
+  Configuration, three layers (later wins): static DEFAULTS < new DiagramController(sel, opts)
+  < data attributes, e.g. <section class="diagram-container" data-diagram-history-limit="50">.
+  Hooks in JS: data-ref (cached once), data-action, data-id, data-state only. No ids/classes as hooks.
+  Lifecycle states (root data-state), allowed transitions in DiagramController.TRANSITIONS:
+    idle -> dragging | panning | drawing | dialog | pinching;  dragging, panning -> idle | pinching;  drawing -> idle | dialog;  others -> idle.
+    Responsive: the widget adapts to its own container (container queries); JS reads the profile token from the canvas.
+    Normalize is an instant command (idle -> idle): one history entry, then the view is fitted.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Diagram Editor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+<style>
+  /* ===== .diagram-page (orchestrator): layout only ===== */
+  /* 0. Tokens: --diagram-canvas-min is the only contract with the widget. Unset, the widget keeps the minimum of its own profile; a short window lowers it. */
+  /* 1. Container layout: the page shell owns the window height and the device safe areas; widgets only grow into it. */
+  .diagram-page { min-height: 100vh; min-height: 100dvh; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+  /* 2. Child elements (Bootstrap utilities stay in the markup; only what a utility cannot do lives here). */
+  .diagram-page .diagram-header { margin-bottom: 1rem; }
+  /* 3. Modal: none */
+  /* 4. States: none (the color mode comes from data-bs-theme) */
+  /* 5. Animations: none */
+  /* 6. Responsive: window height only (widgets adapt to their own container width). A short window, such as a landscape phone, drops the subtitle, tightens the header and lowers the canvas minimum so the page does not scroll. */
+  @media (max-height: 30rem) {
+    .diagram-page { --diagram-canvas-min: 8rem; }
+    .diagram-page .diagram-header { margin-bottom: .5rem; }
+    .diagram-page .diagram-subtitle { display: none; }
+  }
+
+  /* ===== .theme-container ===== */
+  /* 0. Tokens: Bootstrap's secondary color pulled toward the body color, so the outline button reaches 4.5:1 in both color modes. */
+  .theme-container { --theme-ink: color-mix(in srgb, var(--bs-secondary) 55%, var(--bs-body-color)); }
+  /* 1. Container layout: none (Bootstrap button) */
+  /* 2. Child elements */
+  .theme-container .btn-outline-secondary { --bs-btn-color: var(--theme-ink); }
+  /* 3. Modal: none */
+  /* 4. States: none (aria-pressed is styled by Bootstrap) */
+  /* 5. Animations: none */
+  /* 6. Responsive: none */
+
+  /* ===== .diagram-container ===== */
+  /* 0. Tokens: derived from Bootstrap variables, so both color modes work without overrides. The ink tokens pull a Bootstrap color toward the body color
+     until text reaches 4.5:1 (and graphics 3:1) on the toolbar, the canvas and the panels in light and dark. */
+  .diagram-container {
+    --diagram-line: var(--bs-body-color);
+    --diagram-edge: var(--bs-link-color);
+    --diagram-ink-secondary: color-mix(in srgb, var(--bs-secondary) 55%, var(--bs-body-color));
+    --diagram-ink-primary: color-mix(in srgb, var(--bs-primary) 55%, var(--bs-body-color));
+    --diagram-ink-danger: color-mix(in srgb, var(--bs-danger) 55%, var(--bs-body-color));
+    --diagram-select: var(--diagram-ink-danger);
+    --diagram-text-size: 11px;
+    --diagram-title-size: 12px;
+    --diagram-toolbar-gap: .375rem;
+  }
+  /* 1. Container layout: the stage is the size container (the card itself must not be one: containment would trap the fixed dialog). */
+  .diagram-container .diagram-stage { container-type: inline-size; container-name: diagram; min-height: 0; }
+  /* 2. Child elements (Pattern A: role classes live under a prefixed ancestor). */
+  .diagram-container .diagram-secondary { display: none; }
+  .diagram-container .diagram-toolbar { --bs-card-cap-padding-x: .5rem; gap: var(--diagram-toolbar-gap); }
+  .diagram-container .diagram-toolbar .btn { --bs-btn-padding-x: .375rem; }
+  .diagram-container .btn-outline-secondary { --bs-btn-color: var(--diagram-ink-secondary); }
+  .diagram-container .btn-outline-primary { --bs-btn-color: var(--diagram-ink-primary); }
+  .diagram-container .btn-outline-danger { --bs-btn-color: var(--diagram-ink-danger); }
+  .diagram-container .diagram-canvas { position: relative; min-height: var(--diagram-canvas-min, 14rem); overflow: hidden; background: var(--bs-tertiary-bg); touch-action: none; user-select: none; --diagram-profile: compact; --diagram-fit-padding: 12; }
+  .diagram-container .diagram-canvas > svg { display: block; }
+  .diagram-container .diagram-status { max-width: calc(100% - 1rem); }
+  .diagram-container .diagram-status:empty { display: none; }
+  .diagram-container .diagram-inspector { position: absolute; z-index: 5; display: none; flex-direction: column; left: 0; right: 0; bottom: 0; height: 60%; background: var(--bs-body-bg); border: 0 solid var(--bs-border-color); border-top-width: 1px; }
+  .diagram-container .diagram-inspector .header { display: flex; align-items: center; justify-content: space-between; padding: .5rem 1rem; border-bottom: 1px solid var(--bs-border-color); }
+  .diagram-container .diagram-inspector .body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; }
+  .diagram-container .diagram-entity .body { fill: var(--bs-body-bg); stroke: var(--diagram-edge); }
+  .diagram-container .diagram-entity .header { fill: var(--bs-primary-bg-subtle); stroke: var(--diagram-edge); cursor: grab; }
+  .diagram-container .diagram-entity text { fill: var(--bs-body-color); font: var(--diagram-text-size) var(--bs-font-sans-serif); pointer-events: none; }
+  .diagram-container .diagram-entity .title { fill: var(--bs-primary-text-emphasis); font-weight: 600; font-size: var(--diagram-title-size); }
+  .diagram-container .diagram-field .cell { fill: transparent; cursor: pointer; }
+  .diagram-container .diagram-field .key { fill: var(--bs-success-text-emphasis); font-weight: 600; }
+  .diagram-container .diagram-relation .line, .diagram-container .diagram-relation .cardinality { fill: none; stroke: var(--diagram-line); stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .diagram-container .diagram-relation .cardinality { pointer-events: none; }
+  .diagram-container .diagram-relation .hit { fill: none; stroke: transparent; stroke-width: 24; vector-effect: non-scaling-stroke; pointer-events: stroke; cursor: pointer; }
+  .diagram-container .diagram-relation:hover .line, .diagram-container .diagram-relation:hover .cardinality { stroke: var(--diagram-edge); }
+  .diagram-container .diagram-relation text { fill: var(--bs-body-color); font: var(--diagram-text-size) var(--bs-font-sans-serif); paint-order: stroke; stroke: var(--bs-tertiary-bg); stroke-width: 5px; pointer-events: none; }
+  /* 3. Modal (custom role="dialog" overlay, visibility comes from this._state.modal). */
+  .diagram-container .diagram-modal-overlay { position: fixed; inset: 0; z-index: 1055; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgb(0 0 0 / .5); }
+  .diagram-container .diagram-modal { width: min(32rem, 100%); max-height: 90vh; max-height: 90dvh; overflow-y: auto; }
+  /* 4. States (data-state and aria-pressed only). */
+  .diagram-container .btn[aria-pressed="true"] { background: var(--bs-secondary-bg); border-color: var(--bs-primary); }
+  .diagram-container .diagram-secondary[data-state="open"] { display: flex; flex-wrap: wrap; align-items: center; gap: var(--diagram-toolbar-gap); width: 100%; }
+  .diagram-container .diagram-inspector[data-state="open"] { display: flex; }
+  .diagram-container[data-state="drawing"] .diagram-canvas { cursor: crosshair; }
+  .diagram-container[data-state="panning"] .diagram-canvas, .diagram-container[data-state="dragging"] .diagram-canvas { cursor: grabbing; }
+  .diagram-container .diagram-entity[data-state="selected"] .body, .diagram-container .diagram-entity:focus-visible .body { stroke: var(--diagram-select); stroke-width: 2.5; }
+  .diagram-container .diagram-entity:focus-visible { outline: none; }
+  .diagram-container .diagram-field[data-state="selected"] .cell { fill: var(--bs-success-bg-subtle); }
+  .diagram-container .diagram-relation[data-state="selected"] .line, .diagram-container .diagram-relation[data-state="selected"] .cardinality, .diagram-container .diagram-relation:focus-visible .line, .diagram-container .diagram-relation:focus-visible .cardinality { stroke: var(--diagram-select); stroke-width: 3; }
+  .diagram-container .diagram-relation:focus-visible { outline: none; }
+  /* 5. Animations: none (no @keyframes and no transitions, so prefers-reduced-motion is not applicable) */
+  /* 6. Responsive: the widget adapts to its own container width; the canvas exposes the profile to JS through custom properties. */
+  @media (pointer: coarse), (any-pointer: coarse) { .diagram-container .btn, .diagram-container .form-control, .diagram-container .form-select { min-height: 44px; } .diagram-container .btn { min-width: 44px; } .diagram-container .btn-close { min-width: 44px; min-height: 44px; } .diagram-container .diagram-relation .hit { stroke-width: 44; } }
+  @container diagram (min-width: 600px) {
+    .diagram-container .diagram-toolbar { --bs-card-cap-padding-x: 1rem; --diagram-toolbar-gap: .5rem; }
+    .diagram-container .diagram-toolbar .btn { --bs-btn-padding-x: .625rem; }
+    .diagram-container .diagram-canvas { min-height: var(--diagram-canvas-min, 22rem); --diagram-profile: medium; --diagram-fit-padding: 24; }
+    .diagram-container .diagram-secondary, .diagram-container .diagram-secondary[data-state="open"] { display: contents; }
+    .diagram-container .diagram-more { display: none; }
+    .diagram-container .diagram-inspector { top: 0; left: auto; height: auto; width: min(20rem, 85%); border-top-width: 0; border-left-width: 1px; }
+  }
+  @container diagram (min-width: 960px) {
+    .diagram-container .diagram-canvas { --diagram-profile: expanded; --diagram-fit-padding: 40; }
+    .diagram-container .diagram-panel-toggle { display: none; }
+    .diagram-container .diagram-inspector, .diagram-container .diagram-inspector[data-state="open"] { position: relative; display: flex; z-index: auto; flex: 0 0 20rem; width: auto; }
+    .diagram-container .diagram-inspector .header { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    .diagram-container .diagram-inspector .btn-close { display: none; }
+    .diagram-container .diagram-inspector .body { position: absolute; inset: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="diagram-page bg-body text-body d-flex flex-column" data-bs-theme="light">
+  <div class="container-fluid pt-3 pb-0 d-flex flex-column flex-grow-1">
+    <header class="diagram-header d-flex justify-content-between align-items-start gap-3">
+      <div>
+        <h1 class="h3 mb-1">Diagram Editor</h1>
+        <div class="diagram-subtitle"><p class="text-body-secondary small mb-0 d-none d-sm-block">Drag entities, draw relations, edit fields. There is no live save: export JSON when you are done.</p></div>
+      </div>
+      <section class="theme-container" aria-label="Theme">
+        <button type="button" class="btn btn-outline-secondary" data-action="toggle-theme" data-ref="theme-button" aria-pressed="false">Dark theme</button>
+      </section>
+    </header>
+    <main class="d-flex flex-column flex-grow-1">
+      <section class="diagram-container card shadow-sm rounded-bottom-0 flex-grow-1" aria-label="Diagram editor" data-state="idle">
+        <div class="diagram-stage d-flex flex-column flex-grow-1">
+          <div class="diagram-toolbar card-header d-flex flex-wrap align-items-center" role="toolbar" aria-label="Diagram tools">
+            <button type="button" class="btn btn-outline-secondary" data-action="add-entity">+ Entity</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="toggle-draw-relation" data-ref="draw-button" aria-pressed="false">Draw relation</button>
+            <button type="button" class="btn btn-outline-danger" data-action="delete-selected" data-ref="delete-button" aria-keyshortcuts="Delete Backspace" disabled>Delete</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="normalize-layout" data-ref="normalize-button" aria-label="Normalize layout">Normalize</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="undo-change" data-ref="undo-button" aria-keyshortcuts="Control+Z Meta+Z" disabled>Undo</button>
+            <button type="button" class="btn btn-outline-primary diagram-panel-toggle" data-action="toggle-panel" data-ref="panel-button" aria-expanded="false">Properties</button>
+            <button type="button" class="btn btn-outline-secondary diagram-more" data-action="toggle-menu" data-ref="menu-button" aria-expanded="false">More</button>
+            <div class="diagram-secondary" data-ref="secondary">
+              <button type="button" class="btn btn-outline-secondary" data-action="modal-open-junction">+ Many-to-many</button>
+              <button type="button" class="btn btn-outline-secondary" data-action="redo-change" data-ref="redo-button" aria-keyshortcuts="Control+Y Control+Shift+Z Meta+Y Meta+Shift+Z" disabled>Redo</button>
+              <div class="btn-group" role="group" aria-label="Zoom">
+                <button type="button" class="btn btn-outline-secondary" data-action="decrease-zoom" aria-label="Zoom out">&minus;</button>
+                <button type="button" class="btn btn-outline-secondary" data-action="reset-zoom" data-ref="zoom-button" aria-label="Reset zoom, current level 100%">100%</button>
+                <button type="button" class="btn btn-outline-secondary" data-action="increase-zoom" aria-label="Zoom in">+</button>
+              </div>
+              <button type="button" class="btn btn-outline-secondary" data-action="modal-open-help" aria-label="Keyboard shortcuts" title="Keyboard shortcuts">?</button>
+              <div class="btn-group ms-auto" role="group" aria-label="Model">
+                <button type="button" class="btn btn-outline-secondary" data-action="modal-open-validate" data-ref="validate-button" aria-label="Validate model, no issues">Validate <span class="badge text-bg-warning" data-ref="validate-badge" hidden></span></button>
+                <button type="button" class="btn btn-outline-secondary" data-action="export-model">Export JSON</button>
+                <button type="button" class="btn btn-outline-secondary" data-action="import-model">Import JSON</button>
+              </div>
+            </div>
+            <input type="file" accept="application/json,.json" data-action="import-file" data-ref="import-input" hidden aria-label="Import JSON file">
+          </div>
+          <div class="alert alert-danger alert-dismissible m-2 mb-0" role="alert" data-ref="error" hidden>
+            <span data-ref="error-text"></span>
+            <button type="button" class="btn-close" aria-label="Dismiss message" data-action="dismiss-error"></button>
+          </div>
+          <p class="visually-hidden" role="status" data-ref="status"></p>
+          <div class="diagram-row position-relative d-flex flex-grow-1">
+            <div class="diagram-canvas flex-grow-1" data-ref="canvas">
+              <svg class="position-absolute top-0 start-0 w-100 h-100" data-ref="svg" role="group" aria-label="Diagram canvas. Tab to the relations or to an entity, press Enter to select it. Arrow keys move an entity or step between relations, Delete removes the focused one.">
+                <rect data-action="pan-canvas" width="100%" height="100%" fill="transparent"/>
+                <g data-ref="viewport"><g data-ref="relations"></g><g data-ref="entities"></g></g>
+              </svg>
+              <span class="badge text-bg-warning position-absolute top-0 end-0 m-2" data-ref="dirty-badge" hidden>Unsaved changes</span>
+              <p class="diagram-status badge text-bg-dark text-wrap text-start position-absolute bottom-0 start-0 m-2 pe-none" aria-hidden="true" data-ref="notice"></p>
+              <p class="position-absolute top-50 start-50 translate-middle text-body-secondary text-center" data-ref="empty" hidden>The model is empty. Add an entity or import a JSON file.</p>
+              <div class="position-absolute bottom-0 end-0 m-2 p-2 rounded border bg-body small pe-none d-none d-md-block" aria-hidden="true">
+                <div><svg width="34" height="12" class="me-1"><path d="M0 6h34M22 1v10" fill="none" stroke="currentColor" stroke-width="2"/></svg>one</div>
+                <div><svg width="34" height="12" class="me-1"><path d="M0 6h34M20 6l14-5M20 6l14 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>many</div>
+              </div>
+              <ul class="visually-hidden" aria-label="Model outline" data-ref="outline"></ul>
+            </div>
+            <aside class="diagram-inspector" aria-label="Properties" data-ref="inspector" data-state="">
+              <div class="header"><h2 class="title h6 mb-0">Properties</h2><button type="button" class="btn-close" aria-label="Close properties" data-action="close-panel"></button></div>
+              <div class="body" data-ref="inspector-body"></div>
+            </aside>
+          </div>
+        </div>
+        <div class="diagram-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="diagram-modal-title" data-ref="modal" hidden>
+          <div class="diagram-modal card">
+            <div class="card-header"><h2 class="title h6 mb-0" id="diagram-modal-title" data-ref="modal-title"></h2></div>
+            <div class="body card-body" data-ref="modal-body"></div>
+            <div class="actions card-footer d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary" data-action="modal-cancel" data-ref="modal-cancel">Cancel</button>
+              <button type="button" class="btn btn-primary" data-action="modal-confirm" data-ref="modal-confirm">OK</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>
+(() => {
+'use strict';
+
+/** @typedef {{id:string,name:string,type:string,key:''|'PK'|'FK'|'UK'}} Field */
+/** @typedef {{id:string,name:string,x:number,y:number,fields:Field[]}} Entity */
+/** @typedef {{id:string,fromField:string,toField:string,label:string}} Relation fromField is the FK (many side), toField the PK/UK (one side). */
+/** @typedef {Object} ThemeConfig  Resolved ThemeController settings: DEFAULTS < constructor options < data attributes.
+ *  @property {'auto'|'light'|'dark'} initialMode  Start mode; "auto" follows prefers-color-scheme. */
+/** @typedef {Object} ThemeState  The single mutable state of ThemeController.
+ *  @property {'light'|'dark'} mode  Current color mode. */
+/**
+ * @typedef {Object} Config  Resolved DiagramController settings: DEFAULTS < constructor options < data-diagram-* attributes.
+ * @property {number} historyLimit  Undo entries kept.
+ * @property {number} coalesceMs  Edits with the same tag inside this window share one history entry.
+ * @property {number} nudge  Keyboard move step in px.
+ * @property {number} nudgeLarge  Keyboard move step with Shift, in px.
+ * @property {number} minZoom  Lowest zoom factor.
+ * @property {number} maxZoom  Highest zoom factor.
+ * @property {number} zoomStep  Zoom change of the + and - buttons.
+ * @property {number} minReadableZoom  The fit never goes below this zoom (11 px text x 0.82 = 9 px).
+ * @property {number} entityWidth  Entity box width.
+ * @property {number} headerHeight  Entity header height.
+ * @property {number} rowHeight  Field row height.
+ * @property {number} markerLength  Length of the crow's foot and of the bar at a relation end.
+ * @property {number} markerSpread  Half-width of the crow's foot.
+ * @property {number} statusMs  How long a status message stays visible.
+ * @property {number} gridSize  Grid of the layout and of manual positions.
+ * @property {number} layoutGapX  Gap between neighbours of a layer.
+ * @property {number} layoutMinGapY  Smallest gap between layers.
+ * @property {number} layoutMaxGapY  Largest gap between layers.
+ * @property {number} layoutMaxRowWidth  Width at which unrelated groups wrap into a new row.
+ * @property {number} layoutSweeps  Barycenter ordering passes.
+ * @property {'auto'|'vertical'|'horizontal'} layoutDirection  Flow of the layers; "auto" picks it from the canvas shape.
+ * @property {number} layoutAutoAspect  Canvas width/height from which "auto" flows left to right.
+ * @property {number} fitPadding  Fit margin used when the CSS does not provide one.
+ * @property {number} maxName  Longest entity name, field name or label.
+ * @property {number} maxEntities  Model size limit.
+ * @property {number} maxImportBytes  Largest importable file.
+ * @property {string} exportFilename  Name of the downloaded JSON file.
+ */
+/**
+ * @typedef {Object} State  The single mutable state of DiagramController; every part of the UI is a projection of it.
+ * @property {Entity[]} entities  The model: entities with their fields.
+ * @property {Relation[]} relations  The model: foreign-key relations.
+ * @property {{type: 'entity'|'field'|'relation', id: string}|null} selection  Current selection.
+ * @property {'idle'|'dragging'|'panning'|'drawing'|'dialog'|'pinching'} mode  Interaction state machine (see TRANSITIONS).
+ * @property {number} zoom  Viewport scale.
+ * @property {number} panX  Viewport translation along x, in canvas pixels.
+ * @property {number} panY  Viewport translation along y, in canvas pixels.
+ * @property {{kind: 'entity'|'pan', id?: string, ox: number, oy: number, x: number, y: number, moved: boolean}|null} drag  Drag in progress: origin of the dragged thing and start pointer.
+ * @property {{parent: string|null}|null} draw  Relation drawing in progress: the id of the picked parent entity.
+ * @property {Object|null} modal  Open dialog: { type: 'confirm'|'report'|'help'|'junction', title, ... }.
+ * @property {boolean} dirty  Unsaved changes (cleared by an export).
+ * @property {string} error  Error message; empty when there is none.
+ * @property {string} status  Status message (live region and toast).
+ * @property {string[]} undo  Model snapshots to go back to, oldest first.
+ * @property {string[]} redo  Model snapshots to go forward to.
+ * @property {number} idSeq  Counter that keeps generated ids unique.
+ * @property {{tag: string, at: number}} lastCommit  Last history entry, used to coalesce bursts of edits.
+ * @property {boolean} panelOpen  Properties sheet open (compact and medium profiles).
+ * @property {boolean} menuOpen  Secondary toolbar group open (compact profile).
+ * @property {'compact'|'medium'|'expanded'} profile  Responsive profile, read from the CSS.
+ * @property {number} fitPadding  Fit margin, read from the CSS.
+ * @property {{w: number, h: number}} size  Canvas size in pixels (the viewBox).
+ * @property {Map<number, {x: number, y: number}>} pointers  Active pointers on the canvas (pinch tracking).
+ * @property {Object|null} pinch  Pinch in progress: start distance, zoom, midpoint and pan.
+ * @property {{factor: number, clientX: number, clientY: number}|null} wheel  Wheel zoom waiting for the next animation frame.
+ * @property {number} rev  Model revision, bumped by every change and every restore.
+ * @property {number} checkedRev  Revision the cached issues belong to.
+ * @property {{level: string, text: string}[]} issues  Cached validation result (the badge on Validate).
+ */
+
+/**
+ * Theme switch widget. Owns only its button; emits `theme:mode-changed`, never touches the page.
+ * Configuration, three layers (later wins): static DEFAULTS < new ThemeController(selector, opts) < data attributes.
+ *   data-theme-initial-mode="auto|light|dark"  start mode; "auto" follows prefers-color-scheme (default).
+ * Events: `theme:mode-changed` on document, detail { mode: 'light' | 'dark' }.
+ */
+class ThemeController {
+  static DEFAULTS = Object.freeze({ initialMode: 'auto' });
+  static MODES = Object.freeze(['auto', 'light', 'dark']);
+
+  /**
+   * Builds the widget: resolves the config, picks the start mode, caches the button, binds and renders. Does nothing when the root is missing.
+   * @param {string|Element} selector  Root element of the widget, or a selector for it.
+   * @param {Partial<ThemeConfig>} [opts]  Options; data attributes win over them.
+   */
+  constructor(selector, opts = {}) {
+    this._root = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!this._root) return;
+    const $ = (sel) => this._root.querySelector(sel);
+    this._cfg = { ...ThemeController.DEFAULTS, ...opts, ...this._readDataAttrs() };
+    if (!ThemeController.MODES.includes(this._cfg.initialMode)) this._cfg.initialMode = ThemeController.DEFAULTS.initialMode;
+    this._media = window.matchMedia('(prefers-color-scheme: dark)');
+    this._state = { mode: this._cfg.initialMode === 'auto' ? (this._media.matches ? 'dark' : 'light') : this._cfg.initialMode };
+    this._ac = new AbortController();
+    this._refs = { button: $('[data-ref="theme-button"]') };
+    this._bind();
+    this._render();
+    queueMicrotask(() => this._emit()); // after the orchestrator has finished wiring its listener
+  }
+
+  /**
+   * Reads `data-theme-initial-mode`; an invalid value is ignored so the lower layers win.
+   * @returns {Partial<ThemeConfig>}
+   */
+  _readDataAttrs() {
+    const mode = this._root.dataset.themeInitialMode;
+    return mode !== undefined && ThemeController.MODES.includes(mode) ? { initialMode: mode } : {};
+  }
+  /** Projects the mode onto the button: `aria-pressed` is true in dark mode. */
+  _render() { this._refs.button.setAttribute('aria-pressed', String(this._state.mode === 'dark')); }
+  /** Wires the click on the toggle and the system color-scheme change; every listener shares the controller signal. */
+  _bind() {
+    const sig = { signal: this._ac.signal };
+    this._root.addEventListener('click', (e) => { if (e.target.closest('[data-action="toggle-theme"]')) this._handleToggle(); }, sig);
+    this._media.addEventListener('change', (e) => this._setMode(e.matches ? 'dark' : 'light'), sig);
+  }
+  /** Click on the toggle: flips between light and dark. */
+  _handleToggle() { this._setMode(this._state.mode === 'dark' ? 'light' : 'dark'); }
+  /**
+   * Applies a mode: updates the state and the button, then tells the page.
+   * @param {'light'|'dark'} mode
+   */
+  _setMode(mode) { this._state.mode = mode; this._render(); this._emit(); }
+  /** Announces the current mode as `theme:mode-changed` on document (`detail.mode`). */
+  _emit() { document.dispatchEvent(new CustomEvent('theme:mode-changed', { detail: { mode: this._state.mode } })); }
+  /** Public teardown: removes every listener this widget bound. */
+  destroy() { this._ac.abort(); }
+}
+
+/**
+ * ER diagram editor. One controller, one state object; the UI is a projection of this._state.
+ * Configuration, three layers (later wins): static DEFAULTS < new DiagramController(selector, opts) < data attributes.
+ *   data-diagram-history-limit, -min-zoom, -max-zoom, -max-import-bytes, -marker-length, -marker-spread,
+ *   -grid-size, -layout-gap-x, -layout-min-gap-y, -layout-max-row-width, -layout-sweeps, -layout-auto-aspect, -fit-padding, -min-readable-zoom, -status-ms
+ *   (numbers are coerced, NaN falls back to DEFAULTS, ranges are clamped). Unknown opts keys are dropped.
+ *   data-diagram-layout-direction="auto|vertical|horizontal"  flow of the layers: top to bottom, left to right, or (auto, default) left to right
+ *   when the canvas is at least layoutAutoAspect (1.3) times wider than tall. The gap between neighbours of a layer is layoutGapX in both directions.
+ * Fit policy: the view never shrinks the text below minReadableZoom (0.82: 11 px x 0.82 = 9 px). A model that does not fit at that size
+ * starts at its top-left corner, and every fit (load, normalize, import) says "Larger than the screen: pan, pinch or zoom out".
+ * Hooks: data-ref (cached once), data-action (one delegated listener each for click, input, change, pointerdown, keydown), data-id, data-state.
+ */
+class DiagramController {
+  /* ---- 0. Static configuration ---- */
+  static DEFAULTS = Object.freeze({
+    historyLimit: 100, coalesceMs: 800, nudge: 4, nudgeLarge: 20, minZoom: 0.4, maxZoom: 2.5, zoomStep: 0.1,
+    entityWidth: 220, headerHeight: 30, rowHeight: 26, markerLength: 16, markerSpread: 7, minReadableZoom: 0.82, statusMs: 4000, gridSize: 10, layoutGapX: 120, layoutMinGapY: 120, layoutMaxGapY: 260, layoutMaxRowWidth: 1600, layoutSweeps: 6, layoutDirection: 'auto', layoutAutoAspect: 1.3, fitPadding: 40, maxName: 64, maxEntities: 200,
+    maxImportBytes: 1048576, exportFilename: 'diagram-export.json'
+  });
+  static DIRECTIONS = Object.freeze(['auto', 'vertical', 'horizontal']);
+  static FORBIDDEN_KEYS = Object.freeze(['__proto__', 'constructor', 'prototype']);
+  static KEYS = Object.freeze(['', 'PK', 'FK', 'UK']);
+  static TYPES = Object.freeze(['string', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'text', 'uuid']);
+  static ESCAPES = Object.freeze({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#96;' });
+  static TRANSITIONS = Object.freeze({ idle: ['dragging', 'panning', 'drawing', 'dialog', 'pinching'], dragging: ['idle', 'pinching'], panning: ['idle', 'pinching'], drawing: ['idle', 'dialog'], dialog: ['idle'], pinching: ['idle'] });
+  static SEED = Object.freeze({
+    entities: [
+      ['curator', 'CURATOR', 40, 30, [['id', 'PK'], ['name', ''], ['email', 'UK']]],
+      ['student', 'STUDENT', 380, 30, [['id', 'PK'], ['name', ''], ['email', 'UK'], ['curator_id', 'FK']]],
+      ['subject', 'SUBJECT', 720, 30, [['id', 'PK'], ['name', 'UK'], ['credits', ''], ['teacher_id', 'FK']]],
+      ['teacher', 'TEACHER', 1060, 30, [['id', 'PK'], ['name', ''], ['email', 'UK']]],
+      ['course', 'COURSE', 550, 300, [['id', 'PK'], ['student_id', 'FK'], ['subject_id', 'FK'], ['grade', '']]]],
+    relations: [['student', 'curator_id', 'curator', 'id', 'advised by'], ['subject', 'teacher_id', 'teacher', 'id', 'taught by'],
+      ['course', 'student_id', 'student', 'id', 'taken by'], ['course', 'subject_id', 'subject', 'id', 'covers']]
+  });
+
+  /* ---- 1. Constructor ---- */
+  /**
+   * Builds the editor: merges the three config layers, creates the state, caches every `data-ref` once, measures the canvas, seeds the sample model,
+   * binds the events, renders and fits the view. Does nothing when the root is missing.
+   * @param {string|Element} selector  Root element of the widget, or a selector for it.
+   * @param {Partial<Config>} [opts]  Options; data attributes win over them.
+   */
+  constructor(selector, opts = {}) {
+    this._root = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!this._root) return;
+    const $ = (sel) => this._root.querySelector(sel);
+    opts = DiagramController._sanitizeOptions(opts);
+    this._cfg = { ...DiagramController.DEFAULTS, ...opts, ...this._readDataAttrs() };
+    if (!DiagramController.DIRECTIONS.includes(this._cfg.layoutDirection)) this._cfg.layoutDirection = DiagramController.DEFAULTS.layoutDirection;
+    this._cfg.layoutAutoAspect = Number(this._cfg.layoutAutoAspect) > 0 ? Number(this._cfg.layoutAutoAspect) : DiagramController.DEFAULTS.layoutAutoAspect;
+    this._state = {
+      entities: [], relations: [], selection: null, mode: 'idle', zoom: 1, panX: 0, panY: 0, drag: null,
+      draw: null, modal: null, dirty: false, error: '', status: '', undo: [], redo: [], idSeq: 0,
+      lastCommit: { tag: '', at: 0 }, panelOpen: false, menuOpen: false, profile: 'compact', fitPadding: 12, size: { w: 0, h: 0 }, pointers: new Map(), pinch: null, wheel: null, rev: 0, checkedRev: -1, issues: []
+    };
+    this._lastFocused = null;
+    this._ac = new AbortController();
+    const names = ['canvas', 'svg', 'viewport', 'relations', 'entities', 'outline', 'empty', 'inspector', 'inspector-body', 'modal',
+      'modal-title', 'modal-body', 'modal-cancel', 'modal-confirm', 'draw-button', 'delete-button', 'zoom-button',
+      'undo-button', 'redo-button', 'dirty-badge', 'import-input', 'error', 'error-text', 'status', 'normalize-button', 'notice', 'secondary', 'menu-button', 'panel-button', 'validate-button', 'validate-badge'];
+    this._refs = Object.fromEntries(names.map((refName) => [refName, $(`[data-ref="${refName}"]`)]));
+    this._syncSize();
+    this._seed();
+    this._bind();
+    this._render();
+    this._fitAndSay();
+  }
+
+  /* ---- 2. Config ---- */
+  /**
+   * Reads data-diagram-* attributes; invalid numbers fall back to DEFAULTS, ranges are clamped.
+   * @returns {Partial<Config>}
+   */
+  _readDataAttrs() {
+    const dataset = this._root.dataset, out = {};
+    const num = (raw, key, min, max) => { const number = Number(raw); if (raw !== undefined && raw !== '' && Number.isFinite(number)) out[key] = Math.min(max, Math.max(min, number)); };
+    num(dataset.diagramHistoryLimit, 'historyLimit', 1, 500);
+    num(dataset.diagramMinZoom, 'minZoom', 0.1, 1);
+    num(dataset.diagramMaxZoom, 'maxZoom', 1, 5);
+    num(dataset.diagramMarkerLength, 'markerLength', 8, 32);
+    num(dataset.diagramMarkerSpread, 'markerSpread', 3, 16);
+    num(dataset.diagramGridSize, 'gridSize', 1, 50);
+    num(dataset.diagramLayoutGapX, 'layoutGapX', 40, 400);
+    num(dataset.diagramLayoutMinGapY, 'layoutMinGapY', 40, 400);
+    num(dataset.diagramLayoutMaxRowWidth, 'layoutMaxRowWidth', 600, 6000);
+    num(dataset.diagramLayoutSweeps, 'layoutSweeps', 1, 20);
+    num(dataset.diagramLayoutAutoAspect, 'layoutAutoAspect', 0.5, 4);
+    if (DiagramController.DIRECTIONS.includes(dataset.diagramLayoutDirection)) out.layoutDirection = dataset.diagramLayoutDirection;
+    num(dataset.diagramFitPadding, 'fitPadding', 0, 200);
+    num(dataset.diagramMinReadableZoom, 'minReadableZoom', 0.3, 1);
+    num(dataset.diagramStatusMs, 'statusMs', 500, 20000);
+    num(dataset.diagramMaxImportBytes, 'maxImportBytes', 1024, 10485760);
+    return out;
+  }
+
+  /* ---- 3. Render (projection of state) ---- */
+  /** Full projection of the state: canvas layers, inspector, chrome and viewport. Prefer the narrower `_render*` methods when only one part changed. */
+  _render() { this._renderCanvas(); this._renderInspector(); this._renderChrome(); this._applyView(); }
+  /** Writes the pan and zoom of the state to the viewport transform (the only place that does). */
+  _applyView() { const state = this._state; this._refs.viewport.setAttribute('transform', `translate(${state.panX},${state.panY}) scale(${state.zoom})`); }
+  /** Keeps the viewBox 1:1 with canvas pixels and reads the responsive profile the CSS exposes on the canvas. */
+  _syncSize() {
+    const state = this._state, box = this._refs.canvas.getBoundingClientRect(), style = getComputedStyle(this._refs.canvas);
+    state.size = { w: Math.max(1, Math.round(box.width)), h: Math.max(1, Math.round(box.height)) };
+    this._refs.svg.setAttribute('viewBox', `0 0 ${state.size.w} ${state.size.h}`);
+    state.profile = style.getPropertyValue('--diagram-profile').trim() || 'compact';
+    state.fitPadding = parseFloat(style.getPropertyValue('--diagram-fit-padding')) || this._cfg.fitPadding;
+    this._renderChrome();
+  }
+  /**
+   * Projects everything outside the SVG: button states, zoom label, badges, messages, panel and menu flags.
+   * Re-validates the model only when `state.rev` moved since the last check, so the count on the Validate badge costs nothing per frame.
+   * Touches: `state.issues`, `state.checkedRev` (cache).
+   */
+  _renderChrome() {
+    const state = this._state, refs = this._refs, percent = Math.round(state.zoom * 100);
+    this._root.dataset.state = state.mode;
+    refs['undo-button'].disabled = !state.undo.length; refs['redo-button'].disabled = !state.redo.length; refs['delete-button'].disabled = !state.selection; refs['normalize-button'].disabled = state.mode !== 'idle' || !state.entities.length;
+    refs['draw-button'].setAttribute('aria-pressed', String(state.mode === 'drawing'));
+    refs['zoom-button'].textContent = `${percent}%`; refs['zoom-button'].setAttribute('aria-label', `Reset zoom, current level ${percent}%`);
+    if (state.checkedRev !== state.rev) { state.issues = this._validateModel(); state.checkedRev = state.rev; }
+    const issueCount = state.issues.length;
+    refs['validate-badge'].textContent = String(issueCount); refs['validate-badge'].hidden = !issueCount;
+    refs['validate-button'].setAttribute('aria-label', issueCount ? `Validate model, ${issueCount} ${issueCount === 1 ? 'issue' : 'issues'}` : 'Validate model, no issues');
+    refs['dirty-badge'].hidden = !state.dirty; refs.error.hidden = !state.error; refs['error-text'].textContent = state.error;
+    refs.status.textContent = state.status; refs.notice.textContent = state.status; refs.empty.hidden = state.entities.length > 0;
+    refs.inspector.dataset.state = state.panelOpen ? 'open' : ''; refs.inspector.inert = state.profile !== 'expanded' && !state.panelOpen;
+    refs['panel-button'].setAttribute('aria-expanded', String(state.panelOpen)); refs['menu-button'].setAttribute('aria-expanded', String(state.menuOpen)); refs.secondary.dataset.state = state.menuOpen ? 'open' : '';
+  }
+  /** The canvas is three independent layers (entities, relations, outline); a change re-renders only the layers it affects. */
+  _renderCanvas() { this._renderEntities(); this._renderRelations(); this._renderOutline(); }
+  /** `data-state` value of a node: "selected" when it is the current selection. */
+  _stateOf(type, itemId) { const selection = this._state.selection; return selection && selection.type === type && selection.id === itemId ? 'selected' : ''; }
+  /**
+   * SVG transform that puts an entity node at its position.
+   * @param {Entity} entity
+   * @returns {string}
+   */
+  _entityTransform(entity) { return `translate(${entity.x},${entity.y})`; }
+  /** Rebuilds the whole entities layer. Needed when the model, a name or the selection changed; a drag moves a single node instead. */
+  _renderEntities() { this._refs.entities.innerHTML = this._state.entities.map((entity) => this._entityMarkup(entity)).join(''); }
+  /**
+   * SVG markup of one entity: body, draggable header and one row per field. All text is escaped.
+   * @param {Entity} entity
+   * @returns {string}
+   */
+  _entityMarkup(entity) {
+    const cfg = this._cfg, esc = (value) => this._esc(value);
+    const rows = entity.fields.map((field, index) => `<g class="diagram-field" data-action="select-field" data-id="${esc(field.id)}" data-state="${this._stateOf('field', field.id)}" transform="translate(0,${cfg.headerHeight + index * cfg.rowHeight})"><rect class="cell" width="${cfg.entityWidth}" height="${cfg.rowHeight}"/><text x="10" y="17">${esc(field.name)}</text><text class="key" x="${cfg.entityWidth - 10}" y="17" text-anchor="end">${esc(field.key)}</text></g>`).join('');
+    return `<g class="diagram-entity" data-action="select-entity" data-id="${esc(entity.id)}" data-state="${this._stateOf('entity', entity.id)}" tabindex="0" role="group" aria-label="${esc(entity.name)}, ${entity.fields.length} fields" transform="${this._entityTransform(entity)}"><rect class="body" width="${cfg.entityWidth}" height="${cfg.headerHeight + entity.fields.length * cfg.rowHeight}"/><g data-action="drag-entity" data-id="${esc(entity.id)}"><rect class="header" width="${cfg.entityWidth}" height="${cfg.headerHeight}"/><text class="title" x="10" y="20">${esc(entity.name)}</text></g>${rows}</g>`;
+  }
+  /** Relations form one roving tab stop: the selected relation, otherwise the first one (arrow keys move along them). */
+  _renderRelations() {
+    this._refs.relations.innerHTML = this._state.relations.map((relation) => this._relationMarkup(relation)).join('');
+    const nodes = [...this._refs.relations.children];
+    (nodes.find((node) => node.dataset.state === 'selected') ?? nodes[0])?.setAttribute('tabindex', '0');
+  }
+  /** One relation as SVG; empty when an end is missing, both ends are the same entity, or the line has no usable length. */
+  _relationMarkup(relation) {
+    const cfg = this._cfg, esc = (value) => this._esc(value), source = this._owner(relation.fromField), target = this._owner(relation.toField);
+    if (!source || !target || source.entity === target.entity) return '';
+    const start = this._edge(source.entity, target.entity), end = this._edge(target.entity, source.entity), length = Math.hypot(end.x - start.x, end.y - start.y);
+    if (![start.x, start.y, end.x, end.y, length].every(Number.isFinite) || length < 1) return '';
+    const unitX = (end.x - start.x) / length, unitY = (end.y - start.y) / length, path = `M${start.x} ${start.y}L${end.x} ${end.y}`, marker = DiagramController._marker;
+    const markerLength = Math.min(cfg.markerLength, length / 3), markerSpread = cfg.markerSpread * markerLength / cfg.markerLength;
+    const marks = marker('many', start.x, start.y, unitX, unitY, markerLength, markerSpread) + marker('one', end.x, end.y, -unitX, -unitY, markerLength, markerSpread);
+    const showLabel = relation.label && length > DiagramController._labelSpace(relation.label, markerLength);
+    const title = `${esc(source.entity.name)}.${esc(source.field.name)} references ${esc(target.entity.name)}.${esc(target.field.name)}, many to one${relation.label ? `: ${esc(relation.label)}` : ''}`;
+    return `<g class="diagram-relation" data-action="select-relation" data-id="${esc(relation.id)}" data-state="${this._stateOf('relation', relation.id)}" tabindex="-1" role="group" aria-label="${title}"><title>${title}</title><path class="line" d="${path}"/><path class="hit" d="${path}"/><path class="cardinality" d="${marks}"/>${showLabel ? `<text x="${(start.x + end.x) / 2}" y="${(start.y + end.y) / 2 - 6}" text-anchor="middle">${esc(relation.label)}</text>` : ''}</g>`;
+  }
+  /** Visually hidden text twin of the diagram for screen readers. */
+  _renderOutline() {
+    const state = this._state, esc = (value) => this._esc(value);
+    this._refs.outline.innerHTML = state.entities.map((entity) => `<li>${esc(entity.name)}: ${entity.fields.map((field) => esc(field.name) + (field.key ? ` (${field.key})` : '')).join(', ')}</li>`).join('')
+      + state.relations.map((relation) => { const source = this._owner(relation.fromField), target = this._owner(relation.toField); return source && target ? `<li>${esc(source.entity.name)}.${esc(source.field.name)} references ${esc(target.entity.name)}.${esc(target.field.name)}, many to one</li>` : ''; }).join('');
+  }
+  /**
+   * Rebuilds the properties panel for the selection (entity or field: name, position, fields; relation: label).
+   * Inspector edits do not call it, so focus and caret survive typing.
+   */
+  _renderInspector() {
+    const sel = this._state.selection, e = (value) => this._esc(value), body = this._refs['inspector-body'];
+    let html = '<p class="text-body-secondary small">Select an entity or a relation to edit it.</p>';
+    const owner = sel && (sel.type === 'field' ? this._owner(sel.id) : null);
+    const entity = sel && (sel.type === 'entity' ? this._entity(sel.id) : owner && owner.entity);
+    if (entity) {
+      html = `<label class="form-label w-100">Entity name<input type="text" class="form-control" maxlength="${this._cfg.maxName}" data-action="update-entity-name" data-id="${e(entity.id)}" value="${e(entity.name)}"></label>
+        <div class="d-flex gap-2 mt-2"><label class="form-label flex-fill mb-0">X<input type="number" class="form-control" step="${this._cfg.gridSize}" data-action="update-entity-x" data-id="${e(entity.id)}" value="${entity.x}"></label><label class="form-label flex-fill mb-0">Y<input type="number" class="form-control" step="${this._cfg.gridSize}" data-action="update-entity-y" data-id="${e(entity.id)}" value="${entity.y}"></label></div>
+        <div class="d-flex justify-content-between align-items-center my-2"><h3 class="h6 mb-0">Fields</h3><button type="button" class="btn btn-outline-primary btn-sm" data-action="add-field" data-id="${e(entity.id)}">Add field</button></div>
+        <ul class="list-unstyled mb-0">${entity.fields.map((field) => `<li class="d-flex gap-1 mb-1"><input type="text" class="form-control" aria-label="Field name" maxlength="${this._cfg.maxName}" data-action="update-field-name" data-id="${e(field.id)}" value="${e(field.name)}"><select class="form-select w-auto" aria-label="Key type" data-action="update-field-key" data-id="${e(field.id)}">${DiagramController.KEYS.map((keyType) => `<option value="${e(keyType)}"${keyType === field.key ? ' selected' : ''}>${e(keyType || 'none')}</option>`).join('')}</select><button type="button" class="btn btn-outline-danger" aria-label="Delete field ${e(field.name)}" data-action="delete-field" data-id="${e(field.id)}">&times;</button></li>`).join('')}</ul>`;
+    } else if (sel && sel.type === 'relation' && this._relation(sel.id)) {
+      const relation = this._relation(sel.id), source = this._owner(relation.fromField), target = this._owner(relation.toField);
+      html = `<p class="small">${source && target ? `${e(source.entity.name)}.${e(source.field.name)} &rarr; ${e(target.entity.name)}.${e(target.field.name)} (many to one)` : 'Broken relation'}</p>
+        <label class="form-label w-100">Label<input type="text" class="form-control" maxlength="${this._cfg.maxName}" data-action="update-relation-label" data-id="${e(relation.id)}" value="${e(relation.label)}"></label>`;
+    }
+    body.innerHTML = html;
+  }
+  /**
+   * Projects `state.modal` onto the dialog overlay: title, body by type (confirm, report, help, junction) and button labels.
+   * Information-only dialogs hide the confirm button. Moves the focus inside.
+   */
+  _renderDialog() {
+    const modal = this._state.modal, refs = this._refs, e = (value) => this._esc(value);
+    refs.modal.hidden = !modal;
+    if (!modal) return;
+    refs['modal-title'].textContent = modal.title;
+    const infoOnly = modal.type === 'report' || modal.type === 'help';
+    refs['modal-confirm'].hidden = infoOnly; refs['modal-confirm'].textContent = modal.confirmLabel || 'OK';
+    refs['modal-cancel'].textContent = infoOnly ? 'Close' : 'Cancel';
+    if (modal.type === 'confirm') refs['modal-body'].innerHTML = `<p class="mb-0">${e(modal.message)}</p>`;
+    if (modal.type === 'report') refs['modal-body'].innerHTML = modal.issues.length ? `<ul class="mb-0">${modal.issues.map((i) => `<li class="text-${i.level}-emphasis">${e(i.text)}</li>`).join('')}</ul>` : '<p class="mb-0">No problems found.</p>';
+    if (modal.type === 'help') refs['modal-body'].innerHTML = `<dl class="mb-0">${modal.shortcuts.map(({ keys, text }) => `<dt class="fw-normal">${keys.map((keyLabel) => `<kbd>${e(keyLabel)}</kbd>`).join(' or ')}</dt><dd class="text-body-secondary">${e(text)}</dd>`).join('')}</dl>`;
+    if (modal.type === 'junction') {
+      const options = (value) => this._state.entities.map((entity) => `<option value="${e(entity.id)}"${entity.id === value ? ' selected' : ''}>${e(entity.name)}</option>`).join('');
+      refs['modal-body'].innerHTML = `<label class="form-label w-100">First entity<select class="form-select" data-action="modal-set-entity-a">${options(modal.a)}</select></label><label class="form-label w-100 mb-0">Second entity<select class="form-select" data-action="modal-set-entity-b">${options(modal.b)}</select></label>`;
+    }
+    refs.modal.querySelector('select, input, [data-action="modal-confirm"]:not([hidden]), [data-action="modal-cancel"]').focus();
+  }
+
+  /* ---- 4. Actions ---- */
+  /**
+   * Moves the interaction state machine to `next` when TRANSITIONS allows it.
+   * @param {string} next
+   * @returns {boolean} false when the transition is not allowed (`state.mode` stays).
+   */
+  _go(next) { if (!DiagramController.TRANSITIONS[this._state.mode].includes(next)) return false; this._state.mode = next; return true; }
+  /**
+   * Serializes the model for the undo and redo stacks. JSON keeps old entries independent of later in-place edits.
+   * @returns {string}
+   */
+  _snapshot() { return JSON.stringify({ entities: this._state.entities, relations: this._state.relations }); }
+  /** Call BEFORE mutating. Edits with the same tag inside coalesceMs share one history entry. */
+  _commit(tag = '') {
+    const state = this._state, now = Date.now();
+    state.dirty = true; state.rev++;
+    if (tag && state.lastCommit.tag === tag && now - state.lastCommit.at < this._cfg.coalesceMs) { state.lastCommit.at = now; return; }
+    state.undo.push(this._snapshot());
+    if (state.undo.length > this._cfg.historyLimit) state.undo.shift();
+    state.redo = []; state.lastCommit = { tag, at: now };
+  }
+  /**
+   * Replaces the model with a snapshot and re-renders. Clears selection and drawing, marks the diagram dirty and bumps `state.rev`.
+   * @param {string} json  A value produced by `_snapshot`.
+   */
+  _restore(json) { const data = JSON.parse(json); Object.assign(this._state, { entities: data.entities, relations: data.relations, selection: null, draw: null, dirty: true }); this._state.rev++; this._render(); }
+  /** Undo (idle mode only): the current model goes to the redo stack, the latest snapshot comes back. */
+  _undo() { const state = this._state; if (state.mode !== 'idle' || !state.undo.length) return; state.redo.push(this._snapshot()); this._restore(state.undo.pop()); this._say('Undone'); }
+  /** Redo (idle mode only): the current model goes to the undo stack, the next snapshot comes back. */
+  _redo() { const state = this._state; if (state.mode !== 'idle' || !state.redo.length) return; state.undo.push(this._snapshot()); this._restore(state.redo.pop()); this._say('Redone'); }
+  /**
+   * Shows a status message (live region and toast) that clears itself after `statusMs`.
+   * @param {string} message
+   */
+  _say(message) {
+    this._state.status = message; clearTimeout(this._statusTimer);
+    this._statusTimer = setTimeout(() => { this._state.status = ''; this._renderChrome(); }, this._cfg.statusMs);
+    this._renderChrome();
+  }
+  /**
+   * Shows a dismissible error message.
+   * @param {string} message
+   */
+  _fail(message) { this._state.error = message; this._renderChrome(); }
+  /**
+   * Selects an entity, a field or a relation and re-renders canvas, inspector and chrome.
+   * @param {'entity'|'field'|'relation'} type
+   * @param {string} itemId
+   */
+  _select(type, itemId) { this._state.selection = { type, id: itemId }; this._renderCanvas(); this._renderInspector(); this._renderChrome(); }
+  /** Clears the selection; nothing happens when nothing is selected. */
+  _deselect() { if (!this._state.selection) return; this._state.selection = null; this._renderCanvas(); this._renderInspector(); this._renderChrome(); }
+  /** Adds NEW_ENTITY at the visible top-left corner (staggered) and selects it. One history entry; refused past `maxEntities`. */
+  _addEntity() {
+    const state = this._state, count = state.entities.length;
+    if (count >= this._cfg.maxEntities) return this._fail('Entity limit reached.');
+    this._commit();
+    const entity = { id: this._id('entity'), name: 'NEW_ENTITY', x: Math.round((40 - state.panX) / state.zoom + (count * 24) % 240), y: Math.round((40 - state.panY) / state.zoom + (count * 24) % 240), fields: [{ id: this._id('field'), name: 'id', type: 'integer', key: 'PK' }] };
+    state.entities.push(entity); this._select('entity', entity.id); this._say('Entity added');
+  }
+  /**
+   * Appends a `new_field` to an entity (one history entry).
+   * @param {string} entityId
+   */
+  _addField(entityId) {
+    const entity = this._entity(entityId); if (!entity) return;
+    this._commit(); entity.fields.push({ id: this._id('field'), name: 'new_field', type: 'string', key: '' });
+    this._render();
+  }
+  /**
+   * Child gets a new FK field pointing at the parent's PK or UK, and a relation for it. One history entry.
+   * @param {string} parentId
+   * @param {string} childId
+   */
+  _connect(parentId, childId) {
+    const parent = this._entity(parentId), child = this._entity(childId), key = parent && this._keyField(parent);
+    if (!parent || !child || parent === child) return this._fail('Pick two different entities.');
+    if (!key) return this._fail(`${parent.name} needs a PK or UK field to be referenced.`);
+    this._commit();
+    const foreignKey = { id: this._id('field'), name: this._fkName(parent), type: key.type, key: 'FK' }, relation = { id: this._id('relation'), fromField: foreignKey.id, toField: key.id, label: '' };
+    child.fields.push(foreignKey); this._state.relations.push(relation);
+    this._state.draw = null; this._go('idle'); this._select('relation', relation.id); this._say('Relation created');
+  }
+  /**
+   * Many-to-many: creates a junction entity with its own id and one FK field per side, plus the two relations. Both sides need a PK or UK. One history entry.
+   * @param {string} firstId
+   * @param {string} secondId
+   */
+  _createJunction(firstId, secondId) {
+    const first = this._entity(firstId), second = this._entity(secondId), firstKey = first && this._keyField(first), secondKey = second && this._keyField(second);
+    if (!first || !second || first === second) return this._fail('Pick two different entities.');
+    if (!firstKey || !secondKey) return this._fail('Both entities need a PK or UK field.');
+    this._commit();
+    const firstForeignKey = { id: this._id('field'), name: this._fkName(first), type: firstKey.type, key: 'FK' }, secondForeignKey = { id: this._id('field'), name: this._fkName(second), type: secondKey.type, key: 'FK' };
+    const junction = { id: this._id('entity'), name: `${first.name}_${second.name}`.slice(0, this._cfg.maxName), x: Math.round((first.x + second.x) / 2), y: Math.max(first.y, second.y) + 240, fields: [{ id: this._id('field'), name: 'id', type: 'integer', key: 'PK' }, firstForeignKey, secondForeignKey] };
+    this._state.entities.push(junction);
+    this._state.relations.push({ id: this._id('relation'), fromField: firstForeignKey.id, toField: firstKey.id, label: '' }, { id: this._id('relation'), fromField: secondForeignKey.id, toField: secondKey.id, label: '' });
+    this._select('entity', junction.id); this._say('Junction entity created');
+  }
+  /**
+   * Asks first: opens the confirm dialog for deleting an entity, a field or a relation.
+   * @param {'entity'|'field'|'relation'} kind
+   * @param {string} targetId
+   */
+  _requestDelete(kind, targetId) {
+    const target = kind === 'entity' ? this._entity(targetId) : kind === 'field' ? this._owner(targetId)?.field : this._relation(targetId);
+    if (!target) return;
+    this._openModal({ type: 'confirm', title: `Delete ${kind}?`, message: `This removes ${kind === 'relation' ? 'the relation' : `"${target.name}"`} and the relations attached to it.`, confirmLabel: 'Delete', target: { kind, id: targetId } });
+  }
+  /**
+   * Deletes the confirmed target together with the relations attached to it (a field takes its relations, an entity takes the relations of all its fields).
+   * One history entry; clears the selection.
+   * @param {{kind: string, id: string}} target
+   */
+  _deleteTarget({ kind, id: targetId }) {
+    const state = this._state; this._commit();
+    const fieldIds = kind === 'entity' ? (this._entity(targetId)?.fields.map((field) => field.id) ?? []) : kind === 'field' ? [targetId] : [];
+    if (kind === 'entity') state.entities = state.entities.filter((entity) => entity.id !== targetId);
+    if (kind === 'field') state.entities.forEach((entity) => { entity.fields = entity.fields.filter((field) => field.id !== targetId); });
+    state.relations = state.relations.filter((relation) => (kind === 'relation' ? relation.id !== targetId : !fieldIds.includes(relation.fromField) && !fieldIds.includes(relation.toField)));
+    state.selection = null; this._render(); this._say(`${kind} deleted`);
+  }
+  /**
+   * Sets the zoom (rounded to 1%, clamped to minZoom..maxZoom); the pan stays.
+   * @param {number} value
+   */
+  _setZoom(value) { const state = this._state; state.zoom = Math.min(this._cfg.maxZoom, Math.max(this._cfg.minZoom, Math.round(value * 100) / 100)); this._applyView(); this._renderChrome(); }
+  /** Zoom (never above 100%) and pan so the whole model is visible and centered. */
+  _fitView() {
+    const state = this._state, cfg = this._cfg; if (!state.entities.length) return true;
+    const lefts = state.entities.map((e) => e.x), tops = state.entities.map((e) => e.y), minX = Math.min(...lefts), maxX = Math.max(...lefts) + cfg.entityWidth, minY = Math.min(...tops);
+    const maxY = Math.max(...state.entities.map((e) => e.y + cfg.headerHeight + e.fields.length * cfg.rowHeight));
+    const fit = Math.min(1, (state.size.w - 2 * state.fitPadding) / (maxX - minX), (state.size.h - 2 * state.fitPadding) / (maxY - minY)), readable = fit >= cfg.minReadableZoom;
+    state.zoom = Math.min(cfg.maxZoom, Math.max(cfg.minZoom, Math.round((readable ? fit : cfg.minReadableZoom) * 100) / 100));
+    // Too big for a readable size: start at the top-left corner and let the user pan instead of shrinking the text.
+    state.panX = Math.round(readable ? (state.size.w - (maxX - minX) * state.zoom) / 2 - minX * state.zoom : state.fitPadding - minX * state.zoom);
+    state.panY = Math.round(readable ? (state.size.h - (maxY - minY) * state.zoom) / 2 - minY * state.zoom : state.fitPadding - minY * state.zoom);
+    this._applyView(); this._renderChrome();
+    return readable;
+  }
+  /** Fits the view and reports it: `lead` says what just happened (may be empty); the shared hint is appended whenever the model does not fit at a readable size. */
+  _fitAndSay(lead = '') {
+    const readable = this._fitView(), message = [lead, readable ? '' : 'Larger than the screen: pan, pinch or zoom out'].filter(Boolean).join('. ');
+    if (message) this._say(message);
+  }
+  /** "auto" flows left to right when the canvas is at least layoutAutoAspect times wider than tall, otherwise top to bottom. */
+  _resolveDirection() {
+    const { layoutDirection, layoutAutoAspect } = this._cfg, size = this._state.size;
+    return layoutDirection === 'auto' ? (size.w / size.h >= layoutAutoAspect ? 'horizontal' : 'vertical') : layoutDirection;
+  }
+  /** Layered layout for the current canvas shape (the pure function never sees "auto"). */
+  _computeLayout(entities, relations) { return DiagramController._layout(entities, relations, { ...this._cfg, layoutDirection: this._resolveDirection() }); }
+  /** Instant command (idle -> idle): re-layout from scratch, one history entry, fit the view. */
+  _normalizeLayout() {
+    const state = this._state; if (state.mode !== 'idle' || !state.entities.length) return;
+    this._syncSize();
+    const { positions, levels } = this._computeLayout(state.entities, state.relations);
+    if (!state.entities.some((e) => positions.get(e.id).x !== e.x || positions.get(e.id).y !== e.y)) { this._fitAndSay('Already normalized'); return; }
+    this._commit(); state.entities.forEach((e) => Object.assign(e, positions.get(e.id)));
+    this._render();
+    this._fitAndSay(`Layout normalized: ${state.entities.length} entities, ${state.relations.length} relations, ${levels} levels`);
+  }
+  /**
+   * Checks the model: entity without PK, duplicate field names, FK without relation, relation to a field that is not PK or UK, type mismatch. Reads the state only.
+   * @returns {{level: 'warning'|'danger', text: string}[]}
+   */
+  _validateModel() {
+    const issues = [];
+    for (const entity of this._state.entities) {
+      if (!entity.fields.some((field) => field.key === 'PK')) issues.push({ level: 'warning', text: `${entity.name} has no primary key.` });
+      const names = entity.fields.map((field) => field.name);
+      names.filter((name, i) => names.indexOf(name) !== i).forEach((name) => issues.push({ level: 'danger', text: `${entity.name} has a duplicate field "${name}".` }));
+      for (const field of entity.fields.filter((candidate) => candidate.key === 'FK')) if (!this._state.relations.some((relation) => relation.fromField === field.id)) issues.push({ level: 'warning', text: `${entity.name}.${field.name} is a foreign key without a relation.` });
+    }
+    for (const relation of this._state.relations) {
+      const target = this._owner(relation.toField), source = this._owner(relation.fromField);
+      if (!target || !['PK', 'UK'].includes(target.field.key)) issues.push({ level: 'danger', text: 'A relation points at a field that is not PK or UK.' });
+      else if (source && source.field.type !== target.field.type) issues.push({ level: 'warning', text: `${source.entity.name}.${source.field.name} (${source.field.type}) does not match ${target.entity.name}.${target.field.name} (${target.field.type}).` });
+    }
+    return issues;
+  }
+  /**
+   * Opens the dialog when the state machine allows it; remembers the focused element so the close can give the focus back.
+   * @param {{type: 'confirm'|'report'|'help'|'junction', title: string}} modal  Dialog description plus its type-specific fields.
+   */
+  _openModal(modal) {
+    if (!this._go('dialog')) return;
+    this._lastFocused = document.activeElement; this._state.modal = modal; this._renderDialog(); this._renderChrome();
+  }
+  /** Closes the dialog, abandons any relation drawing and returns the focus to the opener. */
+  _closeModal() { this._state.modal = null; this._state.draw = null; this._go('idle'); this._renderDialog(); this._renderChrome(); this._lastFocused?.focus(); }
+  /**
+   * Imports a JSON model. The file is size-checked, parsed and validated into a staged model BEFORE any state is touched, so a bad file only shows an error.
+   * A model without positions is laid out; the view always fits afterwards. One history entry.
+   * @param {File} [file]
+   */
+  _importFile(file) {
+    if (!file) return;
+    if (file.size > this._cfg.maxImportBytes) return this._fail(`The file is larger than ${Math.round(this._cfg.maxImportBytes / 1024)} KB.`);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const staged = DiagramController._validate(JSON.parse(reader.result), this._cfg);
+        this._commit(); Object.assign(this._state, { entities: staged.entities, relations: staged.relations, selection: null });
+        if (!staged.hasLayout) { const { positions } = this._computeLayout(staged.entities, staged.relations); staged.entities.forEach((e) => Object.assign(e, positions.get(e.id))); }
+        this._render();
+        this._fitAndSay(`Imported ${staged.entities.length} entities${staged.skipped ? `, skipped ${staged.skipped} invalid relations` : ''}`);
+      } catch (err) { this._fail(err instanceof SyntaxError ? 'Import failed: the file is not valid JSON.' : err.message); }
+    };
+    reader.onerror = () => this._fail('Import failed: the file could not be read.');
+    reader.readAsText(file);
+  }
+  /** Downloads the model as JSON (`$entitymap` 1.0.0: entities, relations, layout) and clears the dirty flag. */
+  _exportModel() {
+    const state = this._state, keyToConstraints = { PK: ['pk'], FK: ['fk'], UK: ['unique'], '': [] };
+    const payload = {
+      $entitymap: '1.0.0', meta: {},
+      entities: state.entities.map((entity) => ({ id: entity.id, name: entity.name, kind: 'class', fields: entity.fields.map((field) => ({ name: field.name, type: field.type, ...(field.key ? { constraints: keyToConstraints[field.key] } : {}) })) })),
+      relations: state.relations.flatMap((relation) => { const source = this._owner(relation.fromField), target = this._owner(relation.toField); return source && target ? [{ id: relation.id, kind: 'foreign_key', from: source.entity.id, to: target.entity.id, from_field: source.field.name, to_field: target.field.name, multiplicity: 'many_to_one', ...(relation.label ? { comment: relation.label } : {}) }] : []; }),
+      layout: Object.fromEntries(state.entities.map((entity) => [entity.id, { x: entity.x, y: entity.y }]))
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const link = document.createElement('a'); link.href = url; link.download = this._cfg.exportFilename; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    state.dirty = false; this._say('Exported'); 
+  }
+
+  /* ---- 5. Events ---- */
+  /**
+   * Wires every listener once: delegated click, input, change, pointerdown and keydown on the root; the wheel listener (the one documented non-passive listener);
+   * document-level pointer move, up and cancel; the beforeunload guard; the ResizeObserver. All share the controller signal.
+   */
+  _bind() {
+    const sig = { signal: this._ac.signal }, root = this._root;
+    root.addEventListener('click', (e) => { const el = e.target.closest('[data-action]'); if (el) this._act(el.dataset.action, el); }, sig);
+    root.addEventListener('input', (e) => { const el = e.target.closest('[data-action]'); if (el && el.matches('input[type="text"]')) this._edit(el); }, sig);
+    root.addEventListener('change', (e) => { const el = e.target.closest('[data-action]'); if (el && !el.matches('input[type="text"]')) this._edit(el); }, sig);
+    root.addEventListener('pointerdown', (e) => this._onPointerDown(e), sig);
+    root.addEventListener('keydown', (e) => this._onKeyDown(e), sig);
+    this._flushWheel = this._frame(() => this._applyWheel());
+    /* Exception to the passive-listener rule: this wheel listener must be { passive: false } because _handleWheel calls preventDefault synchronously
+       (Ctrl+wheel would otherwise zoom the whole page); the zoom itself is deferred to one animation frame. */
+    root.addEventListener('wheel', (e) => this._handleWheel(e), { passive: false, signal: this._ac.signal });
+    document.addEventListener('pointermove', this._throttle((e) => this._dragTo(e), 16), sig);
+    document.addEventListener('pointerup', (e) => this._onPointerEnd(e), sig);
+    document.addEventListener('pointercancel', (e) => this._onPointerEnd(e), sig);
+    window.addEventListener('beforeunload', (e) => { if (this._state.dirty) { e.preventDefault(); e.returnValue = ''; } }, sig);
+    this._resizeObserver = new ResizeObserver(this._frame(() => this._syncSize()));
+    this._resizeObserver.observe(this._refs.canvas);
+    sig.signal.addEventListener('abort', () => { this._resizeObserver.disconnect(); clearTimeout(this._statusTimer); }, { once: true });
+  }
+  /**
+   * Dispatches a click on a `data-action` element.
+   * @param {string} action  The `data-action` value.
+   * @param {HTMLElement} el  The element that carries it (its `data-id` names the target).
+   */
+  _act(action, el) {
+    const state = this._state, cfg = this._cfg;
+    switch (action) {
+      case 'add-entity': this._addEntity(); break;
+      case 'normalize-layout': this._normalizeLayout(); break;
+      case 'toggle-draw-relation': this._handleToggleDrawing(); break;
+      case 'modal-open-junction': this._handleOpenJunction(); break;
+      case 'modal-open-validate': this._openModal({ type: 'report', title: 'Model validation', issues: this._validateModel() }); break;
+      case 'modal-open-help': this._openModal({ type: 'help', title: 'Keyboard shortcuts', shortcuts: this._shortcuts() }); break;
+      case 'modal-cancel': this._closeModal(); break;
+      case 'modal-confirm': this._handleModalConfirm(); break;
+      case 'delete-selected': if (state.selection) this._requestDelete(state.selection.type, state.selection.id); break;
+      case 'delete-field': this._requestDelete('field', el.dataset.id); break;
+      case 'add-field': this._addField(el.dataset.id); break;
+      case 'decrease-zoom': this._setZoom(state.zoom - cfg.zoomStep); break;
+      case 'increase-zoom': this._setZoom(state.zoom + cfg.zoomStep); break;
+      case 'reset-zoom': this._setZoom(1); break;
+      case 'undo-change': this._undo(); break;
+      case 'redo-change': this._redo(); break;
+      case 'export-model': this._exportModel(); break;
+      case 'import-model': this._refs['import-input'].click(); break;
+      case 'toggle-panel': this._handleTogglePanel(); break;
+      case 'close-panel': this._closePanel(); break;
+      case 'toggle-menu': state.menuOpen = !state.menuOpen; this._renderChrome(); break;
+      case 'dismiss-error': state.error = ''; this._renderChrome(); break;
+    }
+  }
+  /** Starts or cancels relation drawing: the first pick is the parent entity, the second the child. */
+  _handleToggleDrawing() {
+    const state = this._state;
+    if (state.mode === 'drawing') { state.draw = null; this._go('idle'); this._say('Drawing cancelled'); }
+    else if (this._go('drawing')) { state.draw = { parent: null }; this._say('Pick the parent entity (the one with the key)'); }
+    this._renderChrome();
+  }
+  /** Opens the many-to-many dialog with the first two entities preselected; needs at least two entities. */
+  _handleOpenJunction() {
+    const state = this._state;
+    if (state.entities.length < 2) return this._fail('Add at least two entities first.');
+    this._openModal({ type: 'junction', title: 'Create many-to-many', confirmLabel: 'Create', a: state.entities[0].id, b: state.entities[1].id });
+  }
+  /** Runs the confirmed dialog action (delete, or create the junction) after closing the dialog. */
+  _handleModalConfirm() {
+    const modal = this._state.modal; this._closeModal();
+    if (modal.type === 'confirm') this._deleteTarget(modal.target); else if (modal.type === 'junction') this._createJunction(modal.a, modal.b);
+  }
+  /**
+   * Inspector edits mutate in place and skip the inspector re-render so focus and caret survive typing. Bursts of edits to the same thing share one history entry.
+   * @param {HTMLElement} el  The edited input or select (`data-action` says what, `data-id` which one).
+   */
+  _edit(el) {
+    const state = this._state, targetId = el.dataset.id, max = this._cfg.maxName;
+    switch (el.dataset.action) {
+      case 'update-entity-name': { const entity = this._entity(targetId); if (!entity) return; this._commit(`name:${targetId}`); entity.name = el.value.slice(0, max); break; }
+      case 'update-entity-x': case 'update-entity-y': { const entity = this._entity(targetId), value = Number(el.value); if (!entity || el.value === '' || !Number.isFinite(value)) return; this._commit(`position:${targetId}`); entity[el.dataset.action === 'update-entity-x' ? 'x' : 'y'] = Math.max(-1e5, Math.min(1e5, Math.round(value))); break; }
+      case 'update-field-name': { const owner = this._owner(targetId); if (!owner) return; this._commit(`field:${targetId}`); owner.field.name = el.value.slice(0, max); break; }
+      case 'update-field-key': { const owner = this._owner(targetId); if (!owner || !DiagramController.KEYS.includes(el.value)) return; this._commit(); owner.field.key = el.value; break; }
+      case 'update-relation-label': { const relation = this._relation(targetId); if (!relation) return; this._commit(`label:${targetId}`); relation.label = el.value.slice(0, max); break; }
+      case 'modal-set-entity-a': state.modal.a = el.value; return;
+      case 'modal-set-entity-b': state.modal.b = el.value; return;
+      case 'import-file': this._importFile(el.files[0]); el.value = ''; return;
+      default: return;
+    }
+    this._renderCanvas(); this._renderChrome();
+  }
+  /**
+   * Delegated pointerdown: tracks pointers for pinch, then selects a field or relation, starts an entity drag or a canvas pan, or picks an entity while drawing.
+   * @param {PointerEvent} e
+   */
+  _onPointerDown(e) {
+    const el = e.target.closest('[data-action]'), state = this._state;
+    if (e.target.closest('[data-ref="canvas"]') && state.mode !== 'dialog') { state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (state.pointers.size === 2) return this._startPinch(); }
+    if (!el || state.mode === 'dialog' || e.button > 0) return;
+    const action = el.dataset.action, targetId = el.dataset.id;
+    if (state.mode === 'drawing' && (action === 'drag-entity' || action === 'select-entity')) return this._pick(targetId);
+    if (action === 'drag-entity') { this._select('entity', targetId); this._startDrag({ kind: 'entity', id: targetId, ox: this._entity(targetId).x, oy: this._entity(targetId).y }, e); }
+    else if (action === 'select-field') this._select('field', targetId);
+    else if (action === 'select-relation') this._select('relation', targetId);
+    else if (action === 'pan-canvas') { this._deselect(); this._startDrag({ kind: 'pan', ox: state.panX, oy: state.panY }, e); }
+  }
+  /**
+   * Enters dragging or panning and captures the pointer.
+   * @param {{kind: 'entity'|'pan', id?: string, ox: number, oy: number}} drag  Origin of the dragged thing.
+   * @param {PointerEvent} e
+   */
+  _startDrag(drag, e) {
+    if (!this._go(drag.kind === 'pan' ? 'panning' : 'dragging')) return;
+    this._state.drag = { ...drag, x: e.clientX, y: e.clientY, moved: false };
+    try { this._refs.svg.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
+    this._renderChrome();
+  }
+  /** viewBox is kept 1:1 with canvas pixels, so pointer deltas only need the zoom factor. A dragged entity moves its own node in place; only the relations layer is rebuilt. */
+  _dragTo(e) {
+    const state = this._state, drag = state.drag;
+    if (state.pointers.has(e.pointerId)) state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (state.mode === 'pinching') return this._pinchTo();
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (drag.kind === 'pan') { state.panX = drag.ox + dx; state.panY = drag.oy + dy; this._applyView(); return; }
+    const entity = this._entity(drag.id); if (!entity) return;
+    if (!drag.moved) { this._commit(); drag.moved = true; }
+    entity.x = Math.round(drag.ox + dx / state.zoom); entity.y = Math.round(drag.oy + dy / state.zoom);
+    this._entityNode(entity.id)?.setAttribute('transform', this._entityTransform(entity)); this._renderRelations();
+  }
+  /**
+   * pointerup and pointercancel: ends a pinch or a drag; a moved entity refreshes the inspector coordinates.
+   * @param {PointerEvent} e
+   */
+  _onPointerEnd(e) {
+    const state = this._state; state.pointers.delete(e.pointerId);
+    if (state.mode === 'pinching') { if (state.pointers.size < 2) { state.pinch = null; this._go('idle'); this._renderChrome(); } return; }
+    if (!state.drag) return;
+    if (e.type === 'pointerup') this._dragTo(e);
+    const moved = state.drag.kind === 'entity' && state.drag.moved;
+    state.drag = null; this._go('idle'); if (moved) this._renderInspector(); this._renderChrome();
+  }
+  /**
+   * Relation drawing: the first pick is the parent, the second the child (which creates the relation).
+   * @param {string} entityId
+   */
+  _pick(entityId) {
+    const state = this._state;
+    if (!state.draw.parent) { state.draw.parent = entityId; this._say('Now pick the child entity (it receives the foreign key)'); } else this._connect(state.draw.parent, entityId);
+  }
+  /**
+   * SVG node of an entity.
+   * @param {string} entityId
+   * @returns {Element|null}
+   */
+  _entityNode(entityId) { for (const node of this._refs.entities.querySelectorAll('[data-action="select-entity"]')) if (node.dataset.id === entityId) return node; return null; }
+  /**
+   * Moves keyboard focus to an entity node (needed after a re-render replaced it).
+   * @param {string} entityId
+   */
+  _focusEntity(entityId) { this._entityNode(entityId)?.focus(); }
+  /** Moves the roving tab stop of the relations layer to `node` and focuses it. */
+  _focusRelationNode(node) {
+    for (const other of this._refs.relations.children) other.setAttribute('tabindex', other === node ? '0' : '-1');
+    node.focus();
+  }
+  /** Keys on a focused relation: arrows step along the relations, Enter and Space select it, Delete asks to remove it. */
+  _onRelationKey(e, relationId) {
+    const nodes = [...this._refs.relations.children], index = nodes.findIndex((node) => node.dataset.id === relationId);
+    const target = { ArrowRight: index + 1, ArrowDown: index + 1, ArrowLeft: index - 1, ArrowUp: index - 1, Home: 0, End: nodes.length - 1 }[e.key];
+    if (target !== undefined) { e.preventDefault(); this._focusRelationNode(nodes[(target + nodes.length) % nodes.length]); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._select('relation', relationId); this._focusRelationNode(this._refs.relations.querySelector('[data-state="selected"]')); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); this._requestDelete('relation', relationId); }
+  }
+  /** The commands _onKeyDown handles, for the help dialog (keep both in step). */
+  _shortcuts() {
+    const { nudge, nudgeLarge } = this._cfg;
+    return [
+      { keys: ['Ctrl/\u2318 + Z'], text: 'Undo' },
+      { keys: ['Ctrl/\u2318 + Y', 'Ctrl/\u2318 + Shift + Z'], text: 'Redo' },
+      { keys: ['Tab'], text: 'Move focus: one stop for all relations, then each entity' },
+      { keys: ['Enter', 'Space'], text: 'Select the focused entity or relation (while drawing a relation: pick the entity)' },
+      { keys: ['Arrow keys'], text: `Move the focused entity by ${nudge} px (hold Shift for ${nudgeLarge} px); on a relation, step to the next or previous one` },
+      { keys: ['Delete', 'Backspace'], text: 'Delete the focused entity or relation (asks first)' },
+      { keys: ['Escape'], text: 'Close a dialog, the menu or the properties panel; stop drawing a relation' },
+      { keys: ['Ctrl + wheel', 'trackpad pinch'], text: 'Zoom around the pointer' }
+    ];
+  }
+  /**
+   * Delegated keydown: dialog keys first, then the Escape layers (panel, menu, drawing), undo and redo, relation keys, entity keys (select, nudge, delete). Typing in a field is left alone.
+   * @param {KeyboardEvent} e
+   */
+  _onKeyDown(e) {
+    const state = this._state, inField = e.target.closest('input, textarea, select, [contenteditable]');
+    if (state.mode === 'dialog') return this._handleDialogKeys(e);
+    if (e.key === 'Escape' && state.panelOpen && state.profile !== 'expanded') return this._closePanel();
+    if (e.key === 'Escape' && state.menuOpen) { state.menuOpen = false; this._renderChrome(); this._refs['menu-button'].focus(); return; }
+    if (e.key === 'Escape' && state.mode === 'drawing') return this._handleToggleDrawing();
+    if (inField) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? this._redo() : this._undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); this._redo(); return; }
+    const link = e.target.closest('[data-action="select-relation"]'); if (link) return this._onRelationKey(e, link.dataset.id);
+    const node = e.target.closest('[data-action="select-entity"]'); if (!node) return;
+    const entityId = node.dataset.id, step = e.shiftKey ? this._cfg.nudgeLarge : this._cfg.nudge, arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (state.mode === 'drawing') this._pick(entityId); else { this._select('entity', entityId); this._focusEntity(entityId); } }
+    else if (arrows[e.key]) { e.preventDefault(); const entity = this._entity(entityId); this._commit(`nudge:${entityId}`); entity.x += arrows[e.key][0] * step; entity.y += arrows[e.key][1] * step; this._select('entity', entityId); this._focusEntity(entityId); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); this._requestDelete('entity', entityId); }
+  }
+  /** Escape closes the dialog, Tab is trapped inside it. */
+  _handleDialogKeys(e) {
+    if (e.key === 'Escape') { e.preventDefault(); this._closeModal(); return; }
+    if (e.key !== 'Tab') return;
+    const items = [...this._refs.modal.querySelectorAll('select, input, button')].filter((control) => !control.hidden && !control.disabled), first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  /** Opens or closes the properties sheet (always docked and open in the expanded profile). The focus moves in and comes back on close. */
+  _handleTogglePanel() {
+    const state = this._state; if (state.panelOpen) return this._closePanel();
+    this._lastFocused = document.activeElement; state.panelOpen = true; this._renderChrome();
+    this._refs.inspector.querySelector('button, input, select').focus();
+  }
+  /** Closes the properties sheet and restores the focus. */
+  _closePanel() { const state = this._state; if (!state.panelOpen) return; state.panelOpen = false; this._renderChrome(); this._lastFocused?.focus(); }
+  /**
+   * Ctrl+wheel (also what a trackpad pinch produces) zooms around the pointer; a plain wheel keeps scrolling the page.
+   * preventDefault runs synchronously (the one documented { passive: false } listener); the factors of a burst are multiplied
+   * and applied once per animation frame around the latest pointer position.
+   */
+  _handleWheel(e) {
+    if (!e.ctrlKey || !e.target.closest('[data-ref="canvas"]')) return;
+    e.preventDefault();
+    const pending = this._state.wheel ?? { factor: 1 };
+    this._state.wheel = { factor: pending.factor * (e.deltaY < 0 ? 1.1 : 1 / 1.1), clientX: e.clientX, clientY: e.clientY };
+    this._flushWheel();
+  }
+  /** Applies the zoom collected since the last frame. */
+  _applyWheel() {
+    const pending = this._state.wheel; if (!pending) return;
+    this._state.wheel = null;
+    this._zoomAt(pending.factor, pending.clientX, pending.clientY);
+  }
+  /**
+   * Zooms by `factor` and keeps the point under the pointer fixed.
+   * @param {number} factor
+   * @param {number} clientX
+   * @param {number} clientY
+   */
+  _zoomAt(factor, clientX, clientY) {
+    const state = this._state, box = this._refs.canvas.getBoundingClientRect(), pointerX = clientX - box.left, pointerY = clientY - box.top;
+    const zoom = Math.min(this._cfg.maxZoom, Math.max(this._cfg.minZoom, Math.round(state.zoom * factor * 100) / 100)), ratio = zoom / state.zoom;
+    state.panX = Math.round(pointerX - (pointerX - state.panX) * ratio); state.panY = Math.round(pointerY - (pointerY - state.panY) * ratio); state.zoom = zoom;
+    this._applyView(); this._renderChrome();
+  }
+  /** Second finger on the canvas: cancel any drag and zoom/pan around the midpoint of the two pointers. */
+  _startPinch() {
+    const state = this._state; state.drag = null;
+    if (!this._go('pinching')) return;
+    const [first, second] = [...state.pointers.values()], box = this._refs.canvas.getBoundingClientRect();
+    state.pinch = { dist: Math.hypot(first.x - second.x, first.y - second.y) || 1, zoom: state.zoom, mx: (first.x + second.x) / 2 - box.left, my: (first.y + second.y) / 2 - box.top, panX: state.panX, panY: state.panY, left: box.left, top: box.top };
+    this._renderChrome();
+  }
+  /** Pinch move: zoom follows the finger distance, pan keeps the world point under the start midpoint under the current midpoint. */
+  _pinchTo() {
+    const state = this._state, pinch = state.pinch; if (!pinch || state.pointers.size !== 2) return;
+    const [first, second] = [...state.pointers.values()], zoom = Math.min(this._cfg.maxZoom, Math.max(this._cfg.minZoom, Math.round(pinch.zoom * (Math.hypot(first.x - second.x, first.y - second.y) / pinch.dist) * 100) / 100));
+    const worldX = (pinch.mx - pinch.panX) / pinch.zoom, worldY = (pinch.my - pinch.panY) / pinch.zoom, midX = (first.x + second.x) / 2 - pinch.left, midY = (first.y + second.y) / 2 - pinch.top;
+    state.zoom = zoom; state.panX = Math.round(midX - worldX * zoom); state.panY = Math.round(midY - worldY * zoom);
+    this._applyView(); this._renderChrome();
+  }
+
+  /* ---- 6. Helpers ---- */
+  /**
+   * Escapes the 7 characters that can break out of text or attribute context.
+   * @param {*} value
+   * @returns {string}
+   */
+  _esc(value) { return String(value ?? '').replace(/[&<>"'`/]/g, (character) => DiagramController.ESCAPES[character]); }
+  /**
+   * Unique id: prefix, timestamp (base 36) and a sequence number.
+   * @param {string} prefix
+   * @returns {string}
+   */
+  _id(prefix) { return `${prefix}-${Date.now().toString(36)}${++this._state.idSeq}`; }
+  /**
+   * Wraps `callback` so it runs at most once per `intervalMs` (leading edge, the calls in between are dropped). pointermove fires faster than a frame.
+   * @param {Function} callback
+   * @param {number} intervalMs
+   * @returns {Function}
+   */
+  _throttle(callback, intervalMs) { let last = 0; return (...args) => { const now = Date.now(); if (now - last >= intervalMs) { last = now; callback(...args); } }; }
+  /**
+   * One call per animation frame; the LAST call always runs, so the viewBox never stays stale. The pending frame is cancelled on teardown.
+   * @param {Function} callback
+   * @returns {Function}
+   */
+  _frame(callback) { let frameId = 0; this._ac.signal.addEventListener('abort', () => cancelAnimationFrame(frameId), { once: true }); return (...args) => { cancelAnimationFrame(frameId); frameId = requestAnimationFrame(() => callback(...args)); }; }
+  /** Loads the sample model (SEED) and lays it out for the current canvas shape. */
+  _seed() {
+    const { entities, relations } = DiagramController.SEED, state = this._state;
+    state.entities = entities.map(([entityId, name, posX, posY, fields]) => ({ id: entityId, name, x: posX, y: posY, fields: fields.map(([fieldName, key]) => ({ id: DiagramController._fieldId(entityId, fieldName), name: fieldName, type: 'string', key })) }));
+    state.relations = relations.map(([fromEntityId, fromFieldName, toEntityId, toFieldName, label], i) => ({ id: `seed-${i + 1}`, fromField: DiagramController._fieldId(fromEntityId, fromFieldName), toField: DiagramController._fieldId(toEntityId, toFieldName), label }));
+    state.rev++;
+    const { positions } = this._computeLayout(state.entities, state.relations);
+    state.entities.forEach((entity) => Object.assign(entity, positions.get(entity.id)));
+  }
+  /**
+   * The entity with this id, or null.
+   * @param {string} entityId
+   * @returns {Entity|null}
+   */
+  _entity(entityId) { return this._state.entities.find((e) => e.id === entityId) || null; }
+  /**
+   * The entity that owns a field, with the field.
+   * @param {string} fieldId
+   * @returns {{entity: Entity, field: Field}|null}
+   */
+  _owner(fieldId) { for (const entity of this._state.entities) { const field = entity.fields.find((candidate) => candidate.id === fieldId); if (field) return { entity, field }; } return null; }
+  /**
+   * The relation with this id, or null.
+   * @param {string} relationId
+   * @returns {Relation|null}
+   */
+  _relation(relationId) { return this._state.relations.find((relation) => relation.id === relationId) || null; }
+  /**
+   * The field a relation can point at: the PK, otherwise the UK.
+   * @param {Entity} entity
+   * @returns {Field|null}
+   */
+  _keyField(entity) { return entity.fields.find((field) => field.key === 'PK') || entity.fields.find((field) => field.key === 'UK') || null; }
+  /**
+   * Name of the FK field a child gets: the parent name in snake case plus `_id`.
+   * @param {Entity} parent
+   * @returns {string}
+   */
+  _fkName(parent) { return `${parent.name.toLowerCase().replace(/\W+/g, '_')}_id`; }
+  /**
+   * Point where the line between the centers of two entities leaves the box of `entity`.
+   * @param {Entity} entity  The entity whose border is wanted.
+   * @param {Entity} other  The entity at the other end of the line.
+   * @returns {{x: number, y: number}}
+   */
+  _edge(entity, other) {
+    const cfg = this._cfg, width = cfg.entityWidth, height = cfg.headerHeight + entity.fields.length * cfg.rowHeight, otherHeight = cfg.headerHeight + other.fields.length * cfg.rowHeight;
+    const centerX = entity.x + width / 2, centerY = entity.y + height / 2, dx = other.x + width / 2 - centerX, dy = other.y + otherHeight / 2 - centerY;
+    const scale = Math.min(dx ? (width / 2) / Math.abs(dx) : Infinity, dy ? (height / 2) / Math.abs(dy) : Infinity);
+    return { x: Math.round(centerX + dx * scale), y: Math.round(centerY + dy * scale) };
+  }
+
+  /* ---- 7. Lifecycle ---- */
+  /** Public teardown: aborts every listener, the ResizeObserver and the pending timers and animation frames. */
+  destroy() { this._ac.abort(); }
+
+  /* ---- 8. Static pure functions ---- */
+  /** Field ids are "<entity id>:<field name>". Entity ids never contain ":" (see safeId), so the first ":" splits them and two fields can never share an id. */
+  static _fieldId(entityId, name) { return `${entityId}:${name}`; }
+  /** Space a relation label needs on a line (shared by rendering and layout). */
+  static _labelSpace(label, markerLength) { return label.length * 6 + 2 * markerLength + 16; }
+  /**
+   * Pure layered layout (no DOM, no state, independent of current positions => deterministic and idempotent).
+   * Parent (PK side) before child (FK side): above it for cfg.layoutDirection "vertical" (also the fallback for "auto"), to its left for "horizontal".
+   * Cycles broken by DFS; barycenter ordering; components in rows; singles in a grid.
+   * @param {Entity[]} entities
+   * @param {Relation[]} relations
+   * @param {Config} cfg  Reads the entity geometry, the layout gaps and sweeps, layoutDirection ("vertical" or "horizontal").
+   * @returns {{positions: Map<string,{x:number,y:number}>, levels: number}}
+   */
+  static _layout(entities, relations, cfg) {
+    const byId = new Map(entities.map((e) => [e.id, e])), owner = new Map(), entityWidth = cfg.entityWidth, pitch = entityWidth + cfg.layoutGapX;
+    entities.forEach((e) => e.fields.forEach((field) => owner.set(field.id, e.id)));
+    const cmp = (idA, idB) => { const nameA = byId.get(idA).name, nameB = byId.get(idB).name; return nameA < nameB ? -1 : nameA > nameB ? 1 : idA < idB ? -1 : idA > idB ? 1 : 0; };
+    const height = (entityId) => cfg.headerHeight + byId.get(entityId).fields.length * cfg.rowHeight;
+    // Layers run along one axis; the entities of a layer are spread across the other. Equally wide entities (vertical) align left edges,
+    // entities of different heights (horizontal) align centers, so the vertical arithmetic is the same as before.
+    const vertical = cfg.layoutDirection !== 'horizontal', acrossSize = (entityId) => (vertical ? entityWidth : height(entityId)), half = (entityId) => (vertical ? 0 : height(entityId) / 2);
+    const slot = (layer, j) => (vertical ? j * pitch : layer.slice(0, j).reduce((sum, entityId) => sum + height(entityId) + cfg.layoutGapX, 0));
+    const parents = new Map(entities.map((e) => [e.id, new Set()])), children = new Map(entities.map((e) => [e.id, new Set()]));
+    let maxLabel = 0;
+    for (const relation of relations) {
+      const childId = owner.get(relation.fromField), parentId = owner.get(relation.toField);
+      if (!childId || !parentId || childId === parentId) continue;
+      parents.get(childId).add(parentId); children.get(parentId).add(childId); maxLabel = Math.max(maxLabel, (relation.label || '').length);
+    }
+    const gapY = Math.min(cfg.layoutMaxGapY, Math.max(cfg.layoutMinGapY, DiagramController._labelSpace('x'.repeat(maxLabel), cfg.markerLength) + 24));
+    const seen = new Set(), comps = [];
+    for (const entityId of [...byId.keys()].sort(cmp)) {
+      if (seen.has(entityId)) continue;
+      const comp = [], stack = [entityId];
+      while (stack.length) { const current = stack.pop(); if (seen.has(current)) continue; seen.add(current); comp.push(current); stack.push(...parents.get(current), ...children.get(current)); }
+      comps.push(comp.sort(cmp));
+    }
+    const place = (comp) => {
+      const back = new Set(), mark = new Map();
+      const par = (entityId) => [...parents.get(entityId)].filter((parentId) => !back.has(`${parentId}>${entityId}`)).sort(cmp);
+      const kids = (entityId) => [...children.get(entityId)].filter((childId) => !back.has(`${entityId}>${childId}`)).sort(cmp);
+      const dfs = (entityId) => { mark.set(entityId, 1); for (const childId of [...children.get(entityId)].sort(cmp)) { if (mark.get(childId) === 1) back.add(`${entityId}>${childId}`); else if (!mark.get(childId)) dfs(childId); } mark.set(entityId, 2); };
+      for (const entityId of [...comp.filter((memberId) => !parents.get(memberId).size), ...comp]) if (!mark.get(entityId)) dfs(entityId);
+      const level = new Map(), levelOf = (entityId) => { if (!level.has(entityId)) level.set(entityId, par(entityId).reduce((deepest, parentId) => Math.max(deepest, levelOf(parentId) + 1), 0)); return level.get(entityId); };
+      comp.forEach(levelOf);
+      for (const entityId of comp) if (!par(entityId).length && kids(entityId).length) level.set(entityId, Math.min(...kids(entityId).map((childId) => level.get(childId))) - 1);
+      const layers = []; comp.forEach((entityId) => (layers[level.get(entityId)] ||= []).push(entityId));
+      const rows = layers.filter(Boolean), pos = new Map(), index = () => rows.forEach((layer) => layer.forEach((entityId, i) => pos.set(entityId, i)));
+      index();
+      for (let sweep = 0; sweep < cfg.layoutSweeps; sweep++) {
+        const down = sweep % 2 === 0, order = rows.map((layer, i) => i).slice(1);
+        for (const i of down ? order : order.reverse().map((j) => j - 1)) {
+          const key = new Map(rows[i].map((entityId) => { const neighborPositions = (down ? par(entityId) : kids(entityId)).map((neighborId) => pos.get(neighborId)); return [entityId, neighborPositions.length ? neighborPositions.reduce((total, value) => total + value, 0) / neighborPositions.length : pos.get(entityId)]; }));
+          rows[i].sort((idA, idB) => key.get(idA) - key.get(idB) || pos.get(idA) - pos.get(idB)); index();
+        }
+      }
+      const left = new Map();
+      rows.forEach((layer) => {
+        const want = layer.map((entityId, j) => { const parentCenters = par(entityId).map((parentId) => left.get(parentId) + half(parentId)); return parentCenters.length ? parentCenters.reduce((total, value) => total + value, 0) / parentCenters.length - half(entityId) : slot(layer, j); });
+        const out = want.map((value, j) => value), sum = (values) => values.reduce((total, value) => total + value, 0);
+        for (let j = 1; j < out.length; j++) out[j] = Math.max(out[j], out[j - 1] + (acrossSize(layer[j - 1]) + cfg.layoutGapX));
+        const shift = (sum(want) - sum(out)) / out.length;
+        layer.forEach((entityId, j) => left.set(entityId, out[j] + shift));
+      });
+      const minStart = Math.min(...comp.map((entityId) => left.get(entityId))), items = [], starts = [], thickness = (layer) => (vertical ? Math.max(...layer.map(height)) : entityWidth); let reach = 0;
+      rows.forEach((layer, i) => { starts[i] = reach; reach += thickness(layer) + gapY; layer.forEach((entityId) => { const across = left.get(entityId) - minStart; items.push(vertical ? { id: entityId, x: across, y: starts[i] } : { id: entityId, x: starts[i], y: across }); }); });
+      const spread = Math.max(...comp.map((entityId) => left.get(entityId) - minStart + acrossSize(entityId))), length = reach - gapY;
+      return { items, width: vertical ? spread : length, height: vertical ? length : spread, levels: rows.length };
+    };
+    const singles = comps.filter((component) => component.length === 1 && !parents.get(component[0]).size && !children.get(component[0]).size).map((component) => component[0]);
+    const groups = comps.filter((component) => !singles.includes(component[0])).map(place).sort((groupA, groupB) => groupB.items.length - groupA.items.length || cmp(groupA.items[0].id, groupB.items[0].id));
+    const positions = new Map(); let cursorX = 0, cursorY = 0, rowH = 0;
+    for (const group of groups) {
+      if (cursorX > 0 && cursorX + group.width > cfg.layoutMaxRowWidth) { cursorY += rowH + gapY; cursorX = 0; rowH = 0; }
+      group.items.forEach((item) => positions.set(item.id, { x: cursorX + item.x, y: cursorY + item.y }));
+      cursorX += group.width + cfg.layoutGapX; rowH = Math.max(rowH, group.height);
+    }
+    if (singles.length) {
+      if (groups.length) cursorY += rowH + gapY;
+      const cols = Math.max(1, Math.floor((cfg.layoutMaxRowWidth + cfg.layoutGapX) / pitch)), cell = Math.max(...singles.map(height)) + gapY;
+      singles.forEach((entityId, i) => positions.set(entityId, { x: (i % cols) * pitch, y: cursorY + Math.floor(i / cols) * cell }));
+    }
+    for (const position of positions.values()) { position.x = Math.round(position.x / cfg.gridSize) * cfg.gridSize; position.y = Math.round(position.y / cfg.gridSize) * cfg.gridSize; }
+    return { positions, levels: Math.max(0, ...groups.map((group) => group.levels), singles.length ? 1 : 0) };
+  }
+  /**
+   * Pure geometry: the crow's foot ("many") or the bar ("one") at a relation end, as an SVG path.
+   * @param {'many'|'one'} kind
+   * @param {number} pointX  Where the line meets the entity border.
+   * @param {number} pointY
+   * @param {number} unitX  Unit vector pointing away from the entity.
+   * @param {number} unitY
+   * @param {number} length  Length of the marker.
+   * @param {number} spread  Half-width of the marker.
+   * @returns {string}
+   */
+  static _marker(kind, pointX, pointY, unitX, unitY, length, spread) {
+    const roundTenth = (value) => Math.round(value * 10) / 10, perpX = -unitY * spread, perpY = unitX * spread;
+    if (kind === 'one') { const barX = pointX + unitX * length * 0.7, barY = pointY + unitY * length * 0.7; return `M${roundTenth(barX + perpX)} ${roundTenth(barY + perpY)}L${roundTenth(barX - perpX)} ${roundTenth(barY - perpY)}`; }
+    const tipX = roundTenth(pointX + unitX * length), tipY = roundTenth(pointY + unitY * length), baseX = pointX - unitX * 2, baseY = pointY - unitY * 2;
+    return `M${tipX} ${tipY}L${roundTenth(baseX + perpX)} ${roundTenth(baseY + perpY)}M${tipX} ${tipY}L${roundTenth(baseX)} ${roundTenth(baseY)}M${tipX} ${tipY}L${roundTenth(baseX - perpX)} ${roundTenth(baseY - perpY)}`;
+  }
+  /**
+   * Validates untrusted JSON into a staged model; throws before any state is touched.
+   * @param {*} data  Parsed import file.
+   * @param {Config} cfg  Limits (entity count, name length).
+   * @returns {{entities: Entity[], relations: Relation[], skipped: number, hasLayout: boolean}}
+   */
+  static _validate(data, cfg) {
+    const bad = (message) => { throw new Error(`Import failed: ${message}`); };
+    const isObj = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+    const walk = (value, depth = 0) => { if (depth > 8) bad('nesting is too deep'); if (value && typeof value === 'object') for (const key of Object.keys(value)) { if (DiagramController.FORBIDDEN_KEYS.includes(key)) bad(`forbidden key "${key}"`); walk(value[key], depth + 1); } };
+    const safeId = (value) => typeof value === 'string' && /^[\w.-]{1,64}$/.test(value);
+    const text = (value, max) => String(value ?? '').slice(0, max);
+    const num = (value, fallback) => (value !== null && value !== '' && Number.isFinite(Number(value)) ? Math.max(-1e5, Math.min(1e5, Number(value))) : fallback);
+    if (!isObj(data)) bad('the root must be an object'); walk(data);
+    if (typeof data.$entitymap !== 'string' || !data.$entitymap.startsWith('1.')) bad('missing or unsupported $entitymap version');
+    if (!Array.isArray(data.entities) || !Array.isArray(data.relations)) bad('entities[] and relations[] are required');
+    if (data.entities.length > cfg.maxEntities) bad('too many entities');
+    const layout = isObj(data.layout) ? data.layout : {}, byEntity = new Map(), seen = new Set();
+    const entities = data.entities.map((e, i) => {
+      if (!isObj(e) || !safeId(e.id)) bad(`entity #${i + 1} has no valid id`);
+      if (seen.has(e.id)) bad(`duplicate entity id "${e.id}"`); seen.add(e.id);
+      const fields = new Map();
+      for (const field of Array.isArray(e.fields) ? e.fields : []) {
+        if (!isObj(field) || !field.name) bad(`entity "${e.id}" has an invalid field`);
+        const name = text(field.name, cfg.maxName), constraints = Array.isArray(field.constraints) ? field.constraints : [];
+        if (fields.has(name)) bad(`duplicate field "${name}" in "${e.id}"`);
+        fields.set(name, { id: DiagramController._fieldId(e.id, name), name, type: DiagramController.TYPES.includes(field.type) ? field.type : 'string', key: constraints.includes('pk') ? 'PK' : constraints.includes('fk') ? 'FK' : constraints.includes('unique') ? 'UK' : '' });
+      }
+      byEntity.set(e.id, fields);
+      const pos = isObj(layout[e.id]) ? layout[e.id] : {};
+      return { id: e.id, name: text(e.name || e.id, cfg.maxName), x: num(pos.x, 40 + (i % 4) * 280), y: num(pos.y, 40 + Math.floor(i / 4) * 300), fields: [...fields.values()] };
+    });
+    const relations = [], used = new Set(); let skipped = 0;
+    for (const relation of data.relations) {
+      const source = isObj(relation) && byEntity.get(relation.from)?.get(relation.from_field), target = isObj(relation) && byEntity.get(relation.to)?.get(relation.to_field);
+      if (!source || !target || !['PK', 'UK'].includes(target.key)) { skipped++; continue; }
+      const relationId = safeId(relation.id) && !used.has(relation.id) ? relation.id : `relation-${relations.length + 1}`; used.add(relationId);
+      relations.push({ id: relationId, fromField: source.id, toField: target.id, label: text(relation.comment ?? relation.label, cfg.maxName) });
+    }
+    return { entities, relations, skipped, hasLayout: Object.keys(layout).length > 0 };
+  }
+  /** Keeps only known option keys and drops prototype-pollution keys before the config merge. */
+  static _sanitizeOptions(opts) {
+    const source = opts && typeof opts === 'object' ? opts : {};
+    return Object.fromEntries(Object.entries(source).filter(([key]) => Object.hasOwn(DiagramController.DEFAULTS, key) && !DiagramController.FORBIDDEN_KEYS.includes(key)));
+  }
+}
+
+/**
+ * Orchestrator: no state, no render. Applies the color mode to its own root and owns the child widgets.
+ * Options are forwarded as slices: new DiagramPageController('.diagram-page', { theme: {...}, diagram: {...} }).
+ */
+class DiagramPageController {
+  /**
+   * Creates the two widgets (theme, diagram) with their option slices and binds the page-level listener. Does nothing when the root is missing.
+   * @param {string|Element} selector  Root element of the page, or a selector for it.
+   * @param {{theme?: Partial<ThemeConfig>, diagram?: Partial<Config>}} [opts]
+   */
+  constructor(selector, opts = {}) {
+    this._root = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!this._root) return;
+    this._widgets = [new ThemeController('.theme-container', opts.theme ?? {}), new DiagramController('.diagram-container', opts.diagram ?? {})];
+    this._ac = new AbortController();
+    this._bind();
+  }
+
+  /** Listens for `theme:mode-changed` on document. */
+  _bind() {
+    const sig = { signal: this._ac.signal };
+    document.addEventListener('theme:mode-changed', (e) => this._handleThemeChanged(e), sig);
+  }
+  /**
+   * Applies the color mode to this container only; `data-bs-theme` is Bootstrap's own color-mode attribute.
+   * @param {CustomEvent<{mode: string}>} e
+   */
+  _handleThemeChanged(e) { this._root.dataset.bsTheme = e.detail.mode; }
+  /** Tears down both widgets and the page listener. */
+  destroy() { this._widgets.forEach((widget) => widget.destroy()); this._ac.abort(); }
+}
+
+document.addEventListener('DOMContentLoaded', () => new DiagramPageController('.diagram-page'));
+})();
+</script>
+</body>
+</html>
