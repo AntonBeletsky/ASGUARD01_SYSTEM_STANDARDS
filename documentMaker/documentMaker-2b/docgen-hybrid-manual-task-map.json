@@ -1,0 +1,229 @@
+{
+  "meta": {
+    "total_issues": 8,
+    "guide_version": "docgen-hybrid-manual-design-1 (MSDN + Envato/TemplateMonster synthesis)"
+  },
+  "files": [
+    {
+      "file": "doc_generator.py",
+      "issues": [
+        {
+          "id": "docgen-h1",
+          "category": "MANUAL_SPLIT_ARCHITECTURE",
+          "severity": "CRITICAL",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 3070,
+              "end": 3118
+            },
+            "context": "DOCUMENT_TEMPLATE = \"\"\"<!DOCTYPE html>... <header class=\"topbar\">...",
+            "scope": "DOCUMENT_TEMPLATE + render_document()"
+          },
+          "current": "One tree, one content column. render_document() builds a single sidebar (build_sidebar_tree) and a single content flow (overview -> dependency map -> file cards) with no concept of two parallel manuals.",
+          "expected": "Two parallel <nav>/<main> pairs (code-manual and user-manual), a two-way switcher in the topbar using the same radio+:checked pattern already proven for Code/Structure tabs (no JS needed, no risk to the offline-first constraint), CSS toggling which pair is visible. render_document() builds both trees and both content flows into the same file; nothing is generated twice, both are just always present and one is hidden.",
+          "description": "Foundational -- every other item in this map inserts content into one of the two manuals this creates. Nothing else can be scoped precisely until this scaffold exists. Implementation note: adding the tabs to the top bar reintroduced the mobile overflow fixed in docgen-r2, so on narrow screens the tab labels collapse to icons; the mobile drawer also now closes when a quicknav link is tapped (it previously only closed for file links).",
+          "rule_ref": "design decision from chat: 'two trees, not one tab' -- MSDN and TemplateMonster differ in reader type and in navigation shape, not just tone",
+          "dependencies": [
+            {
+              "issue_id": "docgen-h3",
+              "file": "doc_generator.py",
+              "description": "h3's confidence badges attach to elements this item creates; sequence h1 before h3."
+            },
+            {
+              "issue_id": "docgen-h8",
+              "file": "doc_generator.py",
+              "description": "h8's plan.json manuals.* flags gate visibility of what this item builds."
+            }
+          ],
+          "status": "done"
+        },
+        {
+          "id": "docgen-h2",
+          "category": "PACKAGE_JSON_ANALYSIS",
+          "severity": "HIGH",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 329,
+              "end": 350
+            },
+            "context": "CONFIG_EXTS = {\".json\", ...}; def classify_importance(name, ext): ... if ext in CONFIG_EXTS ... return \"config\"",
+            "scope": "new PackageInfo dataclass + analyze_package_json(), called from build_project_data()"
+          },
+          "current": "package.json is detected and correctly tiered as 'config' for sidebar display (docgen-006), but its content is never read -- scripts, dependencies, engines, license all sit unused in a file the tool already found.",
+          "expected": "A new analyze_package_json(raw) -> PackageInfo parsing name/description/version/scripts/engines/dependencies/license via json.loads (already imported) with a try/except for malformed JSON -- returns None on failure rather than raising, so a broken package.json degrades to 'no data' not a crash.",
+          "description": "Single highest-leverage item in this whole map: real, factual data (not inference, not template text) for three separate User Manual sections (Requirements, Getting Started, Third-Party Credits) from one parsing pass over a file already sitting in the scanned tree.",
+          "rule_ref": "chat finding -- 'package.json parsing... common to 2, 3 and 8 [now h4's Requirements/Getting-Started/Credits sections] -- write it once'",
+          "dependencies": [],
+          "status": "done"
+        },
+        {
+          "id": "docgen-h3",
+          "category": "CONFIDENCE_TIER_LABELING",
+          "severity": "HIGH",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 3118,
+              "end": 3118
+            },
+            "context": "def render_document(pdata, project_title, plan=None):",
+            "scope": "shared badge helper, used by every User Manual section builder"
+          },
+          "current": "No concept of per-section confidence exists. Every badge in the current output (.badge, .badge.warn) means 'file property' (size, minified) -- none mean 'how much of this content is real vs. templated'.",
+          "expected": "One small helper (e.g. _confidence_badge_html(tier)) emitting a consistent, visually distinct badge for four tiers -- AUTO (derived from the codebase itself), INFERRED (derived from a convention file like package.json), SCAFFOLD (empty template, no project data), MANUAL (from docgen-manual.md, see h5) -- used by every section in h4.",
+          "description": "Without this, a SCAFFOLD section (empty FAQ template) and an AUTO section (real file structure) look like the same kind of claim. This is what makes the hybrid honest rather than just visually merged -- same reasoning as why Cartographer's notes phrase findings as 'worth checking' rather than fact.",
+          "rule_ref": "MSDN_Documentation_Analysis_EN.md §5 (ms.topic tags every page by communicative purpose); chat principle -- 'never let a template look like a fact'",
+          "dependencies": [
+            {
+              "issue_id": "docgen-h1",
+              "file": "doc_generator.py",
+              "description": "Badges attach to User Manual section markup h1 creates."
+            }
+          ],
+          "status": "done"
+        },
+        {
+          "id": "docgen-h4",
+          "category": "USER_MANUAL_SECTIONS",
+          "severity": "MEDIUM",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 2914,
+              "end": 2914
+            },
+            "context": "def build_overview_section(pdata, plan):  # closest existing analog/insertion point",
+            "scope": "9 new section-builder functions, one per User Manual section"
+          },
+          "current": "No User Manual content exists in any form -- Overview, Requirements, Getting Started, Project Structure, Customization, Third-Party Credits, FAQ, Changelog, Support are all absent.",
+          "expected": "Nine section builders, each tagged via h3's badge helper: Overview (AUTO from root README.md if found, else a neutral stat-based fallback), Requirements (INFERRED from h2's engines + existing stats.external_libs), Getting Started (INFERRED from h2's scripts, or a static-HTML fallback line), Project Structure (AUTO, one line per top-level folder, cross-linking to Code Manual), Customization (AUTO list of CSS custom properties + a MANUAL slot from h5), Third-Party Credits (INFERRED from h2's dependencies+license, explicit 'license unknown' for non-npm externals), FAQ/Changelog/Support (SCAFFOLD, or AUTO if a CHANGELOG.md/HISTORY.md is found for the Changelog case specifically).",
+          "description": "The actual content layer of the User Manual -- this is what a reader sees after h1's scaffold and h3's labeling exist.",
+          "rule_ref": "envato-templatemonster-doc-requirements-en.md §7 (suggested index.html structure) + MSDN reader journey (Overview -> Quickstart -> Reference)",
+          "dependencies": [
+            {
+              "issue_id": "docgen-h1",
+              "file": "doc_generator.py",
+              "description": "Needs the User Manual content column to render into."
+            },
+            {
+              "issue_id": "docgen-h2",
+              "file": "doc_generator.py",
+              "description": "Requirements/Getting-Started/Credits need PackageInfo."
+            },
+            {
+              "issue_id": "docgen-h3",
+              "file": "doc_generator.py",
+              "description": "Every section needs a confidence badge to render honestly."
+            }
+          ],
+          "status": "done"
+        },
+        {
+          "id": "docgen-h5",
+          "category": "DOCGEN_MANUAL_MD_MECHANISM",
+          "severity": "MEDIUM",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 3163,
+              "end": 3163
+            },
+            "context": "def build_project_data(root, ignore_dirs, extra_ignore_globs):",
+            "scope": "new --manual-scaffold CLI flag + docgen-manual.md convention-file detection/parsing"
+          },
+          "current": "No mechanism exists for a human to contribute prose that survives regeneration -- the only external file the tool reads by convention today is the project's own source; nothing analogous to README.md/CHANGELOG.md exists for content the tool itself would ask a person to write.",
+          "expected": "`--manual-scaffold` writes `docgen-manual.md` with one heading per human-only User Manual section, each followed by an HTML-comment hint (`<!-- docgen-hint: ... -->`) describing what's known and what isn't. On a normal run, `docgen-manual.md` is auto-detected by filename (same convention tier as README.md/CHANGELOG.md) and parsed: a heading whose only content is the hint comment (or nothing) stays SCAFFOLD; any content outside the comment is real and renders with a MANUAL badge.",
+          "description": "This is what lets FAQ/Support/Customization notes/etc. ever contain real prose without the tool fabricating it -- and the real/hint distinction (content outside the HTML comment vs. not) is the part that keeps an untouched template from ever being mistaken for a filled-in answer. Implementation note: parsing is fenced-code-aware (a '## ' line or an HTML comment inside a code block is code, not a heading/hint), and --manual-scaffold writes with an exclusive-create open so it can never overwrite an existing file.",
+          "rule_ref": "chat design -- 'a file that survives regeneration, not something living inside the generated HTML'",
+          "dependencies": [
+            {
+              "issue_id": "docgen-h1",
+              "file": "doc_generator.py",
+              "description": "MANUAL-tier content needs the User Manual sections it fills."
+            }
+          ],
+          "status": "done"
+        },
+        {
+          "id": "docgen-h6",
+          "category": "USER_MANUAL_COVERAGE_COUNTER",
+          "severity": "MEDIUM",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 2914,
+              "end": 2914
+            },
+            "context": "same insertion area as h4 -- a summary line above the nine sections",
+            "scope": "User Manual header area"
+          },
+          "current": "No aggregate signal exists for how much of the User Manual is real project data versus untouched template, the same gap docgen-005 closed for JSDoc coverage inside a single JS file, one level up at the whole-manual scale.",
+          "expected": "One line above the User Manual sections: 'N of 9 sections are AUTO/INFERRED from your project; M are templates -- see docgen-manual.md' (or 'not found, run --manual-scaffold to create one' if absent), computed by counting h3's tier badges across the nine h4 sections.",
+          "description": "Same honesty principle as docgen-005 (JSDoc coverage %), one level of granularity higher -- a whole manual that's 4/9 real should say so before the reader has to notice it section by section.",
+          "rule_ref": "precedent: docgen-005 (COVERAGE_INVISIBLE fix, prior task map)",
+          "dependencies": [
+            {
+              "issue_id": "docgen-h4",
+              "file": "doc_generator.py",
+              "description": "Needs all nine sections to exist before counting them."
+            },
+            {
+              "issue_id": "docgen-h5",
+              "file": "doc_generator.py",
+              "description": "MANUAL-tier count depends on docgen-manual.md parsing."
+            }
+          ],
+          "status": "done"
+        },
+        {
+          "id": "docgen-h7",
+          "category": "CALLOUT_SEVERITY_SPLIT",
+          "severity": "LOW",
+          "change_type": "REPLACE",
+          "location": {
+            "lines": {
+              "start": 2978,
+              "end": 3010
+            },
+            "context": "notes.append((\"Unused id / class\", ...)) ... notes.append((\"CSS rules with no match in HTML\", ...)) [6 call sites total]",
+            "scope": "build_overview_section() Cartographer's-notes block, Code Manual only"
+          },
+          "current": "All six note types render with identical .note-block styling regardless of real risk -- 'Project-wide TODO/FIXME' and 'Unresolved links' (a likely-broken path) look equally serious.",
+          "expected": "Split into two tiers matching MSDN's Note/Warning convention: Warning (visually stronger) for unresolved links and unresolved DOM lookups (likely-real problems); Note (current styling) for unused id/class, orphan selectors, images without alt, and TODO/FIXME (worth knowing, not necessarily broken).",
+          "description": "Code-Manual-only, independent of the whole User Manual effort -- a direct, small adoption of the one MSDN convention that maps cleanly onto content we already generate. Implementation note (deviation from this item's 'expected'): only 'Unresolved links' is a Warning. 'Unresolved DOM lookups' stays a Note -- its own text says it describes a limit of the analysis, so a Warning label would contradict it.",
+          "rule_ref": "MSDN_Documentation_Analysis_EN.md §6 (Note vs. Warning, two-tier by real risk)",
+          "dependencies": [],
+          "status": "done"
+        },
+        {
+          "id": "docgen-h8",
+          "category": "PLAN_JSON_MANUALS_TOGGLE",
+          "severity": "LOW",
+          "change_type": "ADD",
+          "location": {
+            "lines": {
+              "start": 2838,
+              "end": 2839
+            },
+            "context": "_PLAN_SECTION_KEYS = (\"overview\", \"dependency_graph\", \"cartographer_notes\", \"color_palette\")",
+            "scope": "derive_generation_plan() / _normalize_plan(), extending the existing plan.json schema"
+          },
+          "current": "plan.json has no concept of the two manuals since they don't exist yet -- sections/diagnostics/files/assets cover Code-Manual-shaped output only.",
+          "expected": "A fifth plan.json top-level key, `\"manuals\": {\"user_manual\": 1, \"code_manual\": 1}`, defaulting to 1/1 (both shown, matching every other default in this schema), consulted once in render_document() to gate which of h1's two trees actually render.",
+          "description": "Smallest item in this map and safe to defer -- existing plan.json files without this key already degrade correctly today (_normalize_plan fills missing keys with 1), so this is additive, not a compatibility risk.",
+          "rule_ref": "existing plan.json design principle -- 'every default is 1, missing keys fall back to 1'",
+          "dependencies": [
+            {
+              "issue_id": "docgen-h1",
+              "file": "doc_generator.py",
+              "description": "Nothing to toggle until both manuals exist."
+            }
+          ],
+          "status": "done"
+        }
+      ]
+    }
+  ]
+}

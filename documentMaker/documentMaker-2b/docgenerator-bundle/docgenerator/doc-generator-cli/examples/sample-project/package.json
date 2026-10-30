@@ -1,0 +1,9 @@
+{
+  "name": "skylark",
+  "description": "Demo landing page for a drone film studio",
+  "version": "1.1.0",
+  "scripts": { "start": "npx serve .", "lint": "eslint js" },
+  "engines": { "node": ">=18" },
+  "devDependencies": { "eslint": "^8.57.0", "serve": "^14.2.0" },
+  "license": "MIT"
+}
